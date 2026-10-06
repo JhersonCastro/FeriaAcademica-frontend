@@ -8,7 +8,7 @@
     <article class="card flex items-center gap-4 p-4.5 lg:block lg:px-6 lg:py-5">
       <div class="grid size-[52px] shrink-0 place-items-center rounded-[10px] bg-navy-soft lg:hidden"><app-icon [name]="s.icono" [size]="24" /></div>
       <div class="flex-1">
-        <div class="flex items-center justify-between"><span class="text-xs font-medium text-muted uppercase">{{ s.titulo }}</span><app-icon class="hidden lg:inline-flex" [name]="s.icono" /></div>
+        <div class="flex items-center justify-between"><span class="text-xs font-medium text-muted uppercase">{{ s.titulo }}</span><span class="hidden lg:inline-flex"><app-icon [name]="s.icono" /></span></div>
         <strong class="my-0.5 block font-serif text-[32px] lg:my-2 lg:text-[38px]">{{ s.valor }}</strong>
         <small class="text-xs text-muted">{{ s.nota }}</small>
       </div>
