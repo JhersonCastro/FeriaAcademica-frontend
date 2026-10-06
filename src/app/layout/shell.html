@@ -1,0 +1,42 @@
+<div class="layout">
+  @if (menuAbierto()) { <div class="overlay" (click)="menuAbierto.set(false)"></div> }
+
+  <aside class="sidebar" [class.open]="menuAbierto()">
+    <div class="brand">
+      <app-crest [size]="46" />
+      <div><strong>FIET</strong><span>UNICAUCA</span></div>
+    </div>
+    <nav>
+      @for (n of nav; track n.ruta) {
+        <a [routerLink]="n.ruta" routerLinkActive="active"><app-icon [name]="n.icono" /> {{ n.etiqueta }}</a>
+      }
+    </nav>
+    <div class="foot">
+      <p>Feria Empresarial 2026</p>
+      <small>Facultad de Ingeniería Electrónica y Telecomunicaciones</small>
+      <button class="logout" (click)="auth.logout()"><app-icon name="logout" [size]="16" /> Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="burger" (click)="menuAbierto.set(true)" aria-label="Abrir menú"><app-icon name="menu" [size]="24" /></button>
+      <div class="title">
+        <h1 class="desktop-title"><span class="dot"></span>{{ titulo() }}</h1>
+        <div class="mobile-title"><strong>FIET - Universidad del Cauca</strong><small>{{ subtitulo() }}</small></div>
+      </div>
+      <div class="user">
+        <div class="who"><strong>{{ auth.usuario()?.nombre }}</strong><small>{{ auth.usuario()?.correo }}</small></div>
+        <div class="avatar">{{ auth.usuario()?.iniciales }}</div>
+      </div>
+    </header>
+
+    <main class="content"><router-outlet /></main>
+
+    <nav class="bottom-nav">
+      @for (n of nav; track n.ruta) {
+        <a [routerLink]="n.ruta" routerLinkActive="active"><app-icon [name]="n.icono" [size]="22" /><span>{{ n.corta }}</span></a>
+      }
+    </nav>
+  </div>
+</div>

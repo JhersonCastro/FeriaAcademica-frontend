@@ -1,0 +1,52 @@
+<div class="page">
+  <span class="deco"></span>
+  <div class="wrap">
+    <section class="intro">
+      <div class="brand">
+        <app-crest [size]="56" />
+        <div><h2>Universidad del Cauca</h2><span>Facultad de Ingeniería Electrónica y Telecomunicaciones</span></div>
+      </div>
+      <h1>Sistema de Gestión de Eventos</h1>
+      <p class="sub">Feria Empresarial FIET</p>
+      <p class="desc">Acceda con sus credenciales institucionales para administrar eventos, registrar inscripciones de empresas, estudiantes y emitir certificados avalados por la Facultad.</p>
+      <div class="shapes"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div>
+    </section>
+
+    <form class="card form" [formGroup]="form" (ngSubmit)="ingresar()" novalidate>
+      <h2>Inicio de Sesión</h2>
+      <p class="hint">Usa tu correo institucional &#64;unicauca.edu.co</p>
+
+      <div class="field">
+        <label for="correo">Correo electrónico</label>
+        <input id="correo" type="email" formControlName="correo" placeholder="usuario@unicauca.edu.co" autocomplete="username">
+        @if (form.controls.correo.touched && form.controls.correo.invalid) { <span class="error">Ingresa un correo válido</span> }
+      </div>
+
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <div class="pw">
+          <input id="password" [type]="verPassword() ? 'text' : 'password'" formControlName="password" placeholder="••••••••••••" autocomplete="current-password">
+          <button type="button" (click)="verPassword.set(!verPassword())" aria-label="Mostrar contraseña">
+            <app-icon [name]="verPassword() ? 'eye-off' : 'eye'" />
+          </button>
+        </div>
+        @if (form.controls.password.touched && form.controls.password.invalid) { <span class="error">La contraseña es obligatoria</span> }
+      </div>
+
+      <div class="row">
+        <label class="check"><input type="checkbox" formControlName="recordar"> Recordarme</label>
+        <button type="button" class="link" (click)="olvido()">¿Olvidó su contraseña?</button>
+      </div>
+
+      @if (error()) { <p class="error block-error">{{ error() }}</p> }
+
+      <button class="btn primary block" type="submit">Ingresar</button>
+
+      <div class="sep"><span>O ingrese con</span></div>
+
+      <button class="btn block" type="button" (click)="google()"><app-icon name="google" /> Google Workspace UNICAUCA</button>
+      <p class="pub-links">¿Visitas la feria? <a href="/feria/espectador">Registro de asistencia</a> · <a href="/feria/proyecto">Inscribir proyecto</a></p>
+    </form>
+  </div>
+  <footer>“Hacia una Universidad comprometida con la paz territorial”</footer>
+</div>

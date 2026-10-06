@@ -1,0 +1,47 @@
+<section class="welcome">
+  <h2>¡Bienvenido de nuevo, Administrador!</h2>
+  <p>Gestión activa de la Feria Empresarial FIET 2026.</p>
+</section>
+
+<div class="stats">
+  <article class="card stat">
+    <div class="ico"><app-icon name="calendar" [size]="24" /></div>
+    <div><span class="lbl">Eventos activos</span><strong>{{ data.stats().eventosActivos }}</strong><small>{{ data.stats().programadosSemana }} programados esta semana</small></div>
+  </article>
+  <article class="card stat">
+    <div class="ico"><app-icon name="users" [size]="24" /></div>
+    <div><span class="lbl">Inscritos totales</span><strong>{{ data.stats().inscritos }}</strong><small>+{{ data.stats().nuevosHoy }} nuevos hoy</small></div>
+  </article>
+  <article class="card stat">
+    <div class="ico"><app-icon name="award" [size]="24" /></div>
+    <div><span class="lbl">Certificados emitidos</span><strong>{{ data.stats().certificados }}</strong><small>{{ data.stats().tasaEntrega }}% de tasa de entrega</small></div>
+  </article>
+  <article class="card stat">
+    <div class="ico"><app-icon name="building" [size]="24" /></div>
+    <div><span class="lbl">Empresas aliadas</span><strong>{{ data.stats().empresas }}</strong><small>{{ data.stats().empresasNuevas }} nuevas en Feria 2026</small></div>
+  </article>
+</div>
+
+<div class="grid">
+  <section class="card">
+    <header><h3>Próximos Eventos <span class="d">- Feria Empresarial</span></h3><a routerLink="/eventos" class="all">Ver Todos</a></header>
+    @for (e of data.proximos(); track e.id) {
+      <a class="item" [routerLink]="['/eventos', e.id]">
+        <div>
+          <strong>{{ e.titulo }}</strong>
+          <span>{{ fecha(e.fecha) }} <b>{{ e.cupos }} Cupos</b></span>
+        </div>
+        <app-status-badge [estado]="e.estado" class="desktop" />
+      </a>
+    }
+  </section>
+
+  <section class="card activity">
+    <h3>Actividad Reciente</h3>
+    <ul>
+      @for (a of data.actividad(); track $index) {
+        <li [class.red]="a.rojo"><i></i><div><span>{{ a.texto }}</span><small>{{ a.hace }}</small></div></li>
+      }
+    </ul>
+  </section>
+</div>
