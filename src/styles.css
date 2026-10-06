@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'EB Garamond', Georgia, serif;
+  --color-navy: #0f1f40;
+  --color-navy-soft: #dbe6f4;
+  --color-brand: #a80000;
+  --color-brand-soft: #fde8e8;
+  --color-surface: #f4f6fa;
+  --color-line: #e2e6ee;
+  --color-muted: #5b6478;
+  --color-ok: #1a7a45;
+  --color-ok-soft: #e3f3ea;
+  --color-warn: #b7791f;
+  --color-warn-soft: #fdf3dc;
+  --color-info: #1e4a96;
+  --color-info-soft: #e6eef9;
+}
+
+@layer base {
+  body { @apply bg-surface font-sans text-sm text-navy antialiased; }
+  h1, h2, h3, h4 { @apply font-serif font-bold; }
+  button { @apply cursor-pointer; }
+}
+
+@layer components {
+  .card { @apply rounded-[10px] border border-line bg-white p-6; }
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-[18px] py-2.5 text-sm font-semibold text-navy transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50; }
+  .btn-primary { @apply border-navy bg-navy text-white; }
+  .btn-danger { @apply border-brand bg-brand text-white; }
+  .btn-danger-soft { @apply border-brand bg-brand-soft text-brand; }
+  .lbl { @apply text-xs font-semibold uppercase text-navy; }
+  .input { @apply w-full rounded-lg border border-line bg-surface px-3.5 py-2.5 outline-none focus:border-navy focus:bg-white; }
+  .err { @apply text-xs text-brand; }
+
+  /* public flows */
+  .pcard { @apply rounded-lg border border-line bg-white p-5 sm:p-7; }
+  .pbtn { @apply inline-flex items-center justify-center gap-2.5 rounded-md border border-line bg-white px-5 py-3 font-semibold text-navy hover:brightness-95; }
+  .pbtn-primary { @apply border-navy bg-navy text-white; }
+  .plabel { @apply text-xs font-semibold; }
+  .pinput { @apply w-full rounded-md border border-line bg-white px-3.5 py-3 outline-none focus:border-info focus:ring-1 focus:ring-info [&.ng-invalid.ng-touched]:border-brand; }
+  .plink { @apply cursor-pointer border-0 bg-transparent p-0 font-semibold text-info; }
+  .chip { @apply inline-flex items-center gap-2 rounded-md bg-info-soft px-3 py-1.5 text-xs font-semibold text-info before:size-1.5 before:rounded-full before:bg-current before:content-['']; }
+  .chip-ok { @apply bg-ok-soft text-ok; }
+  .kvl { @apply mb-1 block text-xs font-semibold text-muted; }
+  .kvv { @apply mb-4.5 text-base leading-normal; }
+  .hr { @apply my-1.5 mb-5 border-0 border-t border-line; }
+}

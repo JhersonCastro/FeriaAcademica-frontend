@@ -21,30 +21,27 @@ const iniciales = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(
     <app-public-layout modo="estudiante" [paso]="1" [pasos]="pasos" [recorrido]="rec" titulo="Comparte tu proyecto con la región"
       subtitulo="Conoce el evento y elige cómo deseas participar. Este recorrido es para estudiantes expositores.">
       <app-evento-hero />
-      <div class="pub-cols" style="margin-top:28px">
-        <div class="pub-main">
-          <div class="pcard"><h2>¿Quiénes pueden postular su proyecto?</h2>
+      <div class="mt-7 grid items-start gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+        <div class="flex min-w-0 flex-col gap-6">
+          <div class="pcard"><h2 class="mb-2 text-2xl">¿Quiénes pueden postular su proyecto?</h2>
             <p>Estudiantes de último semestre de la FIET con un prototipo o proyecto de investigación vinculado a su programa y acompañado por un asesor académico.</p>
-            <div class="ck"><span><app-icon name="check" [size]="16" /> Matrícula activa y correo institucional</span><span><app-icon name="check" [size]="16" /> Equipo identificado y documento del proyecto</span></div>
+            <div class="mt-3 flex flex-wrap gap-x-10 gap-y-2"><span class="inline-flex items-center gap-2"><app-icon name="check" [size]="16" /> Matrícula activa y correo institucional</span><span class="inline-flex items-center gap-2"><app-icon name="check" [size]="16" /> Equipo identificado y documento del proyecto</span></div>
           </div>
           <app-agenda-publica />
         </div>
-        <div class="pub-side">
-          <div class="pcard dest">
-            <p class="et"><app-icon name="presentation" [size]="16" /> ESTUDIANTE EXPOSITOR</p>
-            <h2>Postula tu proyecto</h2>
-            <p class="muted">Presenta tu propuesta, registra a tu equipo y envía la documentación para revisión del comité.</p>
-            <a class="pbtn primary block" routerLink="/feria/proyecto/equipo">Participar con mi proyecto <app-icon name="arrow-left" [size]="16" class="fl" /></a>
-            <div style="margin-top:16px"><app-aviso>La postulación está sujeta a revisión. No garantiza un stand ni la participación aprobada.</app-aviso></div>
+        <div class="flex min-w-0 flex-col gap-6">
+          <div class="pcard border-2 border-info">
+            <p class="mb-2.5 flex items-center gap-2 text-xs font-semibold text-info"><app-icon name="presentation" [size]="16" /> ESTUDIANTE EXPOSITOR</p>
+            <h2 class="mb-2 text-2xl">Postula tu proyecto</h2>
+            <p class="mb-4 text-muted">Presenta tu propuesta, registra a tu equipo y envía la documentación para revisión del comité.</p>
+            <a class="pbtn pbtn-primary w-full" routerLink="/feria/proyecto/equipo">Participar con mi proyecto <app-icon class="rotate-180" name="arrow-left" [size]="16" /></a>
+            <div class="mt-4"><app-aviso>La postulación está sujeta a revisión. No garantiza un stand ni la participación aprobada.</app-aviso></div>
           </div>
-          <div class="pcard"><h2>¿Solo deseas asistir?</h2><p class="muted">Como espectador puedes conocer los proyectos y asistir a la agenda, sin presentar una propuesta.</p>
-            <a class="pbtn block" routerLink="/feria/espectador">Registrarme como espectador</a></div>
+          <div class="pcard"><h2 class="mb-2 text-2xl">¿Solo deseas asistir?</h2><p class="mb-4 text-muted">Como espectador puedes conocer los proyectos y asistir a la agenda, sin presentar una propuesta.</p>
+            <a class="pbtn w-full" routerLink="/feria/espectador">Registrarme como espectador</a></div>
         </div>
       </div>
     </app-public-layout>`,
-  styles: [`.ck { display: flex; gap: 40px; flex-wrap: wrap; margin-top: 12px; span { display: inline-flex; gap: 8px; align-items: center; } }
-    .dest { border: 2px solid #1e4a96; } .et { color: #1e4a96; font-size: 12px; font-weight: 600; display: flex; gap: 8px; align-items: center; margin: 0 0 10px; }
-    .fl { transform: rotate(180deg); }`],
 })
 export class ProyectoDescubrirComponent { pasos = PASOS; rec = REC; }
 
@@ -55,44 +52,50 @@ export class ProyectoDescubrirComponent { pasos = PASOS; rec = REC; }
   template: `
     <app-public-layout modo="estudiante" [paso]="2" [pasos]="pasos" [recorrido]="rec" [iniciales]="ini()" titulo="Datos del estudiante y equipo"
       subtitulo="Identifica a la persona responsable de la solicitud, a los integrantes y al asesor académico.">
-      <form class="pub-cols" [formGroup]="form" (ngSubmit)="continuar()" novalidate>
-        <div class="pub-main">
+      <form class="grid items-start gap-6 lg:grid-cols-[1fr_360px] lg:gap-8" [formGroup]="form" (ngSubmit)="continuar()" novalidate>
+        <div class="flex min-w-0 flex-col gap-6">
           <div class="pcard" formGroupName="responsable">
-            <div class="hd"><h2>Estudiante responsable</h2><span class="req-note">* Campos obligatorios</span></div>
-            <p class="muted">Esta persona recibirá las comunicaciones del comité sobre el proyecto.</p>
-            <div class="pf-2">
-              <div class="pf"><label for="n">Nombre completo <span class="req">*</span></label><input id="n" formControlName="nombre" autocomplete="name">@if (bad('responsable.nombre')) { <span class="err">Obligatorio</span> }</div>
-              <div class="pf"><label for="c">Correo institucional <span class="req">*</span></label><input id="c" type="email" formControlName="correo" placeholder="usuario@unicauca.edu.co">@if (bad('responsable.correo')) { <span class="err">Usa tu correo &#64;unicauca.edu.co</span> }</div>
-              <div class="pf"><label for="cd">Código estudiantil <span class="req">*</span></label><input id="cd" formControlName="codigo" inputmode="numeric">@if (bad('responsable.codigo')) { <span class="err">Obligatorio</span> }</div>
-              <div class="pf"><label for="pr">Programa académico <span class="req">*</span></label><select id="pr" formControlName="programa">@for (p of programas; track p) { <option>{{ p }}</option> }</select></div>
-              <div class="pf"><label for="se">Semestre actual <span class="req">*</span></label><select id="se" formControlName="semestre">@for (s of semestres; track s) { <option>{{ s }}</option> }</select></div>
-              <div class="pf"><label for="tl">Teléfono de contacto</label><input id="tl" formControlName="telefono" inputmode="tel"></div>
+            <div class="flex items-center justify-between gap-2"><h2 class="text-2xl">Estudiante responsable</h2><span class="text-xs text-muted">* Campos obligatorios</span></div>
+            <p class="mt-2 mb-4 text-muted">Esta persona recibirá las comunicaciones del comité sobre el proyecto.</p>
+            <div class="grid gap-x-5 sm:grid-cols-2">
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="n">Nombre completo <span class="text-brand">*</span></label><input class="pinput" id="n" formControlName="nombre" autocomplete="name">@if (bad('responsable.nombre')) { <span class="err">Obligatorio</span> }</div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="c">Correo institucional <span class="text-brand">*</span></label><input class="pinput" id="c" type="email" formControlName="correo" placeholder="usuario@unicauca.edu.co">@if (bad('responsable.correo')) { <span class="err">Usa tu correo &#64;unicauca.edu.co</span> }</div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="cd">Código estudiantil <span class="text-brand">*</span></label><input class="pinput" id="cd" formControlName="codigo" inputmode="numeric">@if (bad('responsable.codigo')) { <span class="err">Obligatorio</span> }</div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="pr">Programa académico <span class="text-brand">*</span></label><select class="pinput" id="pr" formControlName="programa">@for (p of programas; track p) { <option>{{ p }}</option> }</select></div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="se">Semestre actual <span class="text-brand">*</span></label><select class="pinput" id="se" formControlName="semestre">@for (s of semestres; track s) { <option>{{ s }}</option> }</select></div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="tl">Teléfono de contacto</label><input class="pinput" id="tl" formControlName="telefono" inputmode="tel"></div>
             </div>
           </div>
 
           <div class="pcard">
-            <div class="hd"><h2>Equipo del proyecto</h2><span class="chip">{{ integrantes().length + 1 }} integrante{{ integrantes().length ? 's' : '' }}</span></div>
-            <p class="muted">{{ form.controls.responsable.controls.nombre.value || 'El estudiante responsable' }} está incluida como responsable del equipo.</p>
+            <div class="flex items-center justify-between gap-2"><h2 class="text-2xl">Equipo del proyecto</h2><span class="chip">{{ integrantes().length + 1 }} integrante{{ integrantes().length ? 's' : '' }}</span></div>
+            <p class="mt-2 mb-4 text-muted">{{ form.controls.responsable.controls.nombre.value || 'El estudiante responsable' }} está incluida como responsable del equipo.</p>
             @for (i of integrantes(); track $index) {
-              <div class="mi"><div><strong>{{ i.nombre }}</strong><small>{{ i.correo }}</small></div><div class="c2">{{ i.codigo }}<small>{{ i.rol }}</small></div>
-                <span class="ac"><button type="button" class="plink" (click)="abrir($index)">Editar</button><button type="button" class="plink del" (click)="quitar($index)" aria-label="Quitar"><app-icon name="trash" [size]="14" /></button></span></div>
+              <div class="grid grid-cols-[1fr_auto] items-center gap-3 border-t border-line py-3.5 sm:grid-cols-[1fr_160px_90px]">
+                <div><strong>{{ i.nombre }}</strong><small class="block text-muted">{{ i.correo }}</small></div>
+                <div class="col-start-1 sm:col-start-auto">{{ i.codigo }}<small class="block text-muted">{{ i.rol }}</small></div>
+                <span class="col-start-2 row-start-1 flex justify-end gap-3.5 sm:col-start-auto sm:row-start-auto">
+                  <button type="button" class="plink" (click)="abrir($index)">Editar</button>
+                  <button type="button" class="plink text-muted" (click)="quitar($index)" aria-label="Quitar"><app-icon name="trash" [size]="14" /></button>
+                </span>
+              </div>
             }
-            <button type="button" class="pbtn" style="margin-top:14px" (click)="abrir(-1)">Agregar integrante <app-icon name="plus" [size]="16" /></button>
+            <button type="button" class="pbtn mt-3.5" (click)="abrir(-1)">Agregar integrante <app-icon name="plus" [size]="16" /></button>
           </div>
 
-          <div class="pcard" formGroupName="asesor"><h2>Asesor académico</h2>
-            <div class="pf-2">
-              <div class="pf"><label for="an">Nombre del asesor <span class="req">*</span></label><input id="an" formControlName="nombre">@if (bad('asesor.nombre')) { <span class="err">Obligatorio</span> }</div>
-              <div class="pf"><label for="ac">Correo institucional del asesor <span class="req">*</span></label><input id="ac" type="email" formControlName="correo">@if (bad('asesor.correo')) { <span class="err">Usa el correo &#64;unicauca.edu.co</span> }</div>
+          <div class="pcard" formGroupName="asesor"><h2 class="mb-2 text-2xl">Asesor académico</h2>
+            <div class="grid gap-x-5 sm:grid-cols-2">
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="an">Nombre del asesor <span class="text-brand">*</span></label><input class="pinput" id="an" formControlName="nombre">@if (bad('asesor.nombre')) { <span class="err">Obligatorio</span> }</div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="ac">Correo institucional del asesor <span class="text-brand">*</span></label><input class="pinput" id="ac" type="email" formControlName="correo">@if (bad('asesor.correo')) { <span class="err">Usa el correo &#64;unicauca.edu.co</span> }</div>
             </div></div>
 
-          <div class="pactions"><a class="pbtn" href="/feria/proyecto" (click)="$event.preventDefault(); volver()">Volver al evento</a>
-            <div class="right"><button type="button" class="pbtn" (click)="borrador()">Guardar borrador</button><button type="submit" class="pbtn primary">Continuar al proyecto <app-icon name="arrow-left" [size]="16" class="fl" /></button></div></div>
-          <p class="muted">El borrador permite retomar el registro desde Mis solicitudes. Aún no se ha enviado al comité.</p>
+          <div class="flex flex-col justify-between gap-3 sm:flex-row"><button type="button" class="pbtn" (click)="volver()">Volver al evento</button>
+            <div class="flex flex-col gap-3 sm:flex-row"><button type="button" class="pbtn" (click)="borrador()">Guardar borrador</button><button type="submit" class="pbtn pbtn-primary">Continuar al proyecto <app-icon class="rotate-180" name="arrow-left" [size]="16" /></button></div></div>
+          <p class="text-muted">El borrador permite retomar el registro desde Mis solicitudes. Aún no se ha enviado al comité.</p>
         </div>
-        <div class="pub-side">
+        <div class="flex min-w-0 flex-col gap-6">
           <app-evento-aside modalidad="expositor" />
-          <div class="pcard"><h2>Tu equipo, una solicitud</h2><p class="muted">Registra a todos los integrantes y designa un estudiante responsable. Usaremos su correo institucional para las notificaciones.</p>
+          <div class="pcard"><h2 class="mb-2 text-2xl">Tu equipo, una solicitud</h2><p class="mb-4 text-muted">Registra a todos los integrantes y designa un estudiante responsable. Usaremos su correo institucional para las notificaciones.</p>
             <app-aviso>El envío no implica aprobación ni asignación de un espacio de exhibición.</app-aviso></div>
           <app-orientacion />
         </div>
@@ -101,20 +104,15 @@ export class ProyectoDescubrirComponent { pasos = PASOS; rec = REC; }
       @if (modal() !== null) {
         <app-modal [titulo]="modal()! >= 0 ? 'Editar integrante' : 'Agregar integrante'" (cerrar)="modal.set(null)">
           <form [formGroup]="mform" (ngSubmit)="guardarIntegrante()" novalidate>
-            <div class="pf"><label for="mn">Nombre completo <span class="req">*</span></label><input id="mn" formControlName="nombre"></div>
-            <div class="pf"><label for="mc">Correo institucional <span class="req">*</span></label><input id="mc" type="email" formControlName="correo">@if (mform.controls.correo.touched && mform.controls.correo.invalid) { <span class="err">Usa un correo &#64;unicauca.edu.co</span> }</div>
-            <div class="pf-2"><div class="pf"><label for="mk">Código <span class="req">*</span></label><input id="mk" formControlName="codigo"></div>
-              <div class="pf"><label for="mr">Aporte al proyecto</label><input id="mr" formControlName="rol" placeholder="Hardware y sensores"></div></div>
-            <div class="pactions"><button type="button" class="pbtn" (click)="modal.set(null)">Cancelar</button><button type="submit" class="pbtn primary">Guardar</button></div>
+            <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="mn">Nombre completo <span class="text-brand">*</span></label><input class="pinput" id="mn" formControlName="nombre"></div>
+            <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="mc">Correo institucional <span class="text-brand">*</span></label><input class="pinput" id="mc" type="email" formControlName="correo">@if (mform.controls.correo.touched && mform.controls.correo.invalid) { <span class="err">Usa un correo &#64;unicauca.edu.co</span> }</div>
+            <div class="grid gap-x-5 sm:grid-cols-2"><div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="mk">Código <span class="text-brand">*</span></label><input class="pinput" id="mk" formControlName="codigo"></div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="mr">Aporte al proyecto</label><input class="pinput" id="mr" formControlName="rol" placeholder="Hardware y sensores"></div></div>
+            <div class="flex justify-between gap-3"><button type="button" class="pbtn" (click)="modal.set(null)">Cancelar</button><button type="submit" class="pbtn pbtn-primary">Guardar</button></div>
           </form>
         </app-modal>
       }
     </app-public-layout>`,
-  styles: [`.hd { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .mi { display: grid; grid-template-columns: 1fr 160px 90px; gap: 12px; align-items: center; padding: 14px 0; border-top: 1px solid var(--border);
-      small { display: block; color: var(--muted); } .c2 { font-size: 14px; } .ac { display: flex; gap: 14px; justify-content: flex-end; } .del { color: var(--muted); } }
-    .fl { transform: rotate(180deg); }
-    @media (max-width: 640px) { .mi { grid-template-columns: 1fr auto; .c2 { grid-column: 1; } .ac { grid-row: 1; grid-column: 2; } } }`],
 })
 export class ProyectoEquipoComponent {
   pasos = PASOS; rec = REC;
@@ -177,60 +175,60 @@ export class ProyectoEquipoComponent {
   template: `
     <app-public-layout modo="estudiante" [paso]="3" [pasos]="pasos" [recorrido]="rec" [iniciales]="ini()" titulo="Información del proyecto"
       subtitulo="Describe la propuesta y sus necesidades de exhibición. Revisa los datos antes de enviar la solicitud.">
-      <form class="pub-cols" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
-        <div class="pub-main">
-          <div class="pcard"><h2>Propuesta académica</h2><p class="req-note">* Campos obligatorios</p>
-            <div class="pf"><label for="pn">Nombre del proyecto <span class="req">*</span></label><input id="pn" formControlName="nombre">@if (bad('nombre')) { <span class="err">Obligatorio</span> }</div>
-            <div class="pf-2">
-              <div class="pf"><label for="pc">Categoría <span class="req">*</span></label><select id="pc" formControlName="categoria">@for (c of categorias; track c) { <option>{{ c }}</option> }</select></div>
-              <div class="pf"><label for="pt">Tipo de propuesta <span class="req">*</span></label><select id="pt" formControlName="tipo">@for (c of tipos; track c) { <option>{{ c }}</option> }</select></div>
+      <form class="grid items-start gap-6 lg:grid-cols-[1fr_360px] lg:gap-8" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+        <div class="flex min-w-0 flex-col gap-6">
+          <div class="pcard"><h2 class="mb-2 text-2xl">Propuesta académica</h2><p class="mb-3.5 text-xs text-muted">* Campos obligatorios</p>
+            <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="pn">Nombre del proyecto <span class="text-brand">*</span></label><input class="pinput" id="pn" formControlName="nombre">@if (bad('nombre')) { <span class="err">Obligatorio</span> }</div>
+            <div class="grid gap-x-5 sm:grid-cols-2">
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="pc">Categoría <span class="text-brand">*</span></label><select class="pinput" id="pc" formControlName="categoria">@for (c of categorias; track c) { <option>{{ c }}</option> }</select></div>
+              <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="pt">Tipo de propuesta <span class="text-brand">*</span></label><select class="pinput" id="pt" formControlName="tipo">@for (c of tipos; track c) { <option>{{ c }}</option> }</select></div>
             </div>
-            <div class="pf"><label for="pr">Resumen del proyecto <span class="req">*</span></label><textarea id="pr" rows="4" maxlength="1000" formControlName="resumen"></textarea>
-              <span class="hint">Incluye el problema, la solución y lo que mostrarás en el evento. Máximo 1.000 caracteres.</span>@if (bad('resumen')) { <span class="err">Describe tu proyecto (mínimo 30 caracteres)</span> }</div>
+            <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="pr">Resumen del proyecto <span class="text-brand">*</span></label><textarea class="pinput min-h-20 resize-y" id="pr" rows="4" maxlength="1000" formControlName="resumen"></textarea>
+              <span class="text-[13px] text-muted">Incluye el problema, la solución y lo que mostrarás en el evento. Máximo 1.000 caracteres.</span>@if (bad('resumen')) { <span class="err">Describe tu proyecto (mínimo 30 caracteres)</span> }</div>
           </div>
 
-          <div class="pcard"><h2>Requerimientos para la exhibición</h2><p class="muted">Indica lo necesario para tu demostración. La disponibilidad se verificará durante la revisión.</p>
-            <div class="checks"><label class="chk"><input type="checkbox" formControlName="electrica"> Conexión eléctrica</label><label class="chk"><input type="checkbox" formControlName="internet"> Acceso a internet</label><label class="chk"><input type="checkbox" formControlName="mesa"> Mesa de apoyo</label></div>
-            <div class="pf"><label for="pd">Detalle de equipos y necesidades</label><textarea id="pd" rows="3" formControlName="detalle"></textarea></div>
+          <div class="pcard"><h2 class="mb-2 text-2xl">Requerimientos para la exhibición</h2><p class="mb-4 text-muted">Indica lo necesario para tu demostración. La disponibilidad se verificará durante la revisión.</p>
+            <div class="mb-4.5 flex flex-wrap gap-x-10 gap-y-2.5">
+              <label class="flex cursor-pointer items-center gap-2.5"><input class="size-[18px] accent-navy" type="checkbox" formControlName="electrica"> Conexión eléctrica</label>
+              <label class="flex cursor-pointer items-center gap-2.5"><input class="size-[18px] accent-navy" type="checkbox" formControlName="internet"> Acceso a internet</label>
+              <label class="flex cursor-pointer items-center gap-2.5"><input class="size-[18px] accent-navy" type="checkbox" formControlName="mesa"> Mesa de apoyo</label>
+            </div>
+            <div class="mb-4 flex flex-col gap-1.5"><label class="plabel" for="pd">Detalle de equipos y necesidades</label><textarea class="pinput min-h-20 resize-y" id="pd" rows="3" formControlName="detalle"></textarea></div>
           </div>
 
-          <div class="pcard"><h2>Documento del proyecto</h2><p class="muted">Documento de soporte <span class="req">*</span> · PDF, máximo 10 MB. Incluye la descripción y el aval del asesor.</p>
+          <div class="pcard"><h2 class="mb-2 text-2xl">Documento del proyecto</h2><p class="mb-4 text-muted">Documento de soporte <span class="text-brand">*</span> · PDF, máximo 10 MB. Incluye la descripción y el aval del asesor.</p>
             @if (archivo(); as a) {
-              <div class="file"><app-icon name="file" [size]="22" /><div><strong>{{ a.nombre }}</strong><small>PDF · {{ mb(a.tamano) }} MB · Archivo cargado</small></div>
-                <button type="button" class="pbtn" (click)="fi.click()">Reemplazar</button><button type="button" class="tr" (click)="archivo.set(null)" aria-label="Quitar archivo"><app-icon name="trash" /></button></div>
+              <div class="grid grid-cols-[24px_1fr_auto] items-center gap-3 rounded-md border border-line bg-surface px-4 py-3.5 sm:grid-cols-[24px_1fr_auto_auto]">
+                <app-icon name="file" [size]="22" /><div><strong>{{ a.nombre }}</strong><small class="block text-muted">PDF · {{ mb(a.tamano) }} MB · Archivo cargado</small></div>
+                <button type="button" class="pbtn max-sm:col-span-full" (click)="fi.click()">Reemplazar</button>
+                <button type="button" class="border-0 bg-transparent text-muted max-sm:col-start-3 max-sm:row-start-1" (click)="archivo.set(null)" aria-label="Quitar archivo"><app-icon name="trash" /></button>
+              </div>
             } @else {
-              <button type="button" class="drop" (click)="fi.click()"><app-icon name="file" [size]="22" /> Seleccionar archivo PDF</button>
+              <button type="button" class="flex w-full items-center justify-center gap-2.5 rounded-md border-2 border-dashed border-line bg-surface p-6 font-semibold text-info" (click)="fi.click()"><app-icon name="file" [size]="22" /> Seleccionar archivo PDF</button>
             }
             <input #fi type="file" accept="application/pdf" hidden (change)="elegir($any($event.target))">
             @if (errArchivo()) { <span class="err">{{ errArchivo() }}</span> }
           </div>
 
-          <div class="pcard"><label class="chk top"><input type="checkbox" formControlName="autoriza">
-            <span><strong>Autorizo el tratamiento de mis datos personales <span class="req">*</span></strong>
-              <small>Autorizo a la Universidad del Cauca a tratar los datos de esta solicitud para gestionar la inscripción, la evaluación y las comunicaciones del evento, conforme a su política de protección de datos personales.</small>
+          <div class="pcard"><label class="flex cursor-pointer items-start gap-2.5"><input class="mt-0.5 size-[18px] accent-navy" type="checkbox" formControlName="autoriza">
+            <span><strong>Autorizo el tratamiento de mis datos personales <span class="text-brand">*</span></strong>
+              <small class="mt-1 mb-2 block leading-normal text-muted">Autorizo a la Universidad del Cauca a tratar los datos de esta solicitud para gestionar la inscripción, la evaluación y las comunicaciones del evento, conforme a su política de protección de datos personales.</small>
               <a class="plink" href="https://www.unicauca.edu.co" target="_blank" rel="noopener">Consultar política de protección de datos</a></span></label>
             @if (bad('autoriza')) { <span class="err">Debes autorizar el tratamiento de datos para continuar</span> }
           </div>
 
           <app-aviso>Al enviar, la solicitud quedará En revisión. El comité comunicará el resultado a tu correo institucional.</app-aviso>
-          <div class="pactions"><button type="button" class="pbtn" (click)="volver()">Volver al equipo</button>
-            <div class="right"><button type="button" class="pbtn" (click)="borrador()">Guardar borrador</button><button type="submit" class="pbtn primary">Enviar solicitud <app-icon name="arrow-left" [size]="16" class="fl" /></button></div></div>
+          <div class="flex flex-col justify-between gap-3 sm:flex-row"><button type="button" class="pbtn" (click)="volver()">Volver al equipo</button>
+            <div class="flex flex-col gap-3 sm:flex-row"><button type="button" class="pbtn" (click)="borrador()">Guardar borrador</button><button type="submit" class="pbtn pbtn-primary">Enviar solicitud <app-icon class="rotate-180" name="arrow-left" [size]="16" /></button></div></div>
         </div>
-        <div class="pub-side">
+        <div class="flex min-w-0 flex-col gap-6">
           <app-evento-aside modalidad="expositor" />
-          <div class="pcard"><h2>Antes de enviar</h2><p class="muted">Revisa el resumen, los integrantes y el documento adjunto. El comité evaluará la pertinencia académica y las necesidades de exhibición.</p>
+          <div class="pcard"><h2 class="mb-2 text-2xl">Antes de enviar</h2><p class="mb-4 text-muted">Revisa el resumen, los integrantes y el documento adjunto. El comité evaluará la pertinencia académica y las necesidades de exhibición.</p>
             <app-aviso>El envío no implica aprobación ni asignación de un espacio de exhibición.</app-aviso></div>
           <app-orientacion />
         </div>
       </form>
     </app-public-layout>`,
-  styles: [`.checks { display: flex; gap: 40px; flex-wrap: wrap; margin-bottom: 18px; }
-    .file { display: grid; grid-template-columns: 24px 1fr auto auto; gap: 12px; align-items: center; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px;
-      small { display: block; color: var(--muted); } .tr { background: none; border: 0; color: var(--muted); } }
-    .drop { width: 100%; border: 2px dashed var(--border); background: var(--bg); border-radius: 6px; padding: 24px; display: flex; gap: 10px; justify-content: center; align-items: center; color: #1e4a96; font-weight: 600; }
-    .top { align-items: flex-start; small { display: block; color: var(--muted); margin: 4px 0 8px; line-height: 1.5; } input { margin-top: 3px; } }
-    .fl { transform: rotate(180deg); }
-    @media (max-width: 640px) { .file { grid-template-columns: 24px 1fr auto; .pbtn { grid-column: 1 / -1; } } }`],
 })
 export class ProyectoInfoComponent {
   pasos = PASOS; rec = REC;
@@ -285,40 +283,37 @@ export class ProyectoInfoComponent {
   template: `
     <app-public-layout modo="estudiante" [paso]="4" [pasos]="pasos" [recorrido]="rec" [iniciales]="ini()" titulo="Solicitud enviada"
       subtitulo="Conserva tu referencia y consulta las novedades de la evaluación desde Mis solicitudes.">
-      <div class="pcard recibo" style="margin-bottom:28px">
-        <div class="l"><span class="ico"><app-icon name="send" [size]="32" /></span><div><h2>Hemos recibido tu propuesta, {{ nombre() }}</h2><p>Tu proyecto fue enviado al comité del evento. La recepción de la solicitud no equivale a la aprobación de tu participación.</p></div></div>
-        <div class="ref"><span class="kv-l">REFERENCIA DE SOLICITUD</span><strong>{{ r().referencia }}</strong><span class="chip">En revisión</span><small>Enviada el {{ fecha() }}</small></div>
+      <div class="pcard mb-7 grid items-center gap-5 lg:grid-cols-[1fr_300px] lg:gap-8">
+        <div class="flex flex-col items-start gap-3.5 sm:flex-row sm:items-center sm:gap-6"><span class="grid size-[72px] shrink-0 place-items-center rounded-full bg-navy-soft text-info"><app-icon name="send" [size]="32" /></span><div><h2 class="text-2xl">Hemos recibido tu propuesta, {{ nombre() }}</h2><p class="mt-1 leading-relaxed text-muted">Tu proyecto fue enviado al comité del evento. La recepción de la solicitud no equivale a la aprobación de tu participación.</p></div></div>
+        <div><span class="kvl">REFERENCIA DE SOLICITUD</span><strong class="mb-2.5 block text-2xl tracking-wide">{{ r().referencia }}</strong><span class="chip">En revisión</span><small class="mt-2.5 block text-muted">Enviada el {{ fecha() }}</small></div>
       </div>
-      <div class="pub-cols">
-        <div class="pub-main">
-          <div class="pcard"><h2>Resumen de tu solicitud</h2><p class="cat">POSTULACIÓN COMO ESTUDIANTE EXPOSITOR</p><h3 class="pn">{{ r().proyecto.nombre }}</h3>
-            <div class="kv-grid"><div><span class="kv-l">Categoría</span><p class="kv-v">{{ r().proyecto.categoria }}</p></div><div><span class="kv-l">Tipo de propuesta</span><p class="kv-v">{{ r().proyecto.tipo }}</p></div></div><hr class="sep">
-            <span class="kv-l">Evento</span><p class="kv-v">Feria de Proyectos de Grado FIET 2026 · 15 de octubre de 2026<br>Centro de Convenciones Casa de la Moneda, Popayán</p>
-            <div class="kv-grid"><div><span class="kv-l">Estudiante responsable</span><p class="kv-v">{{ r().responsable.nombre }}<br>{{ r().responsable.correo }}<br>{{ r().responsable.codigo }} · {{ r().responsable.programa }} · {{ r().responsable.semestre }}</p></div>
-              <div><span class="kv-l">Asesor académico</span><p class="kv-v">{{ r().asesor.nombre }}<br>{{ r().asesor.correo }}</p></div></div>
-            <span class="kv-l">Equipo · {{ r().integrantes.length + 1 }} integrante{{ r().integrantes.length ? 's' : '' }}</span><p class="kv-v">{{ equipo() }}</p><hr class="sep">
-            <span class="kv-l">Requerimientos solicitados</span><p class="kv-v">{{ reqs() }}<br>{{ r().proyecto.detalle }}</p>
-            <div class="arch"><app-icon name="file" /> {{ r().proyecto.archivo?.nombre }} · {{ mb() }} MB</div>
-            <small class="muted">Autorización de tratamiento de datos personales registrada.</small></div>
+      <div class="grid items-start gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+        <div class="flex min-w-0 flex-col gap-6">
+          <div class="pcard"><h2 class="mb-2 text-2xl">Resumen de tu solicitud</h2><p class="mt-2 mb-4.5 text-xs font-semibold text-info">POSTULACIÓN COMO ESTUDIANTE EXPOSITOR</p><h3 class="mb-5 text-[26px]">{{ r().proyecto.nombre }}</h3>
+            <div class="grid gap-x-8 sm:grid-cols-2"><div><span class="kvl">Categoría</span><p class="kvv">{{ r().proyecto.categoria }}</p></div><div><span class="kvl">Tipo de propuesta</span><p class="kvv">{{ r().proyecto.tipo }}</p></div></div><hr class="hr">
+            <span class="kvl">Evento</span><p class="kvv">Feria de Proyectos de Grado FIET 2026 · 15 de octubre de 2026<br>Centro de Convenciones Casa de la Moneda, Popayán</p>
+            <div class="grid gap-x-8 sm:grid-cols-2"><div><span class="kvl">Estudiante responsable</span><p class="kvv">{{ r().responsable.nombre }}<br>{{ r().responsable.correo }}<br>{{ r().responsable.codigo }} · {{ r().responsable.programa }} · {{ r().responsable.semestre }}</p></div>
+              <div><span class="kvl">Asesor académico</span><p class="kvv">{{ r().asesor.nombre }}<br>{{ r().asesor.correo }}</p></div></div>
+            <span class="kvl">Equipo · {{ r().integrantes.length + 1 }} integrante{{ r().integrantes.length ? 's' : '' }}</span><p class="kvv">{{ equipo() }}</p><hr class="hr">
+            <span class="kvl">Requerimientos solicitados</span><p class="kvv">{{ reqs() }}<br>{{ r().proyecto.detalle }}</p>
+            <div class="mb-3.5 flex items-center gap-2.5 rounded-md bg-surface px-4 py-3.5 text-info"><app-icon name="file" /> {{ r().proyecto.archivo?.nombre }} · {{ mb() }} MB</div>
+            <small class="text-muted">Autorización de tratamiento de datos personales registrada.</small></div>
         </div>
-        <div class="pub-side">
-          <div class="pcard"><h2>¿Qué sigue ahora?</h2><ol class="steps-list">
-            <li><span class="n">1</span><div><b>Revisión académica y logística</b><p>El comité revisará el proyecto, el aval del asesor y los requerimientos para la exhibición.</p></div></li>
-            <li><span class="n">2</span><div><b>Notificación del resultado</b><p>Recibirás la decisión y cualquier solicitud de ajustes en {{ r().responsable.correo }}. También podrás consultarla en Mis solicitudes.</p></div></li>
-            <li><span class="n">3</span><div><b>Atención a las indicaciones</b><p>Si se solicitan ajustes, consulta las observaciones y el plazo indicado. Si se aprueba, recibirás las instrucciones de participación.</p></div></li></ol></div>
+        <div class="flex min-w-0 flex-col gap-6">
+          <div class="pcard"><h2 class="mb-2 text-2xl">¿Qué sigue ahora?</h2><ol class="mt-3.5 flex list-none flex-col gap-5 p-0">
+            <li class="grid grid-cols-[28px_1fr] gap-3"><span class="grid size-7 place-items-center rounded-full bg-navy-soft text-xs font-bold">1</span><div><b class="mb-1 block">Revisión académica y logística</b><p class="m-0 leading-relaxed text-muted">El comité revisará el proyecto, el aval del asesor y los requerimientos para la exhibición.</p></div></li>
+            <li class="grid grid-cols-[28px_1fr] gap-3"><span class="grid size-7 place-items-center rounded-full bg-navy-soft text-xs font-bold">2</span><div><b class="mb-1 block">Notificación del resultado</b><p class="m-0 leading-relaxed text-muted">Recibirás la decisión y cualquier solicitud de ajustes en {{ r().responsable.correo }}. También podrás consultarla en Mis solicitudes.</p></div></li>
+            <li class="grid grid-cols-[28px_1fr] gap-3"><span class="grid size-7 place-items-center rounded-full bg-navy-soft text-xs font-bold">3</span><div><b class="mb-1 block">Atención a las indicaciones</b><p class="m-0 leading-relaxed text-muted">Si se solicitan ajustes, consulta las observaciones y el plazo indicado. Si se aprueba, recibirás las instrucciones de participación.</p></div></li></ol></div>
           <app-aviso><b>Importante</b><br>El comprobante confirma el envío, no la aprobación, la asignación de un stand ni la emisión de un certificado.</app-aviso>
-          <p class="muted" style="padding:0 4px">Para consultas, escribe a bhurtado&#64;unicauca.edu.co e incluye la referencia {{ r().referencia }}.</p>
+          <p class="px-1 text-muted">Para consultas, escribe a bhurtado&#64;unicauca.edu.co e incluye la referencia {{ r().referencia }}.</p>
         </div>
       </div>
-      <div class="pactions" style="justify-content:flex-start;margin-top:28px">
-        <button class="pbtn primary" (click)="pronto()">Ir a Mis solicitudes <app-icon name="arrow-left" [size]="16" class="fl" /></button>
+      <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+        <button class="pbtn pbtn-primary" (click)="pronto()">Ir a Mis solicitudes <app-icon class="rotate-180" name="arrow-left" [size]="16" /></button>
         <button class="pbtn" (click)="comprobante()">Descargar comprobante <app-icon name="download" [size]="16" /></button>
         <a class="pbtn" routerLink="/feria/proyecto" (click)="reg.reiniciarProyecto()">Volver al evento</a>
       </div>
     </app-public-layout>`,
-  styles: [`.cat { color: #1e4a96; font-size: 12px; font-weight: 600; margin: 8px 0 18px; } .pn { font-size: 26px; margin-bottom: 20px; }
-    .arch { display: flex; gap: 10px; align-items: center; background: var(--bg); border-radius: 6px; padding: 14px 16px; margin-bottom: 14px; color: #1e4a96; }
-    .fl { transform: rotate(180deg); }`],
 })
 export class ProyectoEnviadaComponent {
   pasos = PASOS; rec = REC;

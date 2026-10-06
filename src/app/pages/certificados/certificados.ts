@@ -10,22 +10,23 @@ import { StatusBadgeComponent } from '../../shared/status-badge';
   selector: 'app-certificados',
   imports: [IconComponent, StatusBadgeComponent, CrestComponent],
   template: `
-    <div class="layout">
-      <section class="list">
-        <h3>Inscritos Aptos para Certificación</h3>
-        <div class="card bar">
-          <label class="search"><app-icon name="search" [size]="16" />
-            <input placeholder="Buscar participante..." (input)="q.set($any($event.target).value)"></label>
-          <button class="btn danger" (click)="emitir()">Emitir Seleccionados{{ marcados().size ? ' (' + marcados().size + ')' : '' }}</button>
+    <div class="grid items-start gap-6 lg:grid-cols-2">
+      <section>
+        <h3 class="mb-3.5 hidden text-[22px] lg:block">Inscritos Aptos para Certificación</h3>
+        <div class="card mb-3.5 flex flex-col gap-3 p-3 sm:flex-row">
+          <label class="flex flex-1 items-center gap-2 rounded-lg border border-line bg-surface px-3"><app-icon name="search" [size]="16" />
+            <input class="w-full border-0 bg-transparent py-2.5 outline-none" placeholder="Buscar participante..." (input)="q.set($any($event.target).value)"></label>
+          <button class="btn btn-danger" (click)="emitir()">Emitir Seleccionados{{ marcados().size ? ' (' + marcados().size + ')' : '' }}</button>
         </div>
         @for (c of filtrados(); track c.id) {
-          <div class="card item" [class.sel]="c.id === seleccionado().id" (click)="sel.set(c.id)" tabindex="0" (keydown.enter)="sel.set(c.id)">
+          <div class="card mb-3 flex cursor-pointer items-center gap-3.5 px-4 py-3.5" [class]="c.id === seleccionado().id ? 'border-2 border-navy' : ''"
+               (click)="sel.set(c.id)" tabindex="0" (keydown.enter)="sel.set(c.id)">
             @if (c.estado === 'Aprobado' && !c.emitido) {
               <input type="checkbox" [checked]="marcados().has(c.id)" (click)="$event.stopPropagation(); marcar(c.id)" aria-label="Seleccionar para emitir">
             } @else { <app-icon name="award" [size]="22" /> }
-            <div class="txt">
-              <strong>{{ c.participante }}</strong><span>{{ c.evento }}</span>
-              <small>{{ nota(c) }}</small>
+            <div class="min-w-0 flex-1">
+              <strong class="block">{{ c.participante }}</strong><span class="block text-muted">{{ c.evento }}</span>
+              <small class="block text-xs text-brand">{{ nota(c) }}</small>
             </div>
             <app-status-badge [estado]="c.estado" />
             <app-icon name="chevron-right" />
@@ -33,38 +34,24 @@ import { StatusBadgeComponent } from '../../shared/status-badge';
         }
       </section>
 
-      <section class="card prev">
-        <h3>Vista Previa del Certificado</h3>
-        <div class="cert">
-          <div class="head"><app-crest [size]="44" /><div><b>Universidad del Cauca</b><span>FACULTAD DE INGENIERÍA ELECTRÓNICA Y TELECOMUNICACIONES</span></div></div>
-          <p class="o">Otorga el presente certificado a:</p>
-          <p class="n">{{ seleccionado().participante.toUpperCase() }}</p>
-          <p class="o">Por su participación como {{ seleccionado().tipo }} en el evento académico:</p>
-          <p class="e">{{ seleccionado().evento }}{{ seleccionado().evento.includes('2026') ? '' : ' 2026' }}</p>
-          <div class="firmas"><span>Decano FIET</span><span>Coordinador General</span></div>
+      <section class="card flex flex-col gap-2.5 p-6">
+        <h3 class="mb-2 text-[22px]">Vista Previa del Certificado</h3>
+        <div class="mb-2 border-4 border-navy bg-[#fffdf8] px-4.5 py-7 text-center font-serif lg:px-8">
+          <div class="mb-5.5 flex items-center gap-3.5 text-left">
+            <app-crest [size]="44" />
+            <div><b class="block text-lg">Universidad del Cauca</b><span class="font-sans text-[10px] text-muted">FACULTAD DE INGENIERÍA ELECTRÓNICA Y TELECOMUNICACIONES</span></div>
+          </div>
+          <p class="my-1.5 text-xs text-muted">Otorga el presente certificado a:</p>
+          <p class="my-2 text-[26px] font-bold">{{ seleccionado().participante.toUpperCase() }}</p>
+          <p class="my-1.5 text-xs text-muted">Por su participación como {{ seleccionado().tipo }} en el evento académico:</p>
+          <p class="mt-1.5 mb-7 text-lg font-bold text-brand">{{ seleccionado().evento }}{{ seleccionado().evento.includes('2026') ? '' : ' 2026' }}</p>
+          <div class="flex justify-between font-sans text-[10px] text-muted"><span class="min-w-[130px] border-t border-navy pt-1">Decano FIET</span><span class="min-w-[130px] border-t border-navy pt-1">Coordinador General</span></div>
         </div>
-        <button class="btn primary block" (click)="descargar(seleccionado())"><app-icon name="download" [size]="16" /> Descargar PDF Firmado</button>
-        <button class="btn block" (click)="enviar(seleccionado())"><app-icon name="send" [size]="16" /> Enviar por Correo Institucional</button>
+        <button class="btn btn-primary w-full" (click)="descargar(seleccionado())"><app-icon name="download" [size]="16" /> Descargar PDF Firmado</button>
+        <button class="btn w-full" (click)="enviar(seleccionado())"><app-icon name="send" [size]="16" /> Enviar por Correo Institucional</button>
       </section>
     </div>
   `,
-  styles: [`
-    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-    h3 { font-size: 22px; margin-bottom: 14px; }
-    .bar { display: flex; gap: 12px; padding: 12px; margin-bottom: 14px; }
-    .search { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px;
-      input { border: 0; background: none; outline: none; padding: 10px 0; width: 100%; } }
-    .item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 12px; cursor: pointer;
-      &.sel { border: 2px solid var(--navy); }
-      .txt { flex: 1; min-width: 0; strong, span, small { display: block; } span { color: var(--muted); } small { color: var(--red); font-size: 12px; } } }
-    .prev { padding: 24px; display: flex; flex-direction: column; gap: 10px; h3 { margin-bottom: 8px; } }
-    .cert { border: 4px solid var(--navy); background: #fffdf8; padding: 28px 32px; margin-bottom: 8px; font-family: var(--serif); text-align: center;
-      .head { display: flex; gap: 14px; align-items: center; text-align: left; margin-bottom: 22px; b { display: block; font-size: 18px; } span { font: 10px var(--sans); color: var(--muted); } }
-      .o { font-size: 12px; color: var(--muted); margin: 6px 0; } .n { font-size: 26px; font-weight: 700; margin: 8px 0; }
-      .e { color: var(--red); font-size: 18px; font-weight: 700; margin: 6px 0 28px; }
-      .firmas { display: flex; justify-content: space-between; span { border-top: 1px solid var(--navy); padding-top: 4px; min-width: 130px; font: 10px var(--sans); color: var(--muted); } } }
-    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .bar { flex-direction: column; } .cert { padding: 18px; } .list h3 { display: none; } }
-  `],
 })
 export class CertificadosComponent {
   private data = inject(DataService);

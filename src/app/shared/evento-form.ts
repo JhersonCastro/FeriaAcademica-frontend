@@ -9,36 +9,27 @@ import { ModalComponent } from './modal';
   template: `
     <app-modal [titulo]="evento() ? 'Editar evento' : 'Crear nuevo evento'" (cerrar)="cerrar.emit()">
       <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
-        <div class="field"><label for="t">Título</label><input id="t" formControlName="titulo">
-          @if (inv('titulo')) { <span class="error">El título es obligatorio</span> }</div>
-        <div class="two">
-          <div class="field"><label for="c">Categoría</label>
-            <select id="c" formControlName="categoria">@for (c of categorias; track c) { <option>{{ c }}</option> }</select></div>
-          <div class="field"><label for="r">Responsable</label><input id="r" formControlName="responsable">
-            @if (inv('responsable')) { <span class="error">Obligatorio</span> }</div>
+        <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="t">Título</label><input class="input" id="t" formControlName="titulo">
+          @if (inv('titulo')) { <span class="err">El título es obligatorio</span> }</div>
+        <div class="grid gap-x-3.5 sm:grid-cols-2">
+          <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="c">Categoría</label>
+            <select class="input" id="c" formControlName="categoria">@for (c of categorias; track c) { <option>{{ c }}</option> }</select></div>
+          <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="r">Responsable</label><input class="input" id="r" formControlName="responsable">
+            @if (inv('responsable')) { <span class="err">Obligatorio</span> }</div>
+          <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="f">Fecha</label><input class="input" id="f" type="date" formControlName="fecha">
+            @if (inv('fecha')) { <span class="err">Obligatoria</span> }</div>
+          <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="h">Horario</label><input class="input" id="h" formControlName="hora" placeholder="08:00 AM - 05:00 PM"></div>
+          <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="l">Lugar</label><input class="input" id="l" formControlName="lugar"></div>
+          <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="cu">Cupos</label><input class="input" id="cu" type="number" min="1" formControlName="cupos">
+            @if (inv('cupos')) { <span class="err">Mínimo 1</span> }</div>
         </div>
-        <div class="two">
-          <div class="field"><label for="f">Fecha</label><input id="f" type="date" formControlName="fecha">
-            @if (inv('fecha')) { <span class="error">Obligatoria</span> }</div>
-          <div class="field"><label for="h">Horario</label><input id="h" formControlName="hora" placeholder="08:00 AM - 05:00 PM"></div>
-        </div>
-        <div class="two">
-          <div class="field"><label for="l">Lugar</label><input id="l" formControlName="lugar"></div>
-          <div class="field"><label for="cu">Cupos</label><input id="cu" type="number" min="1" formControlName="cupos">
-            @if (inv('cupos')) { <span class="error">Mínimo 1</span> }</div>
-        </div>
-        <div class="field"><label for="d">Descripción</label><textarea id="d" rows="3" formControlName="descripcion"></textarea></div>
-        <div class="actions">
+        <div class="mb-4 flex flex-col gap-1.5"><label class="lbl" for="d">Descripción</label><textarea class="input" id="d" rows="3" formControlName="descripcion"></textarea></div>
+        <div class="flex justify-end gap-2.5">
           <button type="button" class="btn" (click)="cerrar.emit()">Cancelar</button>
-          <button type="submit" class="btn primary">{{ evento() ? 'Guardar cambios' : 'Crear evento' }}</button>
+          <button type="submit" class="btn btn-primary">{{ evento() ? 'Guardar cambios' : 'Crear evento' }}</button>
         </div>
       </form>
     </app-modal>`,
-  styles: [`
-    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .actions { display: flex; justify-content: flex-end; gap: 10px; }
-    @media (max-width: 560px) { .two { grid-template-columns: 1fr; } }
-  `],
 })
 export class EventoFormComponent {
   evento = input<Evento>();

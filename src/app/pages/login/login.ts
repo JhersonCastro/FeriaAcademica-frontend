@@ -9,7 +9,6 @@ import { IconComponent } from '../../shared/icon';
   selector: 'app-login',
   imports: [ReactiveFormsModule, CrestComponent, IconComponent],
   templateUrl: './login.html',
-  styleUrl: './login.scss',
 })
 export class LoginComponent {
   private auth = inject(AuthService);

@@ -1,20 +1,18 @@
 import { Component, computed, input } from '@angular/core';
 import { EstadoRevision } from '../core/models';
 
+const CLASES: Record<EstadoRevision, string> = {
+  'Aprobado': 'bg-ok-soft text-ok',
+  'En Revisión': 'bg-info-soft text-info',
+  'Aprobado con Cambios': 'bg-warn-soft text-warn',
+  'Rechazado': 'bg-brand-soft text-brand',
+};
+
 @Component({
   selector: 'app-status-badge',
-  template: `<span class="badge" [class]="clase()">{{ estado() }}</span>`,
-  styles: [`
-    .badge { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-    .aprobado { background: var(--green-soft); color: var(--green); }
-    .revision { background: var(--blue-soft); color: var(--blue); }
-    .cambios { background: var(--amber-soft); color: var(--amber); }
-    .rechazado { background: var(--red-soft); color: var(--red); }
-  `],
+  template: `<span class="inline-block rounded-md px-3 py-1 text-xs font-semibold whitespace-nowrap" [class]="clase()">{{ estado() }}</span>`,
 })
 export class StatusBadgeComponent {
   estado = input.required<EstadoRevision>();
-  clase = computed(() => ({
-    'Aprobado': 'aprobado', 'En Revisión': 'revision', 'Aprobado con Cambios': 'cambios', 'Rechazado': 'rechazado',
-  }[this.estado()]));
+  clase = computed(() => CLASES[this.estado()]);
 }

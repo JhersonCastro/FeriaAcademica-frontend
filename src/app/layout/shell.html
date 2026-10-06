@@ -1,41 +1,50 @@
-<div class="layout">
-  @if (menuAbierto()) { <div class="overlay" (click)="menuAbierto.set(false)"></div> }
+<div class="flex min-h-screen">
+  @if (menuAbierto()) { <div class="fixed inset-0 z-40 bg-navy/50 lg:hidden" (click)="menuAbierto.set(false)"></div> }
 
-  <aside class="sidebar" [class.open]="menuAbierto()">
-    <div class="brand">
+  <aside class="fixed inset-y-0 left-0 z-50 flex w-[250px] flex-col bg-navy px-4 py-6 text-white transition-transform lg:translate-x-0"
+         [class]="menuAbierto() ? 'translate-x-0' : '-translate-x-full'">
+    <div class="mb-9 flex items-center gap-3 px-1">
       <app-crest [size]="46" />
-      <div><strong>FIET</strong><span>UNICAUCA</span></div>
+      <div><strong class="block font-serif text-xl">FIET</strong><span class="text-xs tracking-wide opacity-80">UNICAUCA</span></div>
     </div>
-    <nav>
+    <nav class="flex flex-col gap-1.5">
       @for (n of nav; track n.ruta) {
-        <a [routerLink]="n.ruta" routerLinkActive="active"><app-icon [name]="n.icono" /> {{ n.etiqueta }}</a>
+        <a [routerLink]="n.ruta" routerLinkActive #rla="routerLinkActive" class="flex items-center gap-3 rounded-lg px-3.5 py-3 font-medium"
+           [class]="rla.isActive ? 'bg-navy-soft font-semibold text-navy' : 'text-white hover:bg-white/10'">
+          <app-icon [name]="n.icono" /> {{ n.etiqueta }}
+        </a>
       }
     </nav>
-    <div class="foot">
-      <p>Feria Empresarial 2026</p>
-      <small>Facultad de Ingeniería Electrónica y Telecomunicaciones</small>
-      <button class="logout" (click)="auth.logout()"><app-icon name="logout" [size]="16" /> Cerrar sesión</button>
+    <div class="mt-7 px-1 text-[#b5c1d8]">
+      <p class="mb-1 text-[13px]">Feria Empresarial 2026</p>
+      <small class="block text-[11px] leading-snug">Facultad de Ingeniería Electrónica y Telecomunicaciones</small>
+      <button class="mt-5 inline-flex items-center gap-2 rounded-lg border border-white/25 bg-transparent px-3 py-2 text-[13px] text-white" (click)="auth.logout()">
+        <app-icon name="logout" [size]="16" /> Cerrar sesión
+      </button>
     </div>
   </aside>
 
-  <div class="main">
-    <header class="topbar">
-      <button class="burger" (click)="menuAbierto.set(true)" aria-label="Abrir menú"><app-icon name="menu" [size]="24" /></button>
-      <div class="title">
-        <h1 class="desktop-title"><span class="dot"></span>{{ titulo() }}</h1>
-        <div class="mobile-title"><strong>FIET - Universidad del Cauca</strong><small>{{ subtitulo() }}</small></div>
+  <div class="flex min-w-0 flex-1 flex-col lg:ml-[250px]">
+    <header class="sticky top-0 z-20 flex h-16 items-center gap-3 border-b border-line bg-white px-4 lg:h-[66px] lg:justify-between lg:px-8">
+      <button class="border-0 bg-transparent p-0 lg:hidden" (click)="menuAbierto.set(true)" aria-label="Abrir menú"><app-icon name="menu" [size]="24" /></button>
+      <div class="min-w-0 flex-1 lg:flex-none">
+        <h1 class="hidden items-center gap-3 text-[26px] lg:flex"><span class="size-3 rotate-45 rounded-xs bg-brand"></span>{{ titulo() }}</h1>
+        <div class="lg:hidden"><strong class="block text-base">FIET - Universidad del Cauca</strong><small class="text-xs text-muted">{{ subtitulo() }}</small></div>
       </div>
-      <div class="user">
-        <div class="who"><strong>{{ auth.usuario()?.nombre }}</strong><small>{{ auth.usuario()?.correo }}</small></div>
-        <div class="avatar">{{ auth.usuario()?.iniciales }}</div>
+      <div class="flex items-center gap-3">
+        <div class="hidden text-right lg:block"><strong class="block text-sm">{{ auth.usuario()?.nombre }}</strong><small class="text-xs text-muted">{{ auth.usuario()?.correo }}</small></div>
+        <div class="grid size-[38px] place-items-center rounded-full bg-navy-soft font-bold">{{ auth.usuario()?.iniciales }}</div>
       </div>
     </header>
 
-    <main class="content"><router-outlet /></main>
+    <main class="flex-1 p-4 pb-24 lg:p-8"><router-outlet /></main>
 
-    <nav class="bottom-nav">
+    <nav class="fixed inset-x-0 bottom-0 z-30 flex bg-navy lg:hidden">
       @for (n of nav; track n.ruta) {
-        <a [routerLink]="n.ruta" routerLinkActive="active"><app-icon [name]="n.icono" [size]="22" /><span>{{ n.corta }}</span></a>
+        <a [routerLink]="n.ruta" routerLinkActive #rlb="routerLinkActive" class="flex flex-1 flex-col items-center gap-1 py-2.5 text-xs"
+           [class]="rlb.isActive ? 'font-bold text-white' : 'text-[#9fb0cd]'">
+          <app-icon [name]="n.icono" [size]="22" /><span>{{ n.corta }}</span>
+        </a>
       }
     </nav>
   </div>

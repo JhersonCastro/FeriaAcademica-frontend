@@ -10,86 +10,68 @@ import { StatusBadgeComponent } from '../../shared/status-badge';
   selector: 'app-inscripciones',
   imports: [IconComponent, StatusBadgeComponent, ModalComponent],
   template: `
-    <div class="card toolbar">
-      <select (change)="eventoId.set(+$any($event.target).value)" aria-label="Evento">
+    <div class="card mb-6 flex flex-wrap items-center gap-3 p-4 max-lg:border-0 max-lg:bg-transparent max-lg:p-0">
+      <select class="w-full rounded-lg border border-line bg-white px-3 py-2.5 sm:w-auto" (change)="eventoId.set(+$any($event.target).value)" aria-label="Evento">
         @for (e of data.eventos(); track e.id) { <option [value]="e.id" [selected]="e.id === eventoId()">Evento: {{ e.titulo.replace(' de Grado FIET', '') }}</option> }
       </select>
-      <select (change)="est.set($any($event.target).value)" aria-label="Estado">
+      <select class="rounded-lg border border-line bg-white px-3 py-2.5" (change)="est.set($any($event.target).value)" aria-label="Estado">
         <option value="">Estado: Todos</option>@for (s of estados; track s) { <option>{{ s }}</option> }
       </select>
-      <span class="total">Total Registros: <b>{{ totalRegistros() }}</b></span>
+      <span class="ml-auto text-muted">Total Registros: <b class="text-navy">{{ totalRegistros() }}</b></span>
     </div>
 
-    <div class="table card">
-      <div class="row head"><span>Inscrito / Empresa</span><span>Cédula/NIT</span><span>Tipo de Participante</span><span>Estado de Revisión</span><span class="r">Acciones</span></div>
+    <div class="card hidden overflow-hidden p-0 lg:block">
+      <div class="grid grid-cols-[2.2fr_1.3fr_1.3fr_1.6fr_1fr] items-center gap-3 px-4.5 pt-4.5 pb-3.5 text-[13px] font-bold">
+        <span>Inscrito / Empresa</span><span>Cédula/NIT</span><span>Tipo de Participante</span><span>Estado de Revisión</span><span class="text-right">Acciones</span>
+      </div>
       @for (i of lista(); track i.id) {
-        <div class="row">
-          <span><strong>{{ i.nombre }}</strong><small>{{ i.detalle }}</small></span>
+        <div class="grid grid-cols-[2.2fr_1.3fr_1.3fr_1.6fr_1fr] items-center gap-3 border-t border-line px-4.5 py-3.5">
+          <span><strong class="block">{{ i.nombre }}</strong><small class="text-xs text-muted">{{ i.detalle }}</small></span>
           <span>{{ i.documento }}</span><span>{{ i.tipo }}</span>
           <span><app-status-badge [estado]="i.estado" /></span>
-          <span class="r acts">
-            <button class="ib view" (click)="ver.set(i)" aria-label="Ver"><app-icon name="eye" [size]="16" /></button>
-            <button class="ib ok" (click)="cambiar(i, 'Aprobado')" aria-label="Aprobar"><app-icon name="check" [size]="16" /></button>
-            <button class="ib no" (click)="cambiar(i, 'Rechazado')" aria-label="Rechazar"><app-icon name="x" [size]="16" /></button>
+          <span class="flex justify-end gap-2">
+            <button class="grid h-7 w-8 place-items-center rounded-md border-0 bg-navy-soft text-navy" (click)="ver.set(i)" aria-label="Ver"><app-icon name="eye" [size]="16" /></button>
+            <button class="grid h-7 w-8 place-items-center rounded-md border-0 bg-ok-soft text-ok" (click)="cambiar(i, 'Aprobado')" aria-label="Aprobar"><app-icon name="check" [size]="16" /></button>
+            <button class="grid h-7 w-8 place-items-center rounded-md border-0 bg-brand-soft text-brand" (click)="cambiar(i, 'Rechazado')" aria-label="Rechazar"><app-icon name="x" [size]="16" /></button>
           </span>
         </div>
-      } @empty { <p class="empty">No hay inscripciones para este filtro.</p> }
+      } @empty { <p class="py-10 text-center text-muted">No hay inscripciones para este filtro.</p> }
     </div>
 
-    <div class="cards">
+    <div class="flex flex-col gap-3.5 lg:hidden">
       @for (i of lista(); track i.id) {
-        <article class="card">
-          <div class="h"><div><strong>{{ i.nombre }}</strong><small>{{ i.detalle }}</small></div><app-status-badge [estado]="i.estado" /></div>
-          <div class="kv"><div><label>ID / NIT</label>{{ i.documento }}</div><div class="rr"><label>Participación</label>{{ i.tipo }}</div></div>
-          <div class="acts">
-            <button class="ib view" (click)="ver.set(i)" aria-label="Ver"><app-icon name="eye" [size]="18" /></button>
-            <button class="ib ok" (click)="cambiar(i, 'Aprobado')" aria-label="Aprobar"><app-icon name="check" [size]="18" /></button>
-            <button class="ib no" (click)="cambiar(i, 'Rechazado')" aria-label="Rechazar"><app-icon name="x" [size]="18" /></button>
+        <article class="card p-4.5">
+          <div class="flex justify-between gap-2 border-b border-line pb-3"><div><strong class="block text-[17px]">{{ i.nombre }}</strong><small class="text-muted">{{ i.detalle }}</small></div><app-status-badge [estado]="i.estado" /></div>
+          <div class="my-3 flex justify-between">
+            <div><label class="block text-[11px] font-semibold text-muted uppercase">ID / NIT</label>{{ i.documento }}</div>
+            <div class="text-right"><label class="block text-[11px] font-semibold text-muted uppercase">Participación</label>{{ i.tipo }}</div>
+          </div>
+          <div class="flex justify-end gap-2">
+            <button class="grid h-[38px] w-11 place-items-center rounded-md border-0 bg-navy-soft text-navy" (click)="ver.set(i)" aria-label="Ver"><app-icon name="eye" [size]="18" /></button>
+            <button class="grid h-[38px] w-11 place-items-center rounded-md border-0 bg-ok-soft text-ok" (click)="cambiar(i, 'Aprobado')" aria-label="Aprobar"><app-icon name="check" [size]="18" /></button>
+            <button class="grid h-[38px] w-11 place-items-center rounded-md border-0 bg-brand-soft text-brand" (click)="cambiar(i, 'Rechazado')" aria-label="Rechazar"><app-icon name="x" [size]="18" /></button>
           </div>
         </article>
-      } @empty { <p class="empty">No hay inscripciones para este filtro.</p> }
+      } @empty { <p class="py-10 text-center text-muted">No hay inscripciones para este filtro.</p> }
     </div>
 
     @if (ver(); as i) {
       <app-modal [titulo]="i.nombre" (cerrar)="ver.set(null)">
-        <dl>
-          <dt>Detalle</dt><dd>{{ i.detalle }}</dd>
-          <dt>Cédula/NIT</dt><dd>{{ i.documento }}</dd>
-          <dt>Tipo de participante</dt><dd>{{ i.tipo }}</dd>
-          <dt>Correo</dt><dd>{{ i.correo }}</dd>
-          <dt>Estado</dt><dd><app-status-badge [estado]="i.estado" /></dd>
+        <dl class="m-0 mb-5 grid grid-cols-[150px_1fr] gap-2.5">
+          <dt class="text-muted">Detalle</dt><dd class="m-0">{{ i.detalle }}</dd>
+          <dt class="text-muted">Cédula/NIT</dt><dd class="m-0">{{ i.documento }}</dd>
+          <dt class="text-muted">Tipo de participante</dt><dd class="m-0">{{ i.tipo }}</dd>
+          <dt class="text-muted">Correo</dt><dd class="m-0">{{ i.correo }}</dd>
+          <dt class="text-muted">Estado</dt><dd class="m-0"><app-status-badge [estado]="i.estado" /></dd>
         </dl>
-        <div class="mact">
+        <div class="flex flex-wrap justify-end gap-2.5">
           <button class="btn" (click)="cambiar(i, 'Aprobado con Cambios'); ver.set(null)">Aprobar con cambios</button>
-          <button class="btn primary" (click)="cambiar(i, 'Aprobado'); ver.set(null)">Aprobar</button>
-          <button class="btn danger-soft" (click)="cambiar(i, 'Rechazado'); ver.set(null)">Rechazar</button>
+          <button class="btn btn-primary" (click)="cambiar(i, 'Aprobado'); ver.set(null)">Aprobar</button>
+          <button class="btn btn-danger-soft" (click)="cambiar(i, 'Rechazado'); ver.set(null)">Rechazar</button>
         </div>
       </app-modal>
     }
   `,
-  styles: [`
-    .toolbar { display: flex; gap: 12px; align-items: center; padding: 16px; margin-bottom: 24px; flex-wrap: wrap; }
-    select { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
-    .total { margin-left: auto; color: var(--muted); b { color: var(--navy); } }
-    .table { padding: 0; overflow: hidden; }
-    .row { display: grid; grid-template-columns: 2.2fr 1.3fr 1.3fr 1.6fr 1fr; gap: 12px; align-items: center; padding: 14px 18px; border-top: 1px solid var(--border);
-      strong { display: block; } small { color: var(--muted); font-size: 12px; } .r { text-align: right; }
-      &.head { border-top: 0; font-weight: 700; font-size: 13px; padding-top: 18px; } }
-    .acts { display: flex; gap: 8px; justify-content: flex-end; }
-    .ib { width: 32px; height: 28px; border: 0; border-radius: 6px; display: grid; place-items: center;
-      &.view { background: var(--navy-soft); color: var(--navy); } &.ok { background: var(--green-soft); color: var(--green); } &.no { background: var(--red-soft); color: var(--red); } }
-    .cards { display: none; flex-direction: column; gap: 14px; }
-    .cards .card { padding: 18px;
-      .h { display: flex; justify-content: space-between; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border); strong { display: block; font-size: 17px; } small { color: var(--muted); } }
-      .kv { display: flex; justify-content: space-between; margin: 12px 0; label { display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); font-weight: 600; } .rr { text-align: right; } }
-      .ib { width: 44px; height: 38px; } }
-    dl { display: grid; grid-template-columns: 150px 1fr; gap: 10px; margin: 0 0 20px; dt { color: var(--muted); } dd { margin: 0; } }
-    .mact { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
-    @media (max-width: 900px) {
-      .table { display: none; } .cards { display: flex; }
-      .toolbar { padding: 0; border: 0; background: none; margin-bottom: 14px; select:first-child { width: 100%; } }
-    }
-  `],
 })
 export class InscripcionesComponent {
   protected data = inject(DataService);

@@ -1,46 +1,46 @@
-<section class="welcome">
-  <h2>¡Bienvenido de nuevo, Administrador!</h2>
-  <p>Gestión activa de la Feria Empresarial FIET 2026.</p>
+<section class="mb-4 rounded-[10px] bg-navy p-6 text-white lg:hidden">
+  <h2 class="text-2xl">¡Bienvenido de nuevo, Administrador!</h2>
+  <p class="mt-1.5 text-[#b5c1d8]">Gestión activa de la Feria Empresarial FIET 2026.</p>
 </section>
 
-<div class="stats">
-  <article class="card stat">
-    <div class="ico"><app-icon name="calendar" [size]="24" /></div>
-    <div><span class="lbl">Eventos activos</span><strong>{{ data.stats().eventosActivos }}</strong><small>{{ data.stats().programadosSemana }} programados esta semana</small></div>
-  </article>
-  <article class="card stat">
-    <div class="ico"><app-icon name="users" [size]="24" /></div>
-    <div><span class="lbl">Inscritos totales</span><strong>{{ data.stats().inscritos }}</strong><small>+{{ data.stats().nuevosHoy }} nuevos hoy</small></div>
-  </article>
-  <article class="card stat">
-    <div class="ico"><app-icon name="award" [size]="24" /></div>
-    <div><span class="lbl">Certificados emitidos</span><strong>{{ data.stats().certificados }}</strong><small>{{ data.stats().tasaEntrega }}% de tasa de entrega</small></div>
-  </article>
-  <article class="card stat">
-    <div class="ico"><app-icon name="building" [size]="24" /></div>
-    <div><span class="lbl">Empresas aliadas</span><strong>{{ data.stats().empresas }}</strong><small>{{ data.stats().empresasNuevas }} nuevas en Feria 2026</small></div>
-  </article>
+<div class="mb-6 grid gap-3 lg:grid-cols-4 lg:gap-5">
+  @for (s of tarjetas(); track s.titulo) {
+    <article class="card flex items-center gap-4 p-4.5 lg:block lg:px-6 lg:py-5">
+      <div class="grid size-[52px] shrink-0 place-items-center rounded-[10px] bg-navy-soft lg:hidden"><app-icon [name]="s.icono" [size]="24" /></div>
+      <div class="flex-1">
+        <div class="flex items-center justify-between"><span class="text-xs font-medium text-muted uppercase">{{ s.titulo }}</span><app-icon class="hidden lg:inline-flex" [name]="s.icono" /></div>
+        <strong class="my-0.5 block font-serif text-[32px] lg:my-2 lg:text-[38px]">{{ s.valor }}</strong>
+        <small class="text-xs text-muted">{{ s.nota }}</small>
+      </div>
+    </article>
+  }
 </div>
 
-<div class="grid">
+<div class="grid items-start gap-6 lg:grid-cols-[1.65fr_1fr]">
   <section class="card">
-    <header><h3>Próximos Eventos <span class="d">- Feria Empresarial</span></h3><a routerLink="/eventos" class="all">Ver Todos</a></header>
+    <header class="mb-4.5 flex items-center justify-between">
+      <h3 class="text-[22px]">Próximos Eventos<span class="hidden lg:inline"> - Feria Empresarial</span></h3>
+      <a routerLink="/eventos" class="font-bold text-brand">Ver Todos</a>
+    </header>
     @for (e of data.proximos(); track e.id) {
-      <a class="item" [routerLink]="['/eventos', e.id]">
+      <a class="mb-3 flex items-center justify-between gap-3 rounded-lg bg-surface px-4 py-3.5" [routerLink]="['/eventos', e.id]">
         <div>
-          <strong>{{ e.titulo }}</strong>
-          <span>{{ fecha(e.fecha) }} <b>{{ e.cupos }} Cupos</b></span>
+          <strong class="mb-1 block">{{ e.titulo }}</strong>
+          <span class="text-[13px] text-muted">{{ fecha(e.fecha) }} <b class="ml-2 text-brand">{{ e.cupos }} Cupos</b></span>
         </div>
-        <app-status-badge [estado]="e.estado" class="desktop" />
+        <app-status-badge class="hidden lg:block" [estado]="e.estado" />
       </a>
     }
   </section>
 
-  <section class="card activity">
-    <h3>Actividad Reciente</h3>
-    <ul>
+  <section class="card hidden lg:block">
+    <h3 class="mb-4 text-[22px]">Actividad Reciente</h3>
+    <ul class="m-0 flex list-none flex-col gap-4 p-0">
       @for (a of data.actividad(); track $index) {
-        <li [class.red]="a.rojo"><i></i><div><span>{{ a.texto }}</span><small>{{ a.hace }}</small></div></li>
+        <li class="flex items-start gap-3">
+          <i class="mt-1.5 size-2 shrink-0 rounded-full" [class]="a.rojo ? 'bg-brand' : 'bg-navy'"></i>
+          <div><span>{{ a.texto }}</span><small class="mt-0.5 block text-[11px] text-muted">{{ a.hace }}</small></div>
+        </li>
       }
     </ul>
   </section>

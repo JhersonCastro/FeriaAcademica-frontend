@@ -6,8 +6,7 @@ import { IconComponent } from '../icon';
 @Component({
   selector: 'app-aviso',
   imports: [IconComponent],
-  template: `<div class="a"><app-icon name="info" [size]="18" /><span><ng-content /></span></div>`,
-  styles: [`.a { display: flex; gap: 12px; align-items: flex-start; background: var(--blue-soft); border-radius: 6px; padding: 14px 16px; line-height: 1.5; app-icon { color: #1e4a96; margin-top: 1px; } }`],
+  template: `<div class="flex items-start gap-3 rounded-md bg-info-soft px-4 py-3.5 leading-normal"><app-icon class="mt-px text-info" name="info" [size]="18" /><span><ng-content /></span></div>`,
 })
 export class AvisoComponent {}
 
@@ -16,14 +15,14 @@ export class AvisoComponent {}
   selector: 'app-evento-aside',
   template: `
     <div class="pcard">
-      <h2>Evento seleccionado</h2>
-      <p class="cat">FERIA EMPRESARIAL · FIET 2026</p>
-      <h3>{{ e().titulo }}</h3><hr class="sep">
-      <p class="d">{{ fecha() }}<br>{{ hora() }}</p>
-      <p class="d muted">{{ e().lugar }}</p>
+      <h2 class="mb-2 text-2xl">Evento seleccionado</h2>
+      <p class="mt-3 mb-3.5 text-xs font-semibold text-info">FERIA EMPRESARIAL · FIET 2026</p>
+      <h3 class="text-[22px]">{{ e().titulo }}</h3>
+      <hr class="my-3.5 border-0 border-t border-line">
+      <p class="mb-3 leading-relaxed">{{ fecha() }}<br>{{ hora() }}</p>
+      <p class="mb-3 leading-relaxed text-muted">{{ e().lugar }}</p>
       <span class="chip">Modalidad: {{ modalidad() }}</span>
     </div>`,
-  styles: [`.cat { color: #1e4a96; font-size: 12px; font-weight: 600; margin: 12px 0 14px; } h3 { font-size: 22px; } .d { line-height: 1.6; margin: 0 0 12px; } hr { margin: 14px 0; }`],
 })
 export class EventoAsideComponent {
   modalidad = input.required<string>();
@@ -35,8 +34,12 @@ export class EventoAsideComponent {
 
 @Component({
   selector: 'app-orientacion',
-  template: `<div class="o"><h3>¿Necesitas orientación?</h3><p>Ing. Beatriz Hurtado<br>Comité de Relación con el Sector Externo</p><a href="mailto:bhurtado@unicauca.edu.co">bhurtado&#64;unicauca.edu.co</a></div>`,
-  styles: [`.o { padding: 0 12px; h3 { font-size: 20px; margin-bottom: 8px; } p { color: var(--muted); line-height: 1.6; margin: 0 0 6px; } a { color: #1e4a96; font-weight: 600; } }`],
+  template: `
+    <div class="px-3">
+      <h3 class="mb-2 text-xl">¿Necesitas orientación?</h3>
+      <p class="mb-1.5 leading-relaxed text-muted">Ing. Beatriz Hurtado<br>Comité de Relación con el Sector Externo</p>
+      <a class="font-semibold text-info" href="mailto:bhurtado@unicauca.edu.co">bhurtado&#64;unicauca.edu.co</a>
+    </div>`,
 })
 export class OrientacionComponent {}
 
@@ -44,21 +47,20 @@ export class OrientacionComponent {}
 @Component({
   selector: 'app-evento-hero',
   template: `
-    <section class="hero">
-      <div class="l">
-        <p class="cat">FERIA EMPRESARIAL · FIET 2026</p>
-        <h2>{{ e().titulo }}</h2><p class="desc">{{ e().descripcion }}</p>
-        <div class="dots"><i></i><i class="r"></i><i></i></div>
+    <section class="grid items-center gap-5 rounded-lg bg-navy p-5.5 text-white lg:grid-cols-[1fr_340px] lg:gap-10 lg:p-8">
+      <div>
+        <p class="mb-3.5 text-xs font-semibold">FERIA EMPRESARIAL · FIET 2026</p>
+        <h2 class="mb-3.5 text-[28px] lg:text-4xl">{{ e().titulo }}</h2>
+        <p class="m-0 leading-relaxed">{{ e().descripcion }}</p>
+        <div class="mt-5.5 flex gap-2.5"><i class="size-3 rotate-45 rounded-xs bg-white"></i><i class="size-3 rotate-45 rounded-xs bg-brand"></i><i class="size-3 rotate-45 rounded-xs bg-white"></i></div>
       </div>
-      <div class="r2"><h3>{{ fecha() }}</h3><p>{{ hora() }}</p><hr><p>{{ lugar()[0] }}<br>{{ lugar()[1] }}</p></div>
+      <div class="rounded-md bg-[#1e4f9c] p-6">
+        <h3 class="mb-3 text-[22px]">{{ fecha() }}</h3>
+        <p class="m-0 text-sm leading-relaxed">{{ hora() }}</p>
+        <hr class="my-3.5 border-0 border-t border-white/30">
+        <p class="m-0 text-sm leading-relaxed">{{ lugar()[0] }}<br>{{ lugar()[1] }}</p>
+      </div>
     </section>`,
-  styles: [`
-    .hero { background: var(--navy); color: #fff; border-radius: 8px; padding: 32px; display: grid; grid-template-columns: 1fr 340px; gap: 40px; align-items: center; }
-    .cat { font-size: 12px; font-weight: 600; margin: 0 0 14px; } h2 { font-size: 36px; margin-bottom: 14px; } .desc { line-height: 1.6; margin: 0; }
-    .dots { display: flex; gap: 10px; margin-top: 22px; i { width: 12px; height: 12px; background: #fff; transform: rotate(45deg); border-radius: 2px; } .r { background: var(--red); } }
-    .r2 { background: #1e4f9c; border-radius: 6px; padding: 24px; h3 { font-size: 22px; margin-bottom: 12px; } p { margin: 0; line-height: 1.6; font-size: 14px; } hr { border: 0; border-top: 1px solid rgba(255,255,255,.3); margin: 14px 0; } }
-    @media (max-width: 960px) { .hero { grid-template-columns: 1fr; padding: 22px; gap: 22px; } h2 { font-size: 28px; } }
-  `],
 })
 export class EventoHeroComponent {
   private data = inject(DataService);
@@ -70,8 +72,13 @@ export class EventoHeroComponent {
 
 @Component({
   selector: 'app-agenda-publica',
-  template: `<div class="pcard"><h2>Agenda del evento</h2>@for (a of e().agenda; track a.hora) { <div class="r"><b>{{ hora(a.hora) }}</b><span>{{ a.titulo }}</span></div> }</div>`,
-  styles: [`.r { display: grid; grid-template-columns: 120px 1fr; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: center; b { color: #1e4a96; font-size: 12px; } } h2 { margin-bottom: 8px; } @media (max-width: 640px) { .r { grid-template-columns: 90px 1fr; } }`],
+  template: `
+    <div class="pcard">
+      <h2 class="mb-2 text-2xl">Agenda del evento</h2>
+      @for (a of e().agenda; track a.hora) {
+        <div class="grid grid-cols-[90px_1fr] items-center border-b border-line py-3.5 sm:grid-cols-[120px_1fr]"><b class="text-xs text-info">{{ hora(a.hora) }}</b><span>{{ a.titulo }}</span></div>
+      }
+    </div>`,
 })
 export class AgendaPublicaComponent {
   private data = inject(DataService);

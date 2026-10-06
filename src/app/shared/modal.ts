@@ -5,23 +5,15 @@ import { IconComponent } from './icon';
   selector: 'app-modal',
   imports: [IconComponent],
   template: `
-    <div class="backdrop" (click)="cerrar.emit()">
-      <div class="dialog" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
-        <header>
-          <h2>{{ titulo() }}</h2>
-          <button class="close" (click)="cerrar.emit()" aria-label="Cerrar"><app-icon name="x" /></button>
+    <div class="fixed inset-0 z-100 flex items-center justify-center bg-navy/50 p-4" (click)="cerrar.emit()">
+      <div class="max-h-[90vh] w-full max-w-[560px] overflow-auto rounded-xl bg-white p-6" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+        <header class="mb-4.5 flex items-center justify-between">
+          <h2 class="text-[22px]">{{ titulo() }}</h2>
+          <button class="border-0 bg-transparent text-muted" (click)="cerrar.emit()" aria-label="Cerrar"><app-icon name="x" /></button>
         </header>
         <ng-content />
       </div>
     </div>`,
-  styles: [`
-    .backdrop { position: fixed; inset: 0; background: rgba(15,31,64,.5); display: flex; align-items: center;
-      justify-content: center; padding: 16px; z-index: 100; }
-    .dialog { background: #fff; border-radius: 12px; padding: 24px; width: 100%; max-width: 560px; max-height: 90vh; overflow: auto; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    h2 { font-size: 22px; }
-    .close { background: none; border: 0; color: var(--muted); }
-  `],
 })
 export class ModalComponent {
   titulo = input.required<string>();

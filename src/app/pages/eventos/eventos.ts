@@ -11,54 +11,33 @@ import { StatusBadgeComponent } from '../../shared/status-badge';
   selector: 'app-eventos',
   imports: [RouterLink, IconComponent, StatusBadgeComponent, EventoFormComponent],
   template: `
-    <div class="toolbar card">
-      <label class="search"><app-icon name="search" [size]="16" />
-        <input placeholder="Buscar evento..." [value]="q()" (input)="q.set($any($event.target).value)"></label>
-      <select (change)="cat.set($any($event.target).value)" aria-label="Categoría">
+    <div class="card mb-6 flex flex-wrap items-center gap-3 p-4">
+      <label class="flex w-full items-center gap-2 rounded-lg border border-line bg-surface px-3 sm:w-60"><app-icon name="search" [size]="16" />
+        <input class="w-full border-0 bg-transparent py-2.5 outline-none" placeholder="Buscar evento..." [value]="q()" (input)="q.set($any($event.target).value)"></label>
+      <select class="flex-1 rounded-lg border border-line bg-white px-3 py-2.5 sm:flex-none" (change)="cat.set($any($event.target).value)" aria-label="Categoría">
         <option value="">Categoría: Todos</option>@for (c of categorias; track c) { <option [value]="c">{{ c }}</option> }</select>
-      <select (change)="est.set($any($event.target).value)" aria-label="Estado">
+      <select class="flex-1 rounded-lg border border-line bg-white px-3 py-2.5 sm:flex-none" (change)="est.set($any($event.target).value)" aria-label="Estado">
         <option value="">Estado: Todos</option>@for (s of estados; track s) { <option [value]="s">{{ s }}</option> }</select>
-      <button class="btn primary new" (click)="crear.set(true)"><app-icon name="plus" [size]="16" /> Crear Nuevo Evento</button>
+      <button class="btn btn-primary w-full sm:ml-auto sm:w-auto" (click)="crear.set(true)"><app-icon name="plus" [size]="16" /> Crear Nuevo Evento</button>
     </div>
 
-    <div class="grid">
+    <div class="grid items-start gap-3.5 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
       @for (e of filtrados(); track e.id) {
-        <a class="card ev" [routerLink]="['/eventos', e.id]">
-          <div class="top"><span class="cat">{{ e.categoria }}</span><app-status-badge [estado]="e.estado" /></div>
-          <h3>{{ e.titulo }}</h3>
-          <p>Responsable: {{ e.responsable }}</p>
-          <div class="meta">
-            <span><app-icon name="calendar" [size]="14" /> {{ fecha(e.fecha) }}</span>
-            <span><app-icon name="users" [size]="14" /> {{ e.cupos }} Cupos</span>
-            <app-icon name="chevron-right" class="go" />
+        <a class="card block px-5 py-4.5 transition-shadow hover:shadow-md" [routerLink]="['/eventos', e.id]">
+          <div class="mb-3.5 flex items-center justify-between"><span class="text-[11px] font-semibold text-brand uppercase">{{ e.categoria }}</span><app-status-badge [estado]="e.estado" /></div>
+          <h3 class="mb-2 text-xl leading-tight">{{ e.titulo }}</h3>
+          <p class="mb-3.5 text-muted">Responsable: {{ e.responsable }}</p>
+          <div class="flex items-center gap-4 border-t border-line pt-3 text-[13px] text-muted">
+            <span class="inline-flex items-center gap-1.5"><app-icon name="calendar" [size]="14" /> {{ fecha(e.fecha) }}</span>
+            <span class="inline-flex items-center gap-1.5"><app-icon name="users" [size]="14" /> {{ e.cupos }} Cupos</span>
+            <app-icon name="chevron-right" class="ml-auto text-navy" />
           </div>
         </a>
-      } @empty { <p class="empty">No hay eventos que coincidan con la búsqueda.</p> }
+      } @empty { <p class="col-span-full py-10 text-center text-muted">No hay eventos que coincidan con la búsqueda.</p> }
     </div>
 
     @if (crear()) { <app-evento-form (guardar)="guardar($event)" (cerrar)="crear.set(false)" /> }
   `,
-  styles: [`
-    .toolbar { display: flex; gap: 12px; padding: 16px; margin-bottom: 24px; align-items: center; flex-wrap: wrap; }
-    .search { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0 12px; width: 240px;
-      input { border: 0; background: none; outline: none; padding: 10px 0; width: 100%; } }
-    select { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; }
-    .new { margin-left: auto; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start; }
-    .ev { padding: 18px 20px; display: block; transition: box-shadow .15s; &:hover { box-shadow: 0 4px 14px rgba(15,31,64,.1); }
-      .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
-      .cat { color: var(--red); font-size: 11px; font-weight: 600; text-transform: uppercase; }
-      h3 { font-size: 20px; line-height: 1.25; margin-bottom: 8px; }
-      p { color: var(--muted); margin: 0 0 14px; }
-      .meta { border-top: 1px solid var(--border); padding-top: 12px; display: flex; gap: 16px; color: var(--muted); font-size: 13px; align-items: center;
-        span { display: inline-flex; gap: 6px; align-items: center; } .go { margin-left: auto; color: var(--navy); } } }
-    .empty { grid-column: 1 / -1; }
-    @media (max-width: 1100px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 700px) {
-      .grid { grid-template-columns: 1fr; gap: 14px; }
-      .search { width: 100%; } .toolbar select { flex: 1; } .new { width: 100%; margin-left: 0; }
-    }
-  `],
 })
 export class EventosComponent {
   private data = inject(DataService);

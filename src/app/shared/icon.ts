@@ -37,7 +37,7 @@ export type IconName = 'grid' | 'calendar' | 'users' | 'award' | 'building' | 's
         @case ('google') { <circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/> }
       }
     </svg>`,
-  styles: [':host { display: inline-flex; flex-shrink: 0; }'],
+  host: { class: 'inline-flex shrink-0' },
 })
 export class IconComponent {
   name = input.required<IconName>();

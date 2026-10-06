@@ -26,7 +26,6 @@ const SUBTITULOS: Record<string, string> = {
   selector: 'app-shell',
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CrestComponent, IconComponent],
   templateUrl: './shell.html',
-  styleUrl: './shell.scss',
 })
 export class ShellComponent {
   protected auth = inject(AuthService);

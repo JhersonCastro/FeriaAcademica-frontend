@@ -1,13 +1,10 @@
 import { Component, input } from '@angular/core';
 
-/** Placeholder del escudo institucional (reemplazar por el escudo oficial en public/img). */
+/** Placeholder del escudo institucional (reemplazar por el escudo oficial en public/). */
 @Component({
   selector: 'app-crest',
-  template: `<div class="crest" [style.width.px]="size()" [style.height.px]="size() * 1.45"><span>ESCUDO<br>UNICAUCA</span></div>`,
-  styles: [`
-    .crest { background: #fff; border: 2px solid #000; outline: 1.5px dotted #000; outline-offset: -6px;
-      display: flex; align-items: center; justify-content: center; text-align: center;
-      font: 700 8px/1.1 var(--sans); color: #000; flex-shrink: 0; }
-  `],
+  template: `
+    <div class="flex shrink-0 items-center justify-center bg-white text-center text-[8px] leading-[1.1] font-bold text-black outline-[1.5px] -outline-offset-6 outline-black outline-dotted border-2 border-black"
+         [style.width.px]="size()" [style.height.px]="size() * 1.45"><span>ESCUDO<br>UNICAUCA</span></div>`,
 })
 export class CrestComponent { size = input(52); }

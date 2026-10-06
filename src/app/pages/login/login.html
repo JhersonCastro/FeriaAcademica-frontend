@@ -1,52 +1,52 @@
-<div class="page">
-  <span class="deco"></span>
-  <div class="wrap">
-    <section class="intro">
-      <div class="brand">
+<div class="relative flex min-h-screen flex-col overflow-hidden bg-surface">
+  <span class="absolute top-[54px] left-0 hidden h-[92px] w-[54px] bg-navy [clip-path:polygon(0_0,100%_0,85%_100%,0_100%)] lg:block"></span>
+  <div class="mx-auto grid w-full max-w-[1000px] flex-1 items-start gap-7 px-4 py-8 lg:grid-cols-[1fr_405px] lg:gap-20 lg:px-6 lg:py-[78px]">
+    <section>
+      <div class="mb-5 flex items-center gap-4 lg:mb-9">
         <app-crest [size]="56" />
-        <div><h2>Universidad del Cauca</h2><span>Facultad de Ingeniería Electrónica y Telecomunicaciones</span></div>
+        <div><h2 class="text-2xl lg:text-[32px]">Universidad del Cauca</h2><span class="text-[15px] text-muted">Facultad de Ingeniería Electrónica y Telecomunicaciones</span></div>
       </div>
-      <h1>Sistema de Gestión de Eventos</h1>
-      <p class="sub">Feria Empresarial FIET</p>
-      <p class="desc">Acceda con sus credenciales institucionales para administrar eventos, registrar inscripciones de empresas, estudiantes y emitir certificados avalados por la Facultad.</p>
-      <div class="shapes"><i class="s1"></i><i class="s2"></i><i class="s3"></i></div>
+      <h1 class="text-[30px] leading-tight lg:text-[42px]">Sistema de Gestión de Eventos</h1>
+      <p class="mt-1.5 mb-5 font-serif text-[22px] text-brand italic lg:text-[28px]">Feria Empresarial FIET</p>
+      <p class="max-w-[480px] text-base leading-[1.7] text-muted">Acceda con sus credenciales institucionales para administrar eventos, registrar inscripciones de empresas, estudiantes y emitir certificados avalados por la Facultad.</p>
+      <div class="mt-6 hidden items-center gap-2.5 lg:flex"><i class="size-3 rotate-45 bg-navy"></i><i class="size-3 rotate-45 rounded-xs bg-brand"></i><i class="size-2 rounded-full bg-navy"></i></div>
     </section>
 
-    <form class="card form" [formGroup]="form" (ngSubmit)="ingresar()" novalidate>
-      <h2>Inicio de Sesión</h2>
-      <p class="hint">Usa tu correo institucional &#64;unicauca.edu.co</p>
+    <form class="card rounded-[14px] p-6 lg:p-8" [formGroup]="form" (ngSubmit)="ingresar()" novalidate>
+      <h2 class="text-2xl">Inicio de Sesión</h2>
+      <p class="mt-1 mb-6 text-muted">Usa tu correo institucional &#64;unicauca.edu.co</p>
 
-      <div class="field">
-        <label for="correo">Correo electrónico</label>
-        <input id="correo" type="email" formControlName="correo" placeholder="usuario@unicauca.edu.co" autocomplete="username">
-        @if (form.controls.correo.touched && form.controls.correo.invalid) { <span class="error">Ingresa un correo válido</span> }
+      <div class="mb-4 flex flex-col gap-1.5">
+        <label class="lbl" for="correo">Correo electrónico</label>
+        <input class="input" id="correo" type="email" formControlName="correo" placeholder="usuario@unicauca.edu.co" autocomplete="username">
+        @if (form.controls.correo.touched && form.controls.correo.invalid) { <span class="err">Ingresa un correo válido</span> }
       </div>
 
-      <div class="field">
-        <label for="password">Contraseña</label>
-        <div class="pw">
-          <input id="password" [type]="verPassword() ? 'text' : 'password'" formControlName="password" placeholder="••••••••••••" autocomplete="current-password">
-          <button type="button" (click)="verPassword.set(!verPassword())" aria-label="Mostrar contraseña">
+      <div class="mb-4 flex flex-col gap-1.5">
+        <label class="lbl" for="password">Contraseña</label>
+        <div class="relative">
+          <input class="input pr-11" id="password" [type]="verPassword() ? 'text' : 'password'" formControlName="password" placeholder="••••••••••••" autocomplete="current-password">
+          <button type="button" class="absolute top-1/2 right-2.5 flex -translate-y-1/2 border-0 bg-transparent text-muted" (click)="verPassword.set(!verPassword())" aria-label="Mostrar contraseña">
             <app-icon [name]="verPassword() ? 'eye-off' : 'eye'" />
           </button>
         </div>
-        @if (form.controls.password.touched && form.controls.password.invalid) { <span class="error">La contraseña es obligatoria</span> }
+        @if (form.controls.password.touched && form.controls.password.invalid) { <span class="err">La contraseña es obligatoria</span> }
       </div>
 
-      <div class="row">
-        <label class="check"><input type="checkbox" formControlName="recordar"> Recordarme</label>
-        <button type="button" class="link" (click)="olvido()">¿Olvidó su contraseña?</button>
+      <div class="mb-5 flex items-center justify-between text-[13px] text-muted">
+        <label class="flex items-center gap-2"><input type="checkbox" formControlName="recordar"> Recordarme</label>
+        <button type="button" class="border-0 bg-transparent p-0 text-[13px] font-semibold text-brand" (click)="olvido()">¿Olvidó su contraseña?</button>
       </div>
 
-      @if (error()) { <p class="error block-error">{{ error() }}</p> }
+      @if (error()) { <p class="err mb-3.5 text-[13px]">{{ error() }}</p> }
 
-      <button class="btn primary block" type="submit">Ingresar</button>
+      <button class="btn btn-primary w-full" type="submit">Ingresar</button>
 
-      <div class="sep"><span>O ingrese con</span></div>
+      <div class="my-5.5 flex items-center gap-3 text-xs text-muted before:h-px before:flex-1 before:bg-line before:content-[''] after:h-px after:flex-1 after:bg-line after:content-['']"><span>O ingrese con</span></div>
 
-      <button class="btn block" type="button" (click)="google()"><app-icon name="google" /> Google Workspace UNICAUCA</button>
-      <p class="pub-links">¿Visitas la feria? <a href="/feria/espectador">Registro de asistencia</a> · <a href="/feria/proyecto">Inscribir proyecto</a></p>
+      <button class="btn w-full" type="button" (click)="google()"><app-icon name="google" /> Google Workspace UNICAUCA</button>
+      <p class="mt-4.5 text-center text-xs text-muted">¿Visitas la feria? <a class="font-semibold text-brand" href="/feria/espectador">Registro de asistencia</a> · <a class="font-semibold text-brand" href="/feria/proyecto">Inscribir proyecto</a></p>
     </form>
   </div>
-  <footer>“Hacia una Universidad comprometida con la paz territorial”</footer>
+  <footer class="bg-gradient-to-r from-brand to-[#5a0000] p-4.5 text-center font-serif text-white italic">“Hacia una Universidad comprometida con la paz territorial”</footer>
 </div>
