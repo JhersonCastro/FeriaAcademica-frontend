@@ -42,3 +42,16 @@ export function roleLabel(role: string): string {
 export function userStatusLabel(status: string): string {
   return USER_STATUS_LABELS[status as UserStatus] ?? status;
 }
+
+const EVENT_STATUS_LABELS: Record<string, string> = {
+  Configuration: 'En configuración',
+  Published: 'Publicada',
+  InProgress: 'En curso',
+  Closed: 'Cerrada',
+  Archived: 'Archivada',
+  Cancelled: 'Cancelada',
+};
+
+export function eventStatusLabel(status: string): string {
+  return EVENT_STATUS_LABELS[status] ?? status;
+}

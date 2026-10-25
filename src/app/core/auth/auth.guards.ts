@@ -39,3 +39,13 @@ export function eventRoleGuard(role: EventRole): CanActivateFn {
       : router.createUrlTree(['/unauthorized']);
   };
 }
+
+/** Check-in and turnout of `:eventId`: super admin, or a coordinator or teacher of the event. */
+export const attendanceStaffGuard: CanActivateFn = (route) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const eventId = route.paramMap.get('eventId');
+  return eventId && auth.canTakeAttendance(eventId)
+    ? true
+    : router.createUrlTree(['/unauthorized']);
+};

@@ -1,0 +1,169 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>{{ eventName() }}</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Check-in</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Check-in</h1>
+    <p class="text-muted">{{ eventName() }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+  <a class="btn btn--secondary" [routerLink]="['/events', eventId, 'attendance']">Ver afluencia</a>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="scanner-title">
+    <h2 class="title-2" id="scanner-title">Escanear ingreso</h2>
+
+    <div class="scanner" [class.scanner--live]="cameraState() === 'on'">
+      <video #video class="scanner__video" muted playsinline aria-hidden="true"></video>
+
+      @if (cameraState() !== 'on') {
+        <div class="scanner__placeholder">
+          <img src="assets/icons/scan-line.svg" width="64" height="64" alt="" />
+          @switch (cameraState()) {
+            @case ('starting') {
+              <p>Abriendo la cámara…</p>
+            }
+            @case ('error') {
+              <p>{{ cameraError() }}</p>
+            }
+            @default {
+              <p>Activa la cámara para leer los QR.</p>
+            }
+          }
+          @if (cameraState() !== 'starting') {
+            <button class="btn btn--primary" type="button" (click)="startCamera()">
+              {{ cameraState() === 'error' ? 'Reintentar' : 'Activar cámara' }}
+            </button>
+          }
+        </div>
+      } @else {
+        <span class="scanner__frame" aria-hidden="true"></span>
+        <p class="scanner__hint">Coloca el QR dentro del recuadro</p>
+      }
+
+      @if (overlay(); as result) {
+        <div
+          class="scanner__result"
+          [class]="'scanner__result--' + result.outcome"
+          role="status"
+          aria-live="assertive"
+        >
+          <span class="scanner__result-icon" aria-hidden="true">
+            @switch (result.outcome) {
+              @case ('Valid') { ✓ }
+              @case ('AlreadyEntered') { ! }
+              @default { ✕ }
+            }
+          </span>
+          <p class="scanner__result-title">{{ outcomeLabels[result.outcome] }}</p>
+          @if (result.attendeeName) {
+            <p class="scanner__result-name">{{ result.attendeeName }}</p>
+          }
+          @if (result.outcome === 'AlreadyEntered' && result.enteredAt) {
+            <p>Primer ingreso a las {{ result.enteredAt | date: 'HH:mm:ss' }}</p>
+          } @else if (result.outcome === 'Invalid') {
+            <p>{{ result.message }}</p>
+          }
+        </div>
+      } @else if (slow()) {
+        <div class="scanner__result scanner__result--sending" role="status">
+          <p class="scanner__result-title">Validando…</p>
+        </div>
+      }
+    </div>
+
+    @if (failure(); as failure) {
+      <div class="alert alert--danger" role="alert">
+        <img class="alert__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+        <div class="alert__body">
+          <p>{{ failure.message }}</p>
+          <div class="actions">
+            @if (failure.retryToken) {
+              <button class="btn btn--primary" type="button" (click)="retry()">Reintentar</button>
+            }
+            <button class="btn btn--secondary" type="button" (click)="dismissFailure()">
+              Volver a escanear
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="actions">
+      @if (cameraState() === 'on') {
+        <button class="btn btn--secondary" type="button" (click)="stopCamera()">
+          Detener cámara
+        </button>
+      }
+    </div>
+
+    <details class="manual">
+      <summary>Ingresar el código manualmente</summary>
+      <form class="manual__form" (submit)="submitManual($event)">
+        <label class="visually-hidden" for="manual-token">Código del QR</label>
+        <div class="control">
+          <input
+            class="control__input"
+            id="manual-token"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="Código de 64 caracteres"
+            [value]="manualToken()"
+            (input)="onManualInput($event)"
+          />
+        </div>
+        <button class="btn btn--primary" type="submit" [disabled]="phase() === 'sending'">
+          Validar
+        </button>
+      </form>
+    </details>
+  </section>
+
+  <section class="card" aria-labelledby="scanner-log-title">
+    <h2 class="title-2" id="scanner-log-title">Lecturas recientes</h2>
+    @if (history().length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Asistente</th>
+              <th scope="col">Resultado</th>
+              <th scope="col">Hora</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of history(); track entry.id) {
+              <tr>
+                <td>
+                  {{ entry.attendeeName ?? 'Desconocido' }}
+                  @if (entry.outcome === 'Invalid') {
+                    <span class="table__secondary">{{ entry.message }}</span>
+                  }
+                </td>
+                <td>
+                  <span
+                    class="chip"
+                    [class.chip--success]="entry.outcome === 'Valid'"
+                    [class.chip--warning]="entry.outcome === 'AlreadyEntered'"
+                    [class.chip--danger]="entry.outcome === 'Invalid'"
+                    >{{ outcomeLabels[entry.outcome] }}</span
+                  >
+                </td>
+                <td>{{ entry.scannedAt | date: 'HH:mm:ss' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="text-muted">Aún no hay lecturas en esta sesión.</p>
+    }
+    <p class="text-muted">
+      Un QR repetido o inválido no suma asistencia; el conteo oficial está en la afluencia.
+    </p>
+  </section>
+</div>

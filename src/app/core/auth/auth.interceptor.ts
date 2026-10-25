@@ -11,7 +11,7 @@ import { AuthService } from './auth.service';
  * (no session, expired, or the account was deactivated), drops the session and goes to login.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!req.url.startsWith(environment.apiBaseUrl)) {
+  if (!req.url.startsWith(`${environment.apiBaseUrl}/api/`)) {
     return next(req);
   }
 

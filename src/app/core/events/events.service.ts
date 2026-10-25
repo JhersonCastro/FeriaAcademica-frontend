@@ -3,11 +3,22 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export type EventStatus =
+  | 'Configuration'
+  | 'Published'
+  | 'InProgress'
+  | 'Closed'
+  | 'Archived'
+  | 'Cancelled';
+
+/** Only these accept registrations and attendance. */
+export const OPEN_EVENT_STATUSES: readonly EventStatus[] = ['Published', 'InProgress'];
+
 export interface EventSummary {
   id: string;
   institutionId: string;
   name: string;
-  status: string;
+  status: EventStatus;
   startDate: string | null;
   endDate: string | null;
 }

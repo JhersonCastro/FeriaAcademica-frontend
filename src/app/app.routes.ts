@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import {
+  attendanceStaffGuard,
   authGuard,
   eventRoleGuard,
   guestGuard,
@@ -9,9 +10,8 @@ import { AppShell } from './layout/app-shell/app-shell';
 import { PublicLayout } from './layout/public-layout/public-layout';
 
 export const routes: Routes = [
-  // Evaluated first: its guard sends `/` to login. A public layout listed before it would match
-  // `/` with no child and render an empty card.
-  // Signed-in area.
+  // Signed-in area. Evaluated first: its guard sends `/` to login. A public layout listed before
+  // it would match `/` with no child and render an empty card.
   {
     path: '',
     component: AppShell,
@@ -71,6 +71,30 @@ export const routes: Routes = [
         title: 'Invitar a la feria',
         canActivate: [eventRoleGuard('Teacher')],
         loadComponent: () => import('./features/events/invite/invite-page').then((m) => m.InvitePage),
+      },
+      {
+        path: 'my-qr',
+        title: 'Mi QR',
+        loadComponent: () =>
+          import('./features/attendance/my-qr/my-qr-page').then((m) => m.MyQrPage),
+      },
+      {
+        path: 'events/:eventId/attendance',
+        canActivate: [attendanceStaffGuard],
+        children: [
+          {
+            path: '',
+            title: 'Afluencia',
+            loadComponent: () =>
+              import('./features/attendance/turnout/turnout-page').then((m) => m.TurnoutPage),
+          },
+          {
+            path: 'scan',
+            title: 'Check-in',
+            loadComponent: () =>
+              import('./features/attendance/scanner/scanner-page').then((m) => m.ScannerPage),
+          },
+        ],
       },
       {
         path: 'unauthorized',

@@ -17,7 +17,17 @@ npm start
 
 Abre `http://localhost:4200/`. La aplicación se recarga sola cuando cambias un archivo.
 
-La URL de la API se configura en `src/environments/environment.ts` (`apiBaseUrl`). La sesión va en una cookie `HttpOnly` (`feria.auth`), por lo que el frontend no guarda tokens y todas las llamadas se envían con credenciales. El backend ya permite CORS desde `http://localhost:4200`.
+En desarrollo, `proxy.conf.json` reenvía `/api` al backend (`http://localhost:5100`), así que el navegador solo habla con el servidor de Angular: sin CORS y con la cookie de sesión `HttpOnly` (`feria.auth`) como propia. El frontend no guarda tokens. Para otra URL de API, cambia `apiBaseUrl` en `src/environments/environment.ts` o el `target` del proxy.
+
+### Probar en el celular (escáner de QR)
+
+La cámara solo funciona con HTTPS o en `localhost`, y el celular no alcanza el `localhost` del PC. Con el PC y el celular en la misma red:
+
+```bash
+npm run start:mobile
+```
+
+Abre en el celular `https://<IP-del-PC>:4200` (la IP sale con `ipconfig`) y acepta una vez el aviso del certificado de desarrollo. Si no carga, permite Node.js en el firewall de Windows para redes privadas.
 
 ## Rutas principales
 
@@ -30,6 +40,9 @@ La URL de la API se configura en `src/environments/environment.ts` (`apiBaseUrl`
 | `/` · `/profile` | Con sesión | Inicio y mis datos |
 | `/admin/users` | Súper admin | Listado, detalle, creación y edición de usuarios |
 | `/events/:eventId/invitations/new` | Profesor del evento | Invitar estudiantes o invitados |
+| `/my-qr` | Con sesión | Inscribirse en una feria publicada y ver el QR personal |
+| `/events/:eventId/attendance/scan` | Súper admin, coordinador o profesor del evento | Check-in: leer QR con la cámara |
+| `/events/:eventId/attendance` | Súper admin, coordinador o profesor del evento | Afluencia en vivo (ingresados / inscritos) |
 | `/unauthorized` | Con sesión | Aviso cuando no se tienen permisos |
 
 ## Estructura

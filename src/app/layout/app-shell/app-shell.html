@@ -47,6 +47,30 @@
           >Mis invitados</a
         >
       }
+      <a
+        class="nav__link"
+        routerLink="/my-qr"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >Mi QR</a
+      >
+      @if (attendanceLinks(); as links) {
+        <a
+          class="nav__link"
+          [routerLink]="links.scan"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >Check-in</a
+        >
+        <a
+          class="nav__link"
+          [routerLink]="links.turnout"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          >Afluencia</a
+        >
+      }
       @if (isSuperAdmin()) {
         <a
           class="nav__link"

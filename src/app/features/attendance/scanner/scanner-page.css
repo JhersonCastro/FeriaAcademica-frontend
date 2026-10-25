@@ -1,0 +1,138 @@
+/* "Escáner": dashed frame from the design; the live video fills it. */
+.scanner {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px dashed var(--color-support);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.scanner--live {
+  border-style: solid;
+  background: #000;
+}
+
+.scanner__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scanner:not(.scanner--live) .scanner__video {
+  visibility: hidden;
+}
+
+.scanner__placeholder {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  text-align: center;
+}
+
+.scanner__frame {
+  position: relative;
+  width: 60%;
+  aspect-ratio: 1;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  border-radius: 12px;
+  box-shadow: 0 0 0 100vmax rgb(15 32 65 / 0.35);
+}
+
+.scanner__hint {
+  position: absolute;
+  bottom: 12px;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  background: rgb(15 32 65 / 0.7);
+  color: #fff;
+  font-size: 12px;
+}
+
+/* Full-color result over the camera: green, amber or red, always with an icon and a title. */
+.scanner__result {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  color: #fff;
+  text-align: center;
+}
+
+.scanner__result--Valid {
+  background: var(--color-success-text);
+}
+
+.scanner__result--AlreadyEntered {
+  background: var(--color-warning-icon);
+  color: var(--color-primary);
+}
+
+.scanner__result--Invalid {
+  background: var(--color-accent);
+}
+
+.scanner__result--sending {
+  background: rgb(15 32 65 / 0.75);
+}
+
+.scanner__result-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scanner__result-title {
+  font: 600 24px/1.2 var(--font-display);
+}
+
+.scanner__result-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.manual summary {
+  cursor: pointer;
+  color: var(--color-support);
+  font-weight: 600;
+}
+
+.manual__form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.manual__form .control {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Square on phones: the camera, the result and the buttons fit in one screen. */
+@media (max-width: 640px) {
+  .scanner {
+    aspect-ratio: 1;
+  }
+
+  .scanner__frame {
+    width: 75%;
+  }
+}

@@ -15,18 +15,33 @@
       <h2 class="title-2" id="home-all-events-title">Todas las ferias</h2>
       @if (allEvents().length) {
         <div class="table-wrap">
-          <table class="table">
+          <table class="table table--stack">
             <thead>
               <tr>
                 <th scope="col">Feria</th>
                 <th scope="col">Estado</th>
+                <th scope="col"><span class="visually-hidden">Acciones</span></th>
               </tr>
             </thead>
             <tbody>
               @for (event of allEvents(); track event.id) {
                 <tr>
                   <td>{{ event.name }}</td>
-                  <td><span class="chip chip--neutral">{{ event.status }}</span></td>
+                  <td data-label="Estado">
+                    <span class="chip chip--neutral">{{ statusLabel(event.status) }}</span>
+                  </td>
+                  <td>
+                    <div class="actions">
+                      <a
+                        class="btn btn--secondary"
+                        [routerLink]="['/events', event.id, 'attendance', 'scan']"
+                        >Check-in</a
+                      >
+                      <a class="btn btn--text" [routerLink]="['/events', event.id, 'attendance']"
+                        >Afluencia</a
+                      >
+                    </div>
+                  </td>
                 </tr>
               }
             </tbody>
@@ -42,7 +57,7 @@
     <h2 class="title-2" id="home-events-title">Mis ferias</h2>
     @if (activeEvents.events().length) {
       <div class="table-wrap">
-        <table class="table">
+        <table class="table table--stack">
           <thead>
             <tr>
               <th scope="col">Feria</th>
@@ -59,7 +74,7 @@
                     <span class="table__secondary">Feria activa</span>
                   }
                 </td>
-                <td>
+                <td data-label="Roles">
                   <div class="chip-list">
                     @for (role of event.roles; track role) {
                       <span class="chip chip--info">{{ role | roleLabel }}</span>
@@ -68,6 +83,19 @@
                 </td>
                 <td>
                   <div class="actions">
+                    <a
+                      class="btn btn--secondary"
+                      routerLink="/my-qr"
+                      [queryParams]="{ event: event.eventId }"
+                      >Mi QR</a
+                    >
+                    @if (canTakeAttendance(event.eventId)) {
+                      <a
+                        class="btn btn--secondary"
+                        [routerLink]="['/events', event.eventId, 'attendance', 'scan']"
+                        >Check-in</a
+                      >
+                    }
                     @if (event.roles.includes('Teacher')) {
                       <a
                         class="btn btn--secondary"

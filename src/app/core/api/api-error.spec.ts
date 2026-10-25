@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { API_MESSAGES, apiErrorMessage, isApiMessage } from './api-error';
+import { API_MESSAGES, apiErrorMessage, isApiMessage, translateApiMessage } from './api-error';
 
 function businessError(detail: string): HttpErrorResponse {
   return new HttpErrorResponse({
@@ -25,6 +25,17 @@ describe('apiErrorMessage', () => {
 
   it('shows unknown details as received', () => {
     expect(apiErrorMessage(businessError('Something new.'))).toBe('Something new.');
+  });
+
+  it('translates the registration and attendance rules', () => {
+    expect(
+      apiErrorMessage(
+        businessError('An event in state Configuration does not accept registrations or attendance.'),
+      ),
+    ).toBe('Esta feria no está abierta a inscripciones ni asistencia en este momento.');
+    expect(translateApiMessage('This QR code is not registered for this event.')).toBe(
+      'Este QR no corresponde a ninguna inscripción de esta feria.',
+    );
   });
 
   it('explains when the server cannot be reached', () => {

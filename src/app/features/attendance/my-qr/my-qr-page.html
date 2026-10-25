@@ -1,0 +1,144 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>{{ selectedEvent()?.name ?? 'Ferias académicas' }}</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Mi QR</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Registro de asistente y QR</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="my-qr-register-title">
+    <h2 class="title-2" id="my-qr-register-title">Registrarme como asistente</h2>
+
+    <div class="field">
+      <label class="field__label" for="my-qr-name">Nombre</label>
+      <div class="control control--readonly">
+        <input class="control__input" id="my-qr-name" type="text" [value]="user()?.fullName ?? ''" readonly />
+        <img class="control__icon" src="assets/icons/lock.svg" width="16" height="16" alt="" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="my-qr-email">Correo</label>
+      <div class="control control--readonly">
+        <input class="control__input" id="my-qr-email" type="email" [value]="user()?.email ?? ''" readonly />
+        <img class="control__icon" src="assets/icons/lock.svg" width="16" height="16" alt="" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="my-qr-event">Feria</label>
+      <div class="control" [class.control--disabled]="!events().length">
+        <select
+          class="control__input"
+          id="my-qr-event"
+          [disabled]="!events().length"
+          (change)="onEventChange($event)"
+        >
+          @for (event of events(); track event.id) {
+            <option [value]="event.id" [selected]="event.id === selectedEventId()">
+              {{ event.name }}
+            </option>
+          } @empty {
+            <option value="">Sin ferias abiertas</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    @if (errorMessage(); as message) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>{{ message }}</p>
+      </div>
+    }
+
+    <div class="actions">
+      @if (state() === 'registered') {
+        <span class="chip chip--success">Ya estás inscrito en esta feria</span>
+      } @else {
+        <button
+          class="btn btn--primary"
+          type="button"
+          [disabled]="state() !== 'not-registered' || registering()"
+          (click)="register()"
+        >
+          {{ registering() ? 'Registrando…' : 'Registrarme' }}
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="card my-qr__code" aria-labelledby="my-qr-code-title" aria-live="polite">
+    <h2 class="title-2" id="my-qr-code-title">Tu código QR</h2>
+
+    @switch (state()) {
+      @case ('loading') {
+        <p class="text-muted">Cargando tu inscripción…</p>
+      }
+      @case ('no-events') {
+        <span class="diamond" aria-hidden="true"></span>
+        <p>No hay ferias abiertas a inscripción en este momento.</p>
+      }
+      @case ('not-registered') {
+        <span class="diamond" aria-hidden="true"></span>
+        <p>Aún no estás inscrito en esta feria. Regístrate para obtener tu QR de ingreso.</p>
+      }
+      @case ('error') {
+        <p class="text-muted">No pudimos cargar tu QR.</p>
+      }
+      @case ('registered') {
+        @if (registration(); as registration) {
+          @if (qrImage(); as image) {
+            <img
+              class="my-qr__image"
+              [src]="image"
+              width="200"
+              height="200"
+              alt="Código QR de tu inscripción"
+            />
+          }
+          <div class="chip-list">
+            @if (registration.status === 'Cancelled') {
+              <span class="chip chip--danger">Inscripción cancelada</span>
+            } @else {
+              <span class="chip chip--success">Registro confirmado</span>
+            }
+          </div>
+
+          @if (registration.status === 'Cancelled') {
+            <div class="alert alert--danger" role="status">
+              <p>Tu inscripción a esta feria fue cancelada; este QR ya no da acceso.</p>
+            </div>
+          } @else if (registration.enteredAt) {
+            <div class="alert alert--success" role="status">
+              <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+              <div class="alert__body">
+                <p class="alert__title">
+                  Ingresaste a las {{ registration.enteredAt | date: 'HH:mm' }}
+                </p>
+                <p>{{ registration.enteredAt | date: 'longDate' }}</p>
+              </div>
+            </div>
+          }
+
+          <p class="lead lead--strong">{{ user()?.fullName }}</p>
+          <p class="lead">{{ selectedEvent()?.name }}</p>
+          <p>
+            Presenta este código en la entrada de la feria. Sube el brillo de tu pantalla para que
+            se lea mejor.
+          </p>
+          @if (qrImage(); as image) {
+            <div class="actions">
+              <a class="btn btn--primary" [href]="image" [attr.download]="downloadName()">Descargar</a>
+            </div>
+          }
+        }
+      }
+    }
+  </section>
+</div>
