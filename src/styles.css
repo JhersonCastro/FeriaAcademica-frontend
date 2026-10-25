@@ -569,6 +569,10 @@ select.control__input {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .card {
+    padding: 16px;
+  }
+
   .auth-card {
     padding: 24px;
   }
@@ -665,4 +669,51 @@ select.control__input {
   min-width: 32px;
   height: 32px;
   padding: 0 8px;
+}
+
+/* Tables with actions become stacked rows on phones; each cell shows its `data-label`. */
+@media (max-width: 640px) {
+  .table--stack thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table--stack,
+  .table--stack tbody,
+  .table--stack tr,
+  .table--stack td {
+    display: block;
+    width: 100%;
+  }
+
+  .table--stack tr {
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .table--stack tbody tr:first-child {
+    border-top: 0;
+  }
+
+  .table--stack tbody tr:nth-child(even) {
+    background: var(--color-bg);
+  }
+
+  .table--stack td,
+  .table--stack tbody tr:nth-child(even) td {
+    padding: 4px 0;
+    border-top: 0;
+    background: transparent;
+  }
+
+  .table--stack td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
 }

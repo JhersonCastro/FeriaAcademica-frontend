@@ -4,6 +4,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export const API_MESSAGES = {
   invalidCredentials: 'Invalid email or password, or the account is temporarily locked.',
   invalidLink: 'The link is invalid or has expired.',
+  notRegistered: 'You are not registered for this event.',
 } as const;
 
 /**
@@ -56,6 +57,24 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ['Birth date cannot be in the future.', 'La fecha de nacimiento no puede ser futura.'],
   ['Guardian email is not valid.', 'El correo del acudiente no es válido.'],
   ['Password is required.', 'La contraseña es obligatoria.'],
+  // Registrations and QR attendance (scan results arrive as `message`, not as an error).
+  [API_MESSAGES.notRegistered, 'Aún no estás inscrito en esta feria.'],
+  [
+    /An event in state \w+ does not accept registrations or attendance\./,
+    'Esta feria no está abierta a inscripciones ni asistencia en este momento.',
+  ],
+  [
+    'Only the super admin or a coordinator or teacher of the event can take attendance.',
+    'Solo el súper admin o un coordinador o profesor de la feria puede tomar asistencia.',
+  ],
+  ['QR token is required.', 'El QR leído no tiene contenido.'],
+  [
+    'This QR code is not registered for this event.',
+    'Este QR no corresponde a ninguna inscripción de esta feria.',
+  ],
+  ['This registration was cancelled.', 'Esta inscripción fue cancelada.'],
+  ['This person already entered.', 'Esta persona ya ingresó.'],
+  ['Attendance registered.', 'Asistencia registrada.'],
   [/Passwords must be at least (\d+) characters\./, 'La contraseña debe tener al menos $1 caracteres.'],
   [
     'Passwords must have at least one non alphanumeric character.',

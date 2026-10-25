@@ -1,0 +1,76 @@
+.turnout {
+  max-width: 760px;
+  gap: 24px;
+}
+
+.turnout__label {
+  color: var(--color-text-muted);
+}
+
+/* Hero figure: same sans as the UI, one per view. */
+.turnout__figure {
+  font: 600 56px/1.1 var(--font-body);
+  color: var(--color-primary);
+}
+
+.turnout__total {
+  font-size: 32px;
+  color: var(--color-text-muted);
+}
+
+/* Meter: fill and track are two steps of the same blue ramp. */
+.turnout__meter {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: var(--color-support-light);
+}
+
+.turnout__meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: var(--color-support);
+  transition: width 0.4s ease;
+}
+
+.turnout__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.turnout__stat {
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.turnout__stat dt {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.turnout__stat dd {
+  margin: 4px 0 0;
+  color: var(--color-primary);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .turnout__figure {
+    font-size: 44px;
+  }
+
+  .turnout__stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turnout__meter-fill {
+    transition: none;
+  }
+}

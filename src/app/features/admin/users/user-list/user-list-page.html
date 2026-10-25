@@ -61,7 +61,7 @@
   }
 
   <div class="table-wrap" [attr.aria-busy]="loading()">
-    <table class="table">
+    <table class="table table--stack">
       <thead>
         <tr>
           <th scope="col">Nombre</th>
@@ -77,7 +77,7 @@
               <a class="table__link" [routerLink]="['/admin/users', user.id]">{{ user.fullName }}</a>
               <span class="table__secondary">{{ user.email }}</span>
             </td>
-            <td>
+            <td data-label="Roles">
               <div class="chip-list">
                 @if (user.isSuperAdmin) {
                   <span class="chip chip--warning">{{ 'SuperAdmin' | roleLabel }}</span>
@@ -91,7 +91,7 @@
                 }
               </div>
             </td>
-            <td><app-status-chip [status]="user.status" /></td>
+            <td data-label="Estado"><app-status-chip [status]="user.status" /></td>
             <td>
               <a class="btn btn--text" [routerLink]="['/admin/users', user.id]">Ver detalle</a>
             </td>

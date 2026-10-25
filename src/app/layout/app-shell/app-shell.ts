@@ -52,6 +52,16 @@ export class AppShell {
       : null;
   });
 
+  /** Check-in and turnout links for the active event, when the user is staff there. */
+  protected readonly attendanceLinks = computed(() => {
+    const event = this.activeEvents.activeEvent();
+    if (!event || !this.auth.canTakeAttendance(event.eventId)) {
+      return null;
+    }
+    const base = ['/events', event.eventId, 'attendance'];
+    return { scan: [...base, 'scan'], turnout: base };
+  });
+
   constructor() {
     this.router.events
       .pipe(

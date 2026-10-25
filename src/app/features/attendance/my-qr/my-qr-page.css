@@ -1,0 +1,19 @@
+.my-qr__image {
+  width: 200px;
+  height: 200px;
+}
+
+/* On one column the QR goes first: it is what the person opens this page for. */
+@media (max-width: 1024px) {
+  .my-qr__code {
+    order: -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .my-qr__image {
+    align-self: center;
+    width: min(260px, 100%);
+    height: auto;
+  }
+}

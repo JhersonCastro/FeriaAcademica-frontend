@@ -70,4 +70,13 @@ export class AuthService {
       ) ?? false
     );
   }
+
+  /** Same rule as the backend: the super admin, or a coordinator or teacher of the event. */
+  canTakeAttendance(eventId: string): boolean {
+    return (
+      this.isSuperAdmin() ||
+      this.hasEventRole(eventId, 'Coordinator') ||
+      this.hasEventRole(eventId, 'Teacher')
+    );
+  }
 }
