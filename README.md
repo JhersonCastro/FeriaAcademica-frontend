@@ -1,5 +1,6 @@
 # Feria Académica · Frontend
 
+
 Interfaz web de la plataforma de ferias académicas de la Universidad del Cauca. Incluye el acceso (inicio de sesión, recuperación y definición de contraseña, invitaciones), el perfil de cada persona y la administración de usuarios. Está hecha con [Angular](https://angular.dev) 22 y sigue el diseño de Figma `gawasoft-mocaps`.
 
 ## Requisitos
