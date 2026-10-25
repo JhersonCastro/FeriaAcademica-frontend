@@ -66,6 +66,17 @@
 
       @if (!invitation.hasAccount) {
         <!-- No account yet: accepting creates it with these data. -->
+        @if (user(); as current) {
+          <div class="alert alert--warning" role="status">
+            <div class="alert__body">
+              <p class="alert__title">Hay una sesión abierta con otra cuenta</p>
+              <p>
+                Estás como {{ current.email }}. Al crear la cuenta de {{ invitation.email }} se
+                cerrará esa sesión y deberás iniciar sesión con la cuenta nueva.
+              </p>
+            </div>
+          </div>
+        }
         <form class="form" [formGroup]="form" (ngSubmit)="createAccount()" novalidate>
           <div class="field">
             <label class="field__label" for="invitation-email">Correo electrónico</label>

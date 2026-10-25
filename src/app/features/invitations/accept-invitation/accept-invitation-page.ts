@@ -120,9 +120,16 @@ export class AcceptInvitationPage {
     this.errorMessage.set(null);
     this.invitations.accept(this.token, { fullName: fullName.trim(), password }).subscribe({
       next: () => {
-        void this.router.navigate(['/login'], {
-          queryParams: { notice: 'invitation-accepted', email: invitation.email },
-        });
+        // Login redirects away when a session is open, so another person's session must end first.
+        const goToLogin = () =>
+          void this.router.navigate(['/login'], {
+            queryParams: { notice: 'invitation-accepted', email: invitation.email },
+          });
+        if (this.user()) {
+          this.auth.logout().subscribe({ complete: goToLogin, error: goToLogin });
+        } else {
+          goToLogin();
+        }
       },
       error: (error: unknown) => this.fail(error),
     });
