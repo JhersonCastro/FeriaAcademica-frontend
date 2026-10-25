@@ -1,59 +1,73 @@
-# SistemaDeGestionDeEventosFeriaEmpresarialFront
+# Feria Académica · Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.4.
+Interfaz web de la plataforma de ferias académicas de la Universidad del Cauca. Incluye el acceso (inicio de sesión, recuperación y definición de contraseña, invitaciones), el perfil de cada persona y la administración de usuarios. Está hecha con [Angular](https://angular.dev) 22 y sigue el diseño de Figma `gawasoft-mocaps`.
 
-## Development server
+## Requisitos
 
-To start a local development server, run:
+- Node.js y npm.
+- La API del backend ([FeriaAcademica-backend](https://github.com/JhersonCastro/FeriaAcademica-backend)) corriendo, por defecto en `http://localhost:5100`.
+
+## Servidor de desarrollo
 
 ```bash
-ng serve
+npm install
+npm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Abre `http://localhost:4200/`. La aplicación se recarga sola cuando cambias un archivo.
 
-## Code scaffolding
+La URL de la API se configura en `src/environments/environment.ts` (`apiBaseUrl`). La sesión va en una cookie `HttpOnly` (`feria.auth`), por lo que el frontend no guarda tokens y todas las llamadas se envían con credenciales. El backend ya permite CORS desde `http://localhost:4200`.
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Rutas principales
 
-```bash
-ng generate component component-name
+| Ruta | Quién | Para |
+| --- | --- | --- |
+| `/login` | Todos | Iniciar sesión |
+| `/forgot-password` | Todos | Pedir el enlace de recuperación |
+| `/account/set-password` · `/account/reset-password` | Todos (desde el correo) | Definir la primera contraseña o restablecerla |
+| `/invitations/:token` | Todos (desde el correo) | Ver y aceptar una invitación |
+| `/` · `/profile` | Con sesión | Inicio y mis datos |
+| `/admin/users` | Súper admin | Listado, detalle, creación y edición de usuarios |
+| `/events/:eventId/invitations/new` | Profesor del evento | Invitar estudiantes o invitados |
+| `/unauthorized` | Con sesión | Aviso cuando no se tienen permisos |
+
+## Estructura
+
+```
+src/app/
+├── core/       Servicios de la API, sesión, interceptor 401, guards y modelos
+├── shared/     Validadores y componentes reutilizables (campo de contraseña, chips...)
+├── layout/     Diseño institucional (pantallas públicas) y barra lateral (área con sesión)
+└── features/   Pantallas: auth, invitations, profile, admin/users, events, home
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Los estilos usan variables CSS con los tokens del diseño (`src/styles.css`); no hay librerías de componentes.
+
+## Compilar
 
 ```bash
+npm run build
+```
+
+Los archivos generados quedan en `dist/`. La compilación de producción optimiza la aplicación para rendimiento y velocidad.
+
+## Pruebas unitarias
+
+Se ejecutan con [Vitest](https://vitest.dev/):
+
+```bash
+npm test
+```
+
+## Generar código
+
+Angular CLI trae herramientas para generar componentes, directivas, pipes y más:
+
+```bash
+ng generate component nombre-del-componente
 ng generate --help
 ```
 
-## Building
+## Recursos adicionales
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Para más información sobre Angular CLI y sus comandos, consulta la [referencia de Angular CLI](https://angular.dev/tools/cli).
