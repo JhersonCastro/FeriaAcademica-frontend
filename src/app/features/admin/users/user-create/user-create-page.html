@@ -1,0 +1,123 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/admin/users">Usuarios</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Crear usuario</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Crear usuario</h1>
+    <p class="text-muted">No hay registro público: las cuentas las crea el súper admin.</p>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="create-user-title">
+    <h2 class="title-2" id="create-user-title">Datos de la cuenta</h2>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="create-email">Correo electrónico</label>
+        <div class="control" [class.control--error]="showError('email')">
+          <input
+            class="control__input"
+            id="create-email"
+            type="email"
+            inputmode="email"
+            autocomplete="off"
+            formControlName="email"
+            [attr.aria-invalid]="showError('email')"
+            [attr.aria-describedby]="showError('email') ? 'create-email-error' : null"
+          />
+          @if (showError('email')) {
+            <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+          }
+        </div>
+        @if (showError('email')) {
+          <p class="field__error" id="create-email-error">Ingresa un correo electrónico válido.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="create-name">Nombre completo</label>
+        <div class="control" [class.control--error]="showError('fullName')">
+          <input
+            class="control__input"
+            id="create-name"
+            type="text"
+            autocomplete="off"
+            formControlName="fullName"
+            [attr.maxlength]="fullNameMaxLength"
+            [attr.aria-invalid]="showError('fullName')"
+            [attr.aria-describedby]="showError('fullName') ? 'create-name-error' : null"
+          />
+          @if (showError('fullName')) {
+            <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+          }
+        </div>
+        @if (showError('fullName')) {
+          <p class="field__error" id="create-name-error">Ingresa el nombre completo.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="create-phone">
+          Teléfono <span class="field__optional">(opcional)</span>
+        </label>
+        <div class="control" [class.control--error]="showError('phoneNumber')">
+          <input
+            class="control__input"
+            id="create-phone"
+            type="tel"
+            autocomplete="off"
+            formControlName="phoneNumber"
+            [attr.aria-invalid]="showError('phoneNumber')"
+            aria-describedby="create-phone-help"
+          />
+          @if (showError('phoneNumber')) {
+            <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+          }
+        </div>
+        @if (showError('phoneNumber')) {
+          <p class="field__error" id="create-phone-help">
+            El teléfono debe tener entre 7 y 15 dígitos; puedes usar +, espacios, guiones y
+            paréntesis.
+          </p>
+        } @else {
+          <p class="field__hint" id="create-phone-help">Entre 7 y 15 dígitos.</p>
+        }
+      </div>
+
+      @if (errorMessage(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Creando…' : 'Crear usuario' }}
+        </button>
+        <a class="btn btn--text" routerLink="/admin/users">Cancelar</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="create-user-help-title">
+    <h2 class="title-2" id="create-user-help-title">Qué pasa después</h2>
+    <div class="alert alert--info">
+      <div class="alert__body">
+        <p class="alert__title">La cuenta queda pendiente</p>
+        <p>
+          La persona recibe un correo con un enlace para definir su contraseña. El enlace vence en
+          24 horas y sirve una sola vez.
+        </p>
+      </div>
+    </div>
+    <p class="text-muted">
+      Los roles se asignan por feria desde el detalle del usuario, una vez creada la cuenta.
+    </p>
+  </section>
+</div>

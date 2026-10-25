@@ -1,0 +1,131 @@
+<div class="shell" [class.shell--nav-open]="navOpen()">
+  <aside class="sidebar" id="app-sidebar">
+    <div class="sidebar__crest">
+      <img
+        src="assets/brand/escudo-unicauca.png"
+        width="97"
+        height="145"
+        alt="Escudo de la Universidad del Cauca"
+      />
+    </div>
+    <p class="sidebar__overline">Vigilada Mineducación</p>
+    <p class="sidebar__title">Ferias académicas</p>
+
+    @if (activeEvents.events().length) {
+      <label class="event-picker">
+        <span class="event-picker__label">FERIA ACTIVA</span>
+        <span class="event-picker__control">
+          <select class="event-picker__select" (change)="selectEvent($event)">
+            @for (event of activeEvents.events(); track event.eventId) {
+              <option
+                [value]="event.eventId"
+                [selected]="event.eventId === activeEvents.activeEvent()?.eventId"
+              >
+                {{ event.eventName }}
+              </option>
+            }
+          </select>
+        </span>
+      </label>
+    }
+
+    <nav class="nav" aria-label="Navegación principal">
+      <a
+        class="nav__link"
+        routerLink="/"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        ariaCurrentWhenActive="page"
+        >Inicio</a
+      >
+      @if (inviteLink(); as link) {
+        <a
+          class="nav__link"
+          [routerLink]="link"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >Mis invitados</a
+        >
+      }
+      @if (isSuperAdmin()) {
+        <a
+          class="nav__link"
+          routerLink="/admin/users"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >Usuarios</a
+        >
+      }
+      <a
+        class="nav__link"
+        routerLink="/profile"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >Mis datos y perfil</a
+      >
+    </nav>
+
+    <p class="sidebar__credit">Desarrollado por GAWASOFT</p>
+  </aside>
+
+  @if (navOpen()) {
+    <button
+      type="button"
+      class="shell__backdrop"
+      aria-label="Cerrar menú"
+      (click)="navOpen.set(false)"
+    ></button>
+  }
+
+  <div class="workspace">
+    <header class="topbar">
+      <button
+        type="button"
+        class="btn btn--text topbar__menu"
+        aria-controls="app-sidebar"
+        [attr.aria-expanded]="navOpen()"
+        (click)="navOpen.set(!navOpen())"
+      >
+        <span aria-hidden="true">☰</span> Menú
+      </button>
+      <p class="topbar__context">
+        {{ activeEvents.activeEvent()?.eventName ?? 'Ferias académicas' }}
+      </p>
+      @if (roleSummary()) {
+        <span class="chip chip--info topbar__roles">{{ roleSummary() }}</span>
+      }
+      <div class="user-menu">
+        <button
+          type="button"
+          class="user-menu__trigger"
+          aria-haspopup="menu"
+          aria-controls="user-menu"
+          [attr.aria-expanded]="userMenuOpen()"
+          [attr.aria-label]="'Opciones de ' + (user()?.fullName ?? 'la cuenta')"
+          (click)="userMenuOpen.set(!userMenuOpen())"
+        >
+          {{ initials() }}
+        </button>
+        @if (userMenuOpen()) {
+          <div class="user-menu__panel" id="user-menu" role="menu">
+            <div class="user-menu__who">
+              <p class="user-menu__name">{{ user()?.fullName }}</p>
+              <p class="text-small text-muted">{{ user()?.email }}</p>
+            </div>
+            <a class="user-menu__item" role="menuitem" routerLink="/profile">Mis datos y perfil</a>
+            <button class="user-menu__item" role="menuitem" type="button" (click)="logout()">
+              Cerrar sesión
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <main class="page">
+      <router-outlet />
+      <footer class="page__footer">
+        Universidad del Cauca · Facultad de Ingeniería Electrónica y Telecomunicaciones · Popayán
+      </footer>
+    </main>
+  </div>
+</div>

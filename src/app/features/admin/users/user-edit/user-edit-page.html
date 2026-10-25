@@ -1,0 +1,79 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/admin/users">Usuarios</a>
+  <span aria-hidden="true">/</span>
+  @if (user(); as user) {
+    <a [routerLink]="['/admin/users', user.id]">{{ user.fullName }}</a>
+    <span aria-hidden="true">/</span>
+  }
+  <span aria-current="page">Editar</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Editar usuario</h1>
+    <p class="text-muted">Aquí sí puedes cambiar el correo de la cuenta.</p>
+  </div>
+</header>
+
+@if (loading()) {
+  <p class="state">Cargando usuario…</p>
+} @else if (loadError(); as message) {
+  <div class="alert alert--danger" role="alert">
+    <p>{{ message }}</p>
+  </div>
+} @else {
+  <section class="card card--narrow" aria-labelledby="edit-user-title">
+    <h2 class="title-2" id="edit-user-title">Datos del usuario</h2>
+
+    @if (submitted() && form.invalid) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>Corrige los campos marcados para poder guardar.</p>
+      </div>
+    }
+
+    <form class="form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="field">
+        <label class="field__label" for="edit-email">Correo electrónico</label>
+        <div class="control" [class.control--error]="showEmailError()">
+          <input
+            class="control__input"
+            id="edit-email"
+            type="email"
+            inputmode="email"
+            autocomplete="off"
+            formControlName="email"
+            [attr.aria-invalid]="showEmailError()"
+            [attr.aria-describedby]="showEmailError() ? 'edit-email-error' : null"
+          />
+          @if (showEmailError()) {
+            <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+          }
+        </div>
+        @if (showEmailError()) {
+          <p class="field__error" id="edit-email-error">Ingresa un correo electrónico válido.</p>
+        }
+      </div>
+
+      <app-personal-data-fields
+        idPrefix="edit"
+        [group]="form.controls.personal"
+        [submitted]="submitted()"
+      />
+
+      @if (errorMessage(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+        <a class="btn btn--text" [routerLink]="['/admin/users', user()?.id]">Cancelar</a>
+      </div>
+    </form>
+  </section>
+}

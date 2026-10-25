@@ -1,0 +1,41 @@
+<div class="access">
+  <div class="access__main">
+    <aside class="identity">
+      <div class="identity__crest">
+        <img
+          src="assets/brand/escudo-unicauca.png"
+          width="97"
+          height="145"
+          alt="Escudo de la Universidad del Cauca"
+        />
+      </div>
+      <p class="identity__overline">Vigilada Mineducación</p>
+      <p class="identity__title">Feria Académica de Proyectos FIET 2026</p>
+      <p class="identity__tagline">Conectamos conocimiento, innovación y territorio.</p>
+      <div class="identity__motif" aria-hidden="true">
+        <span class="rhombus rhombus--lg"></span>
+        <span class="rhombus rhombus--md"></span>
+        <span class="rhombus rhombus--sm"></span>
+      </div>
+      <p class="identity__faculty">
+        Facultad de Ingeniería Electrónica y Telecomunicaciones · Popayán
+      </p>
+      <p class="identity__date">Fecha de referencia: {{ today | date: 'longDate' }}</p>
+    </aside>
+
+    <main class="access__content">
+      <router-outlet />
+      <p class="access__help">
+        ¿Necesitas ayuda?
+        <a href="mailto:soporte@unicauca.edu.co">soporte&#64;unicauca.edu.co</a>
+      </p>
+    </main>
+  </div>
+
+  <footer class="access__footer">
+    <p class="access__credit">Desarrollado por GAWASOFT</p>
+    <div class="access__band">
+      <p>Hacia una Universidad comprometida con la paz territorial</p>
+    </div>
+  </footer>
+</div>

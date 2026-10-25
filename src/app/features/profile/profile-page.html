@@ -1,0 +1,130 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Ferias académicas</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Mis datos y perfil</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Mis datos y perfil</h1>
+    <p class="text-muted">Una cuenta global; roles acumulados por feria.</p>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="profile-form-title">
+    <div>
+      <h2 class="title-2" id="profile-form-title">Modificar mis datos</h2>
+      <p class="text-muted">Actualiza los datos personales permitidos de tu cuenta.</p>
+    </div>
+
+    @if (submitted() && form.invalid) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>Corrige los campos marcados para poder guardar.</p>
+      </div>
+    }
+    @if (errorMessage(); as message) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>{{ message }}</p>
+      </div>
+    }
+    @if (saved()) {
+      <div class="alert alert--success" role="status">
+        <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+        <div class="alert__body">
+          <p class="alert__title">Tus datos se guardaron</p>
+        </div>
+      </div>
+    }
+
+    <form class="form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <app-personal-data-fields idPrefix="profile" [group]="form" [submitted]="submitted()" />
+
+      <div class="field">
+        <label class="field__label" for="profile-email">Correo electrónico (no editable)</label>
+        <div class="control control--readonly">
+          <input
+            class="control__input"
+            id="profile-email"
+            type="email"
+            [value]="user()?.email ?? ''"
+            readonly
+          />
+          <img class="control__icon" src="assets/icons/lock.svg" width="16" height="16" alt="" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  @if (user(); as user) {
+    <section class="card" aria-labelledby="profile-account-title">
+      <h2 class="title-2" id="profile-account-title">Mi cuenta</h2>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Detalle</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Correo</td>
+              <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+              <td>Estado</td>
+              <td><app-status-chip [status]="user.status" /></td>
+            </tr>
+            <tr>
+              <td>Cuenta creada</td>
+              <td>{{ user.createdAt | date: 'longDate' }}</td>
+            </tr>
+            @if (user.isSuperAdmin) {
+              <tr>
+                <td>Rol global</td>
+                <td><span class="chip chip--info">{{ 'SuperAdmin' | roleLabel }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="title-3">Roles por feria</h3>
+      @if (events().length) {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Feria</th>
+                <th scope="col">Roles</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (event of events(); track event.eventId) {
+                <tr>
+                  <td>{{ event.eventName }}</td>
+                  <td>
+                    <div class="chip-list">
+                      @for (role of event.roles; track role) {
+                        <span class="chip chip--info">{{ role | roleLabel }}</span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="text-muted">Aún no tienes roles en ninguna feria.</p>
+      }
+    </section>
+  }
+</div>

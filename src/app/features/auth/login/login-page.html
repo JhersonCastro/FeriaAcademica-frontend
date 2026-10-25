@@ -1,0 +1,75 @@
+<section class="card auth-card" aria-labelledby="login-title">
+  <p class="eyebrow">CUENTA GLOBAL · UNICAUCA</p>
+  <h1 class="title-1" id="login-title">Inicio de sesión</h1>
+
+  @if (notice) {
+    <div class="alert" [class]="'alert--' + notice.tone" role="status">
+      <p>{{ notice.text }}</p>
+    </div>
+  }
+
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="field">
+      <label class="field__label" for="login-email">Correo electrónico</label>
+      <div class="control" [class.control--error]="showError('email')">
+        <input
+          class="control__input"
+          id="login-email"
+          type="email"
+          inputmode="email"
+          autocomplete="username"
+          formControlName="email"
+          [attr.aria-invalid]="showError('email')"
+          [attr.aria-describedby]="showError('email') ? 'login-email-error' : null"
+        />
+        @if (showError('email')) {
+          <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+        }
+      </div>
+      @if (showError('email')) {
+        <p class="field__error" id="login-email-error">
+          @if (form.controls.email.hasError('required')) {
+            Ingresa tu correo electrónico.
+          } @else {
+            Ingresa un correo electrónico válido.
+          }
+        </p>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="login-password">Contraseña</label>
+      <app-password-input
+        inputId="login-password"
+        autocomplete="current-password"
+        formControlName="password"
+        [invalid]="showError('password')"
+        [describedBy]="showError('password') ? 'login-password-error' : undefined"
+      />
+      @if (showError('password')) {
+        <p class="field__error" id="login-password-error">Ingresa tu contraseña.</p>
+      }
+    </div>
+
+    <label class="checkbox">
+      <input type="checkbox" formControlName="remember" />
+      Recordarme
+    </label>
+
+    @if (errorMessage(); as message) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>{{ message }}</p>
+      </div>
+    }
+
+    <div class="actions">
+      <button class="btn btn--primary btn--lg" type="submit" [disabled]="submitting()">
+        {{ submitting() ? 'Ingresando…' : 'Ingresar' }}
+      </button>
+    </div>
+    <div class="actions">
+      <a class="btn btn--text" routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
+    </div>
+    <p class="text-small text-muted">Una cuenta global; roles acumulados por feria.</p>
+  </form>
+</section>

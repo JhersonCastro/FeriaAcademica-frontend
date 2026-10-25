@@ -1,0 +1,136 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Usuarios</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Usuarios</h1>
+    <p class="text-muted">Cuentas de la plataforma y sus roles por feria.</p>
+  </div>
+  <a class="btn btn--primary" routerLink="/admin/users/new">Crear usuario</a>
+</header>
+
+<section class="card" aria-label="Listado de usuarios">
+  <div class="filters" role="search">
+    <div class="field">
+      <label class="field__label" for="users-search">Buscar</label>
+      <div class="control">
+        <img class="control__icon" src="assets/icons/search.svg" width="16" height="16" alt="" />
+        <input
+          class="control__input"
+          id="users-search"
+          type="search"
+          placeholder="Nombre o correo…"
+          [value]="search()"
+          (input)="onSearch($event)"
+        />
+      </div>
+    </div>
+    <div class="field">
+      <label class="field__label" for="users-role">Rol</label>
+      <div class="control">
+        <select class="control__input" id="users-role" (change)="onRoleChange($event)">
+          <option value="" [selected]="role() === ''">Todos los roles</option>
+          @for (option of roleFilters; track option) {
+            <option [value]="option" [selected]="role() === option">{{ option | roleLabel }}</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field__label" for="users-status">Estado</label>
+      <div class="control">
+        <select class="control__input" id="users-status" (change)="onStatusChange($event)">
+          <option value="" [selected]="status() === ''">Todos los estados</option>
+          @for (option of statuses; track option) {
+            <option [value]="option" [selected]="status() === option">
+              {{ statusLabel(option) }}
+            </option>
+          }
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  <div class="table-wrap" [attr.aria-busy]="loading()">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Nombre</th>
+          <th scope="col">Roles</th>
+          <th scope="col">Estado</th>
+          <th scope="col"><span class="visually-hidden">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of result()?.items ?? []; track user.id) {
+          <tr>
+            <td>
+              <a class="table__link" [routerLink]="['/admin/users', user.id]">{{ user.fullName }}</a>
+              <span class="table__secondary">{{ user.email }}</span>
+            </td>
+            <td>
+              <div class="chip-list">
+                @if (user.isSuperAdmin) {
+                  <span class="chip chip--warning">{{ 'SuperAdmin' | roleLabel }}</span>
+                }
+                @for (role of eventRoles(user); track role) {
+                  <span class="chip chip--info">{{ role | roleLabel }}</span>
+                } @empty {
+                  @if (!user.isSuperAdmin) {
+                    <span class="text-muted">Sin roles</span>
+                  }
+                }
+              </div>
+            </td>
+            <td><app-status-chip [status]="user.status" /></td>
+            <td>
+              <a class="btn btn--text" [routerLink]="['/admin/users', user.id]">Ver detalle</a>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="state">
+              {{ loading() ? 'Cargando usuarios…' : 'No hay usuarios que coincidan con los filtros.' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (result(); as result) {
+      <div class="pager">
+        <span>{{ result.total }} registros · Página {{ result.page }} de {{ totalPages() }}</span>
+        <div class="pager__controls">
+          <button
+            class="btn btn--text pager__btn"
+            type="button"
+            aria-label="Página anterior"
+            [disabled]="page() <= 1 || loading()"
+            (click)="goToPage(page() - 1)"
+          >
+            ‹
+          </button>
+          <span aria-current="page">{{ result.page }}</span>
+          <button
+            class="btn btn--text pager__btn"
+            type="button"
+            aria-label="Página siguiente"
+            [disabled]="page() >= totalPages() || loading()"
+            (click)="goToPage(page() + 1)"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</section>

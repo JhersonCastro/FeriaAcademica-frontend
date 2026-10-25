@@ -1,0 +1,115 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span aria-current="page">Inicio</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Hola, {{ firstName() }}</h1>
+    <p class="text-muted">{{ user()?.email }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<div class="grid-2">
+  @if (isSuperAdmin()) {
+    <section class="card" aria-labelledby="home-all-events-title">
+      <h2 class="title-2" id="home-all-events-title">Todas las ferias</h2>
+      @if (allEvents().length) {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Feria</th>
+                <th scope="col">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (event of allEvents(); track event.id) {
+                <tr>
+                  <td>{{ event.name }}</td>
+                  <td><span class="chip chip--neutral">{{ event.status }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="text-muted">Todavía no hay ferias creadas.</p>
+      }
+    </section>
+  }
+
+  <section class="card" aria-labelledby="home-events-title">
+    <h2 class="title-2" id="home-events-title">Mis ferias</h2>
+    @if (activeEvents.events().length) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Feria</th>
+              <th scope="col">Roles</th>
+              <th scope="col"><span class="visually-hidden">Acciones</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (event of activeEvents.events(); track event.eventId) {
+              <tr>
+                <td>
+                  {{ event.eventName }}
+                  @if (event.eventId === activeEvents.activeEvent()?.eventId) {
+                    <span class="table__secondary">Feria activa</span>
+                  }
+                </td>
+                <td>
+                  <div class="chip-list">
+                    @for (role of event.roles; track role) {
+                      <span class="chip chip--info">{{ role | roleLabel }}</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="actions">
+                    @if (event.roles.includes('Teacher')) {
+                      <a
+                        class="btn btn--secondary"
+                        [routerLink]="['/events', event.eventId, 'invitations', 'new']"
+                        >Invitar</a
+                      >
+                    }
+                    @if (event.eventId !== activeEvents.activeEvent()?.eventId) {
+                      <button
+                        class="btn btn--text"
+                        type="button"
+                        (click)="activeEvents.select(event.eventId)"
+                      >
+                        Usar como activa
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="text-muted">
+        Aún no tienes roles en ninguna feria. Cuando te inviten o te asignen un rol, la verás aquí.
+      </p>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="home-account-title">
+    <h2 class="title-2" id="home-account-title">Mi cuenta</h2>
+    <p>Revisa y actualiza tus datos personales.</p>
+    <div class="actions">
+      <a class="btn btn--secondary" routerLink="/profile">Mis datos y perfil</a>
+    </div>
+    @if (isSuperAdmin()) {
+      <h3 class="title-3">Administración</h3>
+      <p>Crea cuentas, edítalas, actívalas o desactívalas y asigna roles por feria.</p>
+      <div class="actions">
+        <a class="btn btn--primary" routerLink="/admin/users">Gestionar usuarios</a>
+      </div>
+    }
+  </section>
+</div>

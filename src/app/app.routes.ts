@@ -1,40 +1,133 @@
-import { inject } from '@angular/core';
-import { CanActivateFn, Router, Routes } from '@angular/router';
-import { authGuard } from './core/auth.guard';
-import { RegistroService } from './core/registro.service';
-
-const enviado: CanActivateFn = () => inject(RegistroService).proyecto().referencia ? true : inject(Router).createUrlTree(['/feria/proyecto']);
-const confirmado: CanActivateFn = () => inject(RegistroService).espectador().referencia ? true : inject(Router).createUrlTree(['/feria/espectador']);
-const revisable: CanActivateFn = () => inject(RegistroService).espectador().nombre ? true : inject(Router).createUrlTree(['/feria/espectador/formulario']);
+import { Routes } from '@angular/router';
+import {
+  authGuard,
+  eventRoleGuard,
+  guestGuard,
+  superAdminGuard,
+} from './core/auth/auth.guards';
+import { AppShell } from './layout/app-shell/app-shell';
+import { PublicLayout } from './layout/public-layout/public-layout';
 
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/login').then(m => m.LoginComponent), title: 'Iniciar sesión · FIET' },
-  {
-    path: 'feria',
-    children: [
-      { path: 'proyecto', loadComponent: () => import('./pages/publico/proyecto').then(m => m.ProyectoDescubrirComponent), title: 'Inscripción de proyecto · FIET' },
-      { path: 'proyecto/equipo', loadComponent: () => import('./pages/publico/proyecto').then(m => m.ProyectoEquipoComponent), title: 'Estudiante y equipo · FIET' },
-      { path: 'proyecto/informacion', loadComponent: () => import('./pages/publico/proyecto').then(m => m.ProyectoInfoComponent), title: 'Información del proyecto · FIET' },
-      { path: 'proyecto/enviada', canActivate: [enviado], loadComponent: () => import('./pages/publico/proyecto').then(m => m.ProyectoEnviadaComponent), title: 'Solicitud enviada · FIET' },
-      { path: 'espectador', loadComponent: () => import('./pages/publico/espectador').then(m => m.EspEventoComponent), title: 'Registro de asistencia · FIET' },
-      { path: 'espectador/formulario', loadComponent: () => import('./pages/publico/espectador').then(m => m.EspFormularioComponent), title: 'Formulario de asistencia · FIET' },
-      { path: 'espectador/revision', canActivate: [revisable], loadComponent: () => import('./pages/publico/espectador').then(m => m.EspRevisionComponent), title: 'Revisar inscripción · FIET' },
-      { path: 'espectador/confirmada', canActivate: [confirmado], loadComponent: () => import('./pages/publico/espectador').then(m => m.EspConfirmadaComponent), title: 'Inscripción confirmada · FIET' },
-      { path: '', pathMatch: 'full', redirectTo: 'espectador' },
-    ],
-  },
+  // Evaluated first: its guard sends `/` to login. A public layout listed before it would match
+  // `/` with no child and render an empty card.
+  // Signed-in area.
   {
     path: '',
+    component: AppShell,
     canActivate: [authGuard],
-    loadComponent: () => import('./layout/shell').then(m => m.ShellComponent),
     children: [
-      { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent), title: 'Panel Principal · FIET' },
-      { path: 'eventos', loadComponent: () => import('./pages/eventos/eventos').then(m => m.EventosComponent), title: 'Gestión de Eventos · FIET' },
-      { path: 'eventos/:id', loadComponent: () => import('./pages/evento-detalle/evento-detalle').then(m => m.EventoDetalleComponent), title: 'Detalle del Evento · FIET' },
-      { path: 'inscripciones', loadComponent: () => import('./pages/inscripciones/inscripciones').then(m => m.InscripcionesComponent), title: 'Inscripciones · FIET' },
-      { path: 'certificados', loadComponent: () => import('./pages/certificados/certificados').then(m => m.CertificadosComponent), title: 'Certificados · FIET' },
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: '',
+        pathMatch: 'full',
+        title: 'Inicio',
+        loadComponent: () => import('./features/home/home-page').then((m) => m.HomePage),
+      },
+      {
+        path: 'profile',
+        title: 'Mis datos y perfil',
+        loadComponent: () => import('./features/profile/profile-page').then((m) => m.ProfilePage),
+      },
+      {
+        path: 'admin/users',
+        canActivate: [superAdminGuard],
+        children: [
+          {
+            path: '',
+            title: 'Usuarios',
+            loadComponent: () =>
+              import('./features/admin/users/user-list/user-list-page').then(
+                (m) => m.UserListPage,
+              ),
+          },
+          {
+            path: 'new',
+            title: 'Crear usuario',
+            loadComponent: () =>
+              import('./features/admin/users/user-create/user-create-page').then(
+                (m) => m.UserCreatePage,
+              ),
+          },
+          {
+            path: ':id',
+            title: 'Detalle de usuario',
+            loadComponent: () =>
+              import('./features/admin/users/user-detail/user-detail-page').then(
+                (m) => m.UserDetailPage,
+              ),
+          },
+          {
+            path: ':id/edit',
+            title: 'Editar usuario',
+            loadComponent: () =>
+              import('./features/admin/users/user-edit/user-edit-page').then(
+                (m) => m.UserEditPage,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'events/:eventId/invitations/new',
+        title: 'Invitar a la feria',
+        canActivate: [eventRoleGuard('Teacher')],
+        loadComponent: () => import('./features/events/invite/invite-page').then((m) => m.InvitePage),
+      },
+      {
+        path: 'unauthorized',
+        title: 'No autorizado',
+        loadComponent: () =>
+          import('./features/errors/unauthorized-page').then((m) => m.UnauthorizedPage),
+      },
     ],
   },
+
+  // Public screens, most of them opened from links in emails.
+  {
+    path: '',
+    component: PublicLayout,
+    children: [
+      {
+        path: 'login',
+        title: 'Inicio de sesión',
+        canActivate: [guestGuard],
+        loadComponent: () => import('./features/auth/login/login-page').then((m) => m.LoginPage),
+      },
+      {
+        path: 'forgot-password',
+        title: 'Recuperar contraseña',
+        loadComponent: () =>
+          import('./features/auth/forgot-password/forgot-password-page').then(
+            (m) => m.ForgotPasswordPage,
+          ),
+      },
+      {
+        path: 'account/set-password',
+        title: 'Definir contraseña',
+        data: { mode: 'set' },
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password-page').then(
+            (m) => m.ResetPasswordPage,
+          ),
+      },
+      {
+        path: 'account/reset-password',
+        title: 'Restablecer contraseña',
+        data: { mode: 'reset' },
+        loadComponent: () =>
+          import('./features/auth/reset-password/reset-password-page').then(
+            (m) => m.ResetPasswordPage,
+          ),
+      },
+      {
+        path: 'invitations/:token',
+        title: 'Aceptar invitación',
+        loadComponent: () =>
+          import('./features/invitations/accept-invitation/accept-invitation-page').then(
+            (m) => m.AcceptInvitationPage,
+          ),
+      },
+    ],
+  },
+
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,206 @@
+<section class="card auth-card" aria-labelledby="invitation-title" aria-live="polite">
+  <p class="eyebrow">CUENTA GLOBAL · UNICAUCA</p>
+
+  @switch (state().kind) {
+    @case ('loading') {
+      <h1 class="title-1" id="invitation-title">Aceptar invitación</h1>
+      <p class="text-muted">Cargando la invitación…</p>
+    }
+    @case ('not-found') {
+      <h1 class="title-1" id="invitation-title">Invitación no válida</h1>
+      <span class="diamond" aria-hidden="true"></span>
+      <h2 class="title-2">No encontramos esta invitación</h2>
+      <p class="lead">Revisa que el enlace esté completo o pide una nueva invitación a tu profesor.</p>
+      <div class="actions">
+        <a class="btn btn--text" routerLink="/login">Ir a iniciar sesión</a>
+      </div>
+    }
+    @case ('error') {
+      <h1 class="title-1" id="invitation-title">Aceptar invitación</h1>
+      <div class="alert alert--danger" role="alert">
+        <p>{{ loadError() }}</p>
+      </div>
+    }
+  }
+
+  @if (invitation(); as invitation) {
+    @if (invitation.status !== 'Pending') {
+      @switch (invitation.status) {
+        @case ('Expired') {
+          <h1 class="title-1" id="invitation-title">Invitación vencida</h1>
+          <span class="diamond" aria-hidden="true"></span>
+          <h2 class="title-2">Esta invitación ya no es válida</h2>
+          <p class="lead">Venció el {{ invitation.expiresAt | date: 'longDate' }}.</p>
+          <p>Pide una nueva invitación a tu profesor.</p>
+        }
+        @case ('Accepted') {
+          <h1 class="title-1" id="invitation-title">Invitación aceptada</h1>
+          <span class="diamond" aria-hidden="true"></span>
+          <h2 class="title-2">Esta invitación ya fue aceptada</h2>
+          <p class="lead">
+            El rol en {{ invitation.eventName }} ya está asignado. Inicia sesión para continuar.
+          </p>
+        }
+        @default {
+          <h1 class="title-1" id="invitation-title">Invitación no disponible</h1>
+          <span class="diamond" aria-hidden="true"></span>
+          <h2 class="title-2">Esta invitación ya no es válida</h2>
+          <p>Pide una nueva invitación a tu profesor.</p>
+        }
+      }
+      <div class="actions">
+        <a class="btn btn--text" [routerLink]="user() ? '/' : '/login'">
+          {{ user() ? 'Ir a mi panel' : 'Ir a iniciar sesión' }}
+        </a>
+      </div>
+    } @else {
+      <h1 class="title-1" id="invitation-title">Aceptar invitación</h1>
+      <p class="lead lead--strong">Te invitaron a participar en {{ invitation.eventName }}.</p>
+      <div>
+        <span class="chip chip--info">Rol: {{ roleLabel() }}</span>
+      </div>
+      <p class="text-muted">
+        Invitación para {{ invitation.email }} · vence el
+        {{ invitation.expiresAt | date: "d 'de' MMMM 'de' y, h:mm a" }}
+      </p>
+
+      @if (!invitation.hasAccount) {
+        <!-- No account yet: accepting creates it with these data. -->
+        <form class="form" [formGroup]="form" (ngSubmit)="createAccount()" novalidate>
+          <div class="field">
+            <label class="field__label" for="invitation-email">Correo electrónico</label>
+            <div class="control control--readonly">
+              <input
+                class="control__input"
+                id="invitation-email"
+                type="email"
+                [value]="invitation.email"
+                readonly
+              />
+              <img class="control__icon" src="assets/icons/lock.svg" width="16" height="16" alt="" />
+            </div>
+            <p class="field__hint">Es el correo al que llegó la invitación.</p>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="invitation-name">Nombre completo</label>
+            <div class="control" [class.control--error]="showError('fullName')">
+              <input
+                class="control__input"
+                id="invitation-name"
+                type="text"
+                autocomplete="name"
+                formControlName="fullName"
+                [attr.maxlength]="fullNameMaxLength"
+                [attr.aria-invalid]="showError('fullName')"
+                [attr.aria-describedby]="showError('fullName') ? 'invitation-name-error' : null"
+              />
+              @if (showError('fullName')) {
+                <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+              }
+            </div>
+            @if (showError('fullName')) {
+              <p class="field__error" id="invitation-name-error">Ingresa tu nombre completo.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="invitation-password">Contraseña</label>
+            <app-password-input
+              inputId="invitation-password"
+              autocomplete="new-password"
+              formControlName="password"
+              describedBy="invitation-password-strength"
+              [invalid]="showError('password')"
+            />
+            <app-password-strength hintId="invitation-password-strength" [password]="password()" />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="invitation-confirmation">Confirmar contraseña</label>
+            <app-password-input
+              inputId="invitation-confirmation"
+              autocomplete="new-password"
+              formControlName="confirmation"
+              [invalid]="showError('confirmation')"
+              [describedBy]="showError('confirmation') ? 'invitation-confirmation-error' : undefined"
+            />
+            @if (showError('confirmation')) {
+              <p class="field__error" id="invitation-confirmation-error">
+                @if (form.controls.confirmation.hasError('required')) {
+                  Confirma tu contraseña.
+                } @else {
+                  Las contraseñas no coinciden.
+                }
+              </p>
+            }
+          </div>
+
+          @if (errorMessage(); as message) {
+            <div class="alert alert--danger alert--compact" role="alert">
+              <p>{{ message }}</p>
+            </div>
+          }
+
+          <div class="actions">
+            <button class="btn btn--primary" type="submit" [disabled]="accepting()">
+              {{ accepting() ? 'Aceptando…' : 'Crear cuenta y aceptar' }}
+            </button>
+          </div>
+          <p class="text-small text-muted">Después de aceptar, inicia sesión con tu nueva cuenta.</p>
+        </form>
+      } @else if (accepted()) {
+        <div class="alert alert--success" role="status">
+          <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+          <div class="alert__body">
+            <p class="alert__title">Ahora eres {{ roleLabel().toLowerCase() }} de esta feria</p>
+          </div>
+        </div>
+        <div class="actions">
+          <a class="btn btn--secondary" routerLink="/">Ir a mi panel</a>
+        </div>
+      } @else if (signedInAsInvitee()) {
+        @if (errorMessage(); as message) {
+          <div class="alert alert--danger alert--compact" role="alert">
+            <p>{{ message }}</p>
+          </div>
+        }
+        <div class="actions">
+          <button
+            class="btn btn--primary"
+            type="button"
+            [disabled]="accepting()"
+            (click)="acceptWithSession()"
+          >
+            {{ accepting() ? 'Aceptando…' : 'Aceptar invitación' }}
+          </button>
+        </div>
+      } @else if (user(); as user) {
+        <div class="alert alert--warning" role="status">
+          <div class="alert__body">
+            <p class="alert__title">Iniciaste sesión con otra cuenta</p>
+            <p>
+              Estás como {{ user.email }}, pero la invitación es para {{ invitation.email }}. Cierra
+              sesión e ingresa con la cuenta invitada.
+            </p>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn--primary" type="button" (click)="switchAccount()">
+            Cambiar de cuenta
+          </button>
+        </div>
+      } @else {
+        <p>
+          Ya tienes una cuenta con {{ invitation.email }}. Inicia sesión con ese correo para aceptar
+          la invitación.
+        </p>
+        <div class="actions">
+          <a class="btn btn--primary" routerLink="/login" [queryParams]="loginQueryParams()">
+            Iniciar sesión para aceptar
+          </a>
+        </div>
+      }
+    }
+  }
+</section>

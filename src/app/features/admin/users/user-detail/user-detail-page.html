@@ -1,0 +1,242 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/admin/users">Usuarios</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">{{ user()?.fullName ?? 'Detalle' }}</span>
+</nav>
+
+@if (loading()) {
+  <p class="state">Cargando usuario…</p>
+} @else if (loadError(); as message) {
+  <div class="alert alert--danger" role="alert">
+    <p>{{ message }}</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn--secondary" routerLink="/admin/users">Volver al listado</a>
+  </div>
+} @else if (user(); as user) {
+  <header class="page-header">
+    <div class="page-header__text">
+      <h1 class="title-1">{{ user.fullName }}</h1>
+      <div class="actions">
+        <span class="text-muted">{{ user.email }}</span>
+        <app-status-chip [status]="user.status" />
+        @if (user.isSuperAdmin) {
+          <span class="chip chip--warning">{{ 'SuperAdmin' | roleLabel }}</span>
+        }
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn btn--secondary" [routerLink]="['/admin/users', user.id, 'edit']">Editar</a>
+      @if (user.status === 'Inactive') {
+        <button
+          class="btn btn--primary"
+          type="button"
+          [disabled]="changingStatus()"
+          (click)="changeStatus()"
+        >
+          {{ changingStatus() ? 'Activando…' : 'Activar cuenta' }}
+        </button>
+      } @else if (!confirmingDeactivation()) {
+        <button
+          class="btn btn--accent"
+          type="button"
+          [disabled]="isSelf()"
+          [attr.aria-describedby]="isSelf() ? 'self-deactivate-hint' : null"
+          (click)="changeStatus()"
+        >
+          Desactivar cuenta
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (isSelf() && user.status !== 'Inactive') {
+    <p class="field__hint" id="self-deactivate-hint">No puedes desactivar tu propia cuenta.</p>
+  }
+
+  @if (confirmingDeactivation()) {
+    <div class="alert alert--warning" role="alertdialog" aria-labelledby="deactivate-title">
+      <div class="alert__body">
+        <p class="alert__title" id="deactivate-title">¿Desactivar la cuenta de {{ user.fullName }}?</p>
+        <p>Perderá el acceso y sus sesiones abiertas se cerrarán en menos de un minuto.</p>
+        <div class="actions">
+          <button
+            class="btn btn--accent"
+            type="button"
+            [disabled]="changingStatus()"
+            (click)="changeStatus()"
+          >
+            {{ changingStatus() ? 'Desactivando…' : 'Sí, desactivar' }}
+          </button>
+          <button
+            class="btn btn--text"
+            type="button"
+            [disabled]="changingStatus()"
+            (click)="confirmingDeactivation.set(false)"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (notice(); as message) {
+    <div class="alert alert--success" role="status">
+      <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+      <div class="alert__body">
+        <p>{{ message }}</p>
+      </div>
+    </div>
+  }
+  @if (actionError(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  <div class="grid-2">
+    <section class="card" aria-labelledby="user-data-title">
+      <h2 class="title-2" id="user-data-title">Datos personales</h2>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Detalle</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Correo</td>
+              <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+              <td>Teléfono</td>
+              <td>{{ user.phoneNumber || '—' }}</td>
+            </tr>
+            <tr>
+              <td>Fecha de nacimiento</td>
+              <td>{{ user.birthDate ? (user.birthDate | date: 'longDate' : 'UTC') : '—' }}</td>
+            </tr>
+            <tr>
+              <td>Acudiente</td>
+              <td>{{ user.guardianName || '—' }}</td>
+            </tr>
+            <tr>
+              <td>Correo del acudiente</td>
+              <td>{{ user.guardianEmail || '—' }}</td>
+            </tr>
+            <tr>
+              <td>Cuenta creada</td>
+              <td>{{ user.createdAt | date: 'longDate' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="user-roles-title">
+      <h2 class="title-2" id="user-roles-title">Roles por feria</h2>
+      @if (events().length) {
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Feria</th>
+                <th scope="col">Roles</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (event of events(); track event.eventId) {
+                <tr>
+                  <td>{{ event.eventName }}</td>
+                  <td>
+                    <div class="chip-list">
+                      @for (role of event.roles; track role) {
+                        <span class="chip chip--info">{{ role | roleLabel }}</span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="text-muted">Sin roles en ninguna feria.</p>
+      }
+
+      <h3 class="title-3">Asignar rol</h3>
+      <form class="form" [formGroup]="roleForm" (ngSubmit)="assignRole()" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label class="field__label" for="assign-event">Feria</label>
+            <div class="control" [class.control--error]="showRoleError('eventId')">
+              <select
+                class="control__input"
+                id="assign-event"
+                formControlName="eventId"
+                [attr.aria-invalid]="showRoleError('eventId')"
+                [attr.aria-describedby]="
+                  showRoleError('eventId') || eventsUnavailable() ? 'assign-event-help' : null
+                "
+              >
+                <option value="" disabled>Selecciona una feria</option>
+                @for (event of allEvents(); track event.id) {
+                  <option [value]="event.id">{{ event.name }}</option>
+                }
+              </select>
+            </div>
+            @if (eventsUnavailable()) {
+              <p class="field__error" id="assign-event-help">
+                No pudimos cargar las ferias. Recarga la página para intentarlo de nuevo.
+              </p>
+            } @else if (showRoleError('eventId')) {
+              <p class="field__error" id="assign-event-help">Selecciona una feria.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="assign-role">Rol</label>
+            <div class="control" [class.control--error]="showRoleError('role')">
+              <select
+                class="control__input"
+                id="assign-role"
+                formControlName="role"
+                [attr.aria-invalid]="showRoleError('role')"
+              >
+                <option value="" disabled>Selecciona un rol</option>
+                @for (role of eventRoleOptions; track role) {
+                  <option [value]="role">{{ role | roleLabel }}</option>
+                }
+              </select>
+            </div>
+            @if (showRoleError('role')) {
+              <p class="field__error">Selecciona un rol.</p>
+            }
+          </div>
+        </div>
+
+        @if (roleError(); as message) {
+          <div class="alert alert--danger alert--compact" role="alert">
+            <p>{{ message }}</p>
+          </div>
+        }
+        @if (roleAssigned()) {
+          <div class="alert alert--success alert--compact" role="status">
+            <p>Rol asignado.</p>
+          </div>
+        }
+
+        <div class="actions">
+          <button class="btn btn--primary" type="submit" [disabled]="assigning()">
+            {{ assigning() ? 'Asignando…' : 'Asignar rol' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}

@@ -1,0 +1,150 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>{{ eventName() }}</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Mis invitados</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Invitar a la feria</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="invite-form-title">
+    <h2 class="title-2" id="invite-form-title">Invitar participante</h2>
+
+    <form class="form" [formGroup]="form" (ngSubmit)="send()" novalidate>
+      <div class="field">
+        <label class="field__label" for="invite-email">Correo</label>
+        <div class="control" [class.control--error]="showEmailError()">
+          <input
+            class="control__input"
+            id="invite-email"
+            type="email"
+            inputmode="email"
+            autocomplete="off"
+            formControlName="email"
+            [attr.aria-invalid]="showEmailError()"
+            aria-describedby="invite-email-help"
+          />
+          @if (showEmailError()) {
+            <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+          }
+        </div>
+        @if (showEmailError()) {
+          <p class="field__error" id="invite-email-help">Ingresa un correo electrónico válido.</p>
+        } @else {
+          <p class="field__hint" id="invite-email-help">
+            Puede ser institucional o externo, tenga o no cuenta.
+          </p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="invite-role">Tipo</label>
+        <div class="control">
+          <select class="control__input" id="invite-role" formControlName="role">
+            @for (role of roles; track role) {
+              <option [value]="role">{{ roleLabels[role] }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="invite-owner">Responsable</label>
+        <div class="control control--readonly">
+          <input
+            class="control__input"
+            id="invite-owner"
+            type="text"
+            [value]="user()?.fullName ?? ''"
+            readonly
+          />
+          <img class="control__icon" src="assets/icons/lock.svg" width="16" height="16" alt="" />
+        </div>
+      </div>
+
+      @if (errorMessage(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="sending()">
+          {{ sending() ? 'Enviando…' : 'Enviar invitación' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="invite-sent-title" aria-live="polite">
+    @if (lastSent(); as sent) {
+      <h2 class="title-2" id="invite-sent-title">Invitación enviada</h2>
+      <div>
+        <span class="chip chip--info">En espera de aceptación</span>
+      </div>
+      <p>{{ sent.email }}</p>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Detalle</th>
+              <th scope="col">Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Feria</td>
+              <td>{{ eventName() }}</td>
+            </tr>
+            <tr>
+              <td>Tipo</td>
+              <td>{{ roleLabels[sent.role] }}</td>
+            </tr>
+            <tr>
+              <td>Responsable</td>
+              <td>{{ user()?.fullName }}</td>
+            </tr>
+            <tr>
+              <td>Creación</td>
+              <td>{{ sent.createdAt | date: "d MMM y · h:mm a" }}</td>
+            </tr>
+            <tr>
+              <td>Caducidad</td>
+              <td>{{ sent.expiresAt | date: "d MMM y · h:mm a" }}</td>
+            </tr>
+            <tr>
+              <td>Enlace</td>
+              <td>Un solo uso · Token oculto</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="alert alert--success" role="status">
+        <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+        <div class="alert__body">
+          <p class="alert__title">Se notificó a la persona invitada</p>
+          <p>El enlace no concede un rol hasta que se acepte la invitación.</p>
+        </div>
+      </div>
+    } @else {
+      <h2 class="title-2" id="invite-sent-title">Cómo funciona</h2>
+      <div class="alert alert--info">
+        <div class="alert__body">
+          <p class="alert__title">La invitación vence en 7 días</p>
+          <p>
+            La persona recibe un enlace de un solo uso. Si no tiene cuenta, la crea al aceptar; si
+            ya la tiene, acepta con su sesión iniciada.
+          </p>
+        </div>
+      </div>
+      <p class="text-muted">
+        Solo puedes invitar estudiantes participantes o invitados a esta feria.
+      </p>
+    }
+  </section>
+</div>

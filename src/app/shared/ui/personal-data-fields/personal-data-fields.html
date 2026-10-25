@@ -1,0 +1,120 @@
+<ng-container [formGroup]="group()">
+  <div class="field form-grid__full">
+    <label class="field__label" [for]="id('full-name')">Nombre completo</label>
+    <div class="control" [class.control--error]="showError('fullName')">
+      <input
+        class="control__input"
+        type="text"
+        autocomplete="name"
+        formControlName="fullName"
+        [id]="id('full-name')"
+        [attr.maxlength]="fullNameMaxLength"
+        [attr.aria-invalid]="showError('fullName')"
+        [attr.aria-describedby]="showError('fullName') ? id('full-name-error') : null"
+      />
+      @if (showError('fullName')) {
+        <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+      }
+    </div>
+    @if (showError('fullName')) {
+      <p class="field__error" [id]="id('full-name-error')">
+        @if (group().controls.fullName.hasError('required')) {
+          Ingresa el nombre completo.
+        } @else {
+          Máximo {{ fullNameMaxLength }} caracteres.
+        }
+      </p>
+    }
+  </div>
+
+  <div class="field">
+    <label class="field__label" [for]="id('phone')">
+      Teléfono <span class="field__optional">(opcional)</span>
+    </label>
+    <div class="control" [class.control--error]="showError('phoneNumber')">
+      <input
+        class="control__input"
+        type="tel"
+        autocomplete="tel"
+        formControlName="phoneNumber"
+        [id]="id('phone')"
+        [attr.aria-invalid]="showError('phoneNumber')"
+        [attr.aria-describedby]="id('phone-help')"
+      />
+      @if (showError('phoneNumber')) {
+        <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+      }
+    </div>
+    @if (showError('phoneNumber')) {
+      <p class="field__error" [id]="id('phone-help')">
+        El teléfono debe tener entre 7 y 15 dígitos; puedes usar +, espacios, guiones y paréntesis.
+      </p>
+    } @else {
+      <p class="field__hint" [id]="id('phone-help')">Entre 7 y 15 dígitos.</p>
+    }
+  </div>
+
+  <div class="field">
+    <label class="field__label" [for]="id('birth-date')">
+      Fecha de nacimiento <span class="field__optional">(opcional)</span>
+    </label>
+    <div class="control" [class.control--error]="showError('birthDate')">
+      <input
+        class="control__input"
+        type="date"
+        autocomplete="bday"
+        formControlName="birthDate"
+        [id]="id('birth-date')"
+        [max]="today"
+        [attr.aria-invalid]="showError('birthDate')"
+        [attr.aria-describedby]="showError('birthDate') ? id('birth-date-error') : null"
+      />
+    </div>
+    @if (showError('birthDate')) {
+      <p class="field__error" [id]="id('birth-date-error')">
+        La fecha de nacimiento no puede ser futura.
+      </p>
+    }
+  </div>
+
+  <div class="field">
+    <label class="field__label" [for]="id('guardian-name')">
+      Nombre del acudiente <span class="field__optional">(opcional)</span>
+    </label>
+    <div class="control" [class.control--error]="showError('guardianName')">
+      <input
+        class="control__input"
+        type="text"
+        formControlName="guardianName"
+        [id]="id('guardian-name')"
+        [attr.maxlength]="fullNameMaxLength"
+        [attr.aria-invalid]="showError('guardianName')"
+        [attr.aria-describedby]="id('guardian-help')"
+      />
+    </div>
+    <p class="field__hint" [id]="id('guardian-help')">Solo para participantes menores de edad.</p>
+  </div>
+
+  <div class="field">
+    <label class="field__label" [for]="id('guardian-email')">
+      Correo del acudiente <span class="field__optional">(opcional)</span>
+    </label>
+    <div class="control" [class.control--error]="showError('guardianEmail')">
+      <input
+        class="control__input"
+        type="email"
+        inputmode="email"
+        formControlName="guardianEmail"
+        [id]="id('guardian-email')"
+        [attr.aria-invalid]="showError('guardianEmail')"
+        [attr.aria-describedby]="showError('guardianEmail') ? id('guardian-email-error') : null"
+      />
+      @if (showError('guardianEmail')) {
+        <img class="control__icon" src="assets/icons/circle-alert.svg" width="16" height="16" alt="" />
+      }
+    </div>
+    @if (showError('guardianEmail')) {
+      <p class="field__error" [id]="id('guardian-email-error')">Ingresa un correo válido.</p>
+    }
+  </div>
+</ng-container>
