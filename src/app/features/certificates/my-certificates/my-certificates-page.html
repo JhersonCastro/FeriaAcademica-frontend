@@ -1,0 +1,93 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Ferias académicas</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Mis certificados</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Mis certificados</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="certificates-title">
+  <h2 class="title-2" id="certificates-title">Certificados en PDF</h2>
+  <p class="text-muted">
+    Solo ves tus certificados. Cada uno trae un código para que cualquiera pueda verificarlo.
+  </p>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+  @if (downloadError(); as message) {
+    <div class="alert alert--danger alert--compact" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-muted" role="status">Cargando tus certificados…</p>
+  } @else if (!certificates().length && !errorMessage()) {
+    <div class="state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>
+        Aún no tienes certificados. Aparecen aquí cuando asistes a una feria o participas con un
+        trabajo.
+      </p>
+    </div>
+  } @else if (certificates().length) {
+    <div class="table-wrap">
+      <table class="table table--stack">
+        <thead>
+          <tr>
+            <th scope="col">Feria</th>
+            <th scope="col">Tipo</th>
+            <th scope="col">Estado</th>
+            <th scope="col"><span class="visually-hidden">Acción</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (certificate of certificates(); track certificate.id) {
+            <tr>
+              <td>
+                <strong>{{ certificate.eventName }}</strong>
+                @if (certificate.verificationCode) {
+                  <span class="table__secondary">Código {{ certificate.verificationCode }}</span>
+                }
+              </td>
+              <td data-label="Tipo">{{ kindLabels[certificate.kind] }}</td>
+              <td data-label="Estado">
+                @if (certificate.available) {
+                  <span class="chip chip--success">Disponible</span>
+                  @if (certificate.issuedAt) {
+                    <span class="table__secondary"
+                      >Emitido el {{ certificate.issuedAt | date: 'd MMM y' }}</span
+                    >
+                  }
+                } @else {
+                  <span class="chip chip--neutral">Pendiente</span>
+                  <span class="table__secondary">{{ conditions[certificate.kind] }}</span>
+                }
+              </td>
+              <td>
+                @if (certificate.available) {
+                  <button
+                    class="btn btn--secondary"
+                    type="button"
+                    [disabled]="downloadingId() === certificate.id"
+                    (click)="download(certificate)"
+                  >
+                    {{ downloadingId() === certificate.id ? 'Descargando…' : 'Descargar PDF' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

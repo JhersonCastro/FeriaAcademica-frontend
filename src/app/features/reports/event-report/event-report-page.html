@@ -1,0 +1,198 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Informe del evento</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Informe del evento</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="report-filter-title">
+  <h2 class="visually-hidden" id="report-filter-title">Feria del informe</h2>
+  <div class="report-filter">
+    <div class="field">
+      <label class="field__label" for="report-event">Feria</label>
+      <div class="control" [class.control--disabled]="!events().length">
+        <select
+          class="control__input"
+          id="report-event"
+          [disabled]="!events().length"
+          (change)="onEventChange($event)"
+        >
+          @for (event of events(); track event.id) {
+            <option [value]="event.id" [selected]="event.id === selectedEventId()">
+              {{ event.name }}
+            </option>
+          } @empty {
+            <option value="">Sin ferias</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button
+        class="btn btn--secondary"
+        type="button"
+        [disabled]="!selectedEventId() || generating()"
+        (click)="generate()"
+      >
+        {{ generating() ? 'Generando…' : 'Actualizar cifras' }}
+      </button>
+      <button
+        class="btn btn--primary"
+        type="button"
+        [disabled]="!report() || downloading()"
+        (click)="downloadPdf()"
+      >
+        {{ downloading() ? 'Preparando PDF…' : 'Descargar PDF' }}
+      </button>
+    </div>
+  </div>
+  @if (downloadError(); as message) {
+    <div class="alert alert--danger alert--compact" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+</section>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="text-muted" role="status">Cargando el informe…</p>
+  }
+  @case ('no-events') {
+    <div class="card state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>Todavía no hay ferias creadas. Cuando exista una, aquí verás su informe.</p>
+    </div>
+  }
+  @case ('error') {
+    <div class="alert alert--danger" role="alert">
+      <div class="alert__body">
+        <p class="alert__title">No pudimos generar el informe</p>
+        <p>{{ errorMessage() }}</p>
+      </div>
+    </div>
+  }
+  @case ('ready') {
+    @if (report(); as report) {
+      <p class="text-small text-muted report-stamp" aria-live="polite">
+        Cifras de {{ report.eventName }} calculadas el
+        {{ report.generatedAt | date: "d 'de' MMMM 'de' y, h:mm a" }}
+      </p>
+
+      <div class="grid-2">
+        <section class="card" aria-labelledby="report-works-title">
+          <h2 class="title-2" id="report-works-title">Trabajos</h2>
+          <dl class="stats">
+            <div class="stat stat--lead">
+              <dt>Recibidos</dt>
+              <dd>{{ report.worksReceived | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt><span class="dot dot--approved" aria-hidden="true"></span>Aprobados</dt>
+              <dd>{{ report.worksApproved | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt><span class="dot dot--rejected" aria-hidden="true"></span>Rechazados</dt>
+              <dd>{{ report.worksRejected | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>
+                <span class="dot dot--progress" aria-hidden="true"></span>En revisión o corrección
+              </dt>
+              <dd>{{ report.worksInProgress | number }}</dd>
+            </div>
+          </dl>
+          @if (report.worksReceived > 0) {
+            <div class="split" aria-hidden="true">
+              <span class="split__part dot--approved" [style.width.%]="shares().approved"></span>
+              <span class="split__part dot--progress" [style.width.%]="shares().inProgress"></span>
+              <span class="split__part dot--rejected" [style.width.%]="shares().rejected"></span>
+            </div>
+          } @else {
+            <p class="text-muted">Esta feria aún no ha recibido trabajos.</p>
+          }
+        </section>
+
+        <section class="card" aria-labelledby="report-attendance-title">
+          <h2 class="title-2" id="report-attendance-title">Inscripciones y asistencia</h2>
+          <dl class="stats">
+            <div class="stat stat--lead">
+              <dt>Inscritos</dt>
+              <dd>{{ report.registered | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>Asistentes con QR</dt>
+              <dd>{{ report.attended | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>Asistencia</dt>
+              <dd>{{ rate() }} %</dd>
+            </div>
+          </dl>
+          <div
+            class="gauge"
+            role="meter"
+            aria-label="Porcentaje de asistencia"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="rate()"
+          >
+            <span class="gauge__fill" [style.width.%]="rate()"></span>
+          </div>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="report-table-title">
+        <h2 class="title-2" id="report-table-title">Resumen</h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Indicador</th>
+                <th scope="col" class="num">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Trabajos recibidos</td>
+                <td class="num">{{ report.worksReceived | number }}</td>
+              </tr>
+              <tr>
+                <td>Trabajos aprobados</td>
+                <td class="num">{{ report.worksApproved | number }}</td>
+              </tr>
+              <tr>
+                <td>Trabajos rechazados</td>
+                <td class="num">{{ report.worksRejected | number }}</td>
+              </tr>
+              <tr>
+                <td>Trabajos en revisión o corrección</td>
+                <td class="num">{{ report.worksInProgress | number }}</td>
+              </tr>
+              <tr>
+                <td>Inscritos</td>
+                <td class="num">{{ report.registered | number }}</td>
+              </tr>
+              <tr>
+                <td>Asistentes registrados con QR</td>
+                <td class="num">{{ report.attended | number }}</td>
+              </tr>
+              <tr>
+                <td>Porcentaje de asistencia</td>
+                <td class="num">{{ rate() }} %</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-small text-muted">
+          El PDF trae estas mismas cifras para compartirlo con las directivas de la Facultad.
+        </p>
+      </section>
+    }
+  }
+}

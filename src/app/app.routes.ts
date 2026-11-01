@@ -111,6 +111,23 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'certificates',
+        title: 'Mis certificados',
+        loadComponent: () =>
+          import('./features/certificates/my-certificates/my-certificates-page').then(
+            (m) => m.MyCertificatesPage,
+          ),
+      },
+      {
+        path: 'admin/report',
+        title: 'Informe del evento',
+        canActivate: [superAdminGuard],
+        loadComponent: () =>
+          import('./features/reports/event-report/event-report-page').then(
+            (m) => m.EventReportPage,
+          ),
+      },
+      {
         path: 'my-qr',
         title: 'Mi QR',
         loadComponent: () =>

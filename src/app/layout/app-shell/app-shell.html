@@ -89,7 +89,21 @@
           >Afluencia</a
         >
       }
+      <a
+        class="nav__link"
+        routerLink="/certificates"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >Mis certificados</a
+      >
       @if (isSuperAdmin()) {
+        <a
+          class="nav__link"
+          routerLink="/admin/report"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >Informe del evento</a
+        >
         <a
           class="nav__link"
           routerLink="/admin/users"
