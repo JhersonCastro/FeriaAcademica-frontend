@@ -7,6 +7,7 @@ import { API_MESSAGES, apiErrorMessage, isApiMessage } from '../../../core/api/a
 import { AttendanceService } from '../../../core/attendance/attendance.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ActiveEventStore } from '../../../core/events/active-event.store';
+import { isEventFull, seatsLabel } from '../../../core/events/event-seats';
 import {
   EventSummary,
   EventsService,
@@ -41,6 +42,10 @@ export class MyQrPage {
   protected readonly selectedEvent = computed(
     () => this.events().find((event) => event.id === this.selectedEventId()) ?? null,
   );
+
+  /** HU-041: seats left in the selected event, and whether it is full. */
+  protected readonly seats = computed(() => seatsLabel(this.selectedEvent()));
+  protected readonly full = computed(() => isEventFull(this.selectedEvent()));
 
   protected readonly state = signal<ViewState>('loading');
   protected readonly registration = signal<RegistrationDto | null>(null);
@@ -90,6 +95,7 @@ export class MyQrPage {
     this.attendance.register(eventId).subscribe({
       next: (registration) => {
         this.registering.set(false);
+        this.takeSeat(eventId);
         void this.show(registration);
       },
       error: (error: unknown) => {
@@ -97,6 +103,22 @@ export class MyQrPage {
         this.errorMessage.set(apiErrorMessage(error));
       },
     });
+  }
+
+  /** Keeps the seat count on screen in step with the registration that just went through. */
+  private takeSeat(eventId: string): void {
+    this.events.update((events) =>
+      events.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              registered: event.registered + 1,
+              availableSeats:
+                event.availableSeats == null ? null : Math.max(0, event.availableSeats - 1),
+            }
+          : event,
+      ),
+    );
   }
 
   private select(eventId: string): void {

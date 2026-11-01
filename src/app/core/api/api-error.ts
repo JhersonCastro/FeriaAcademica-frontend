@@ -75,6 +75,7 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ['This registration was cancelled.', 'Esta inscripción fue cancelada.'],
   ['This person already entered.', 'Esta persona ya ingresó.'],
   ['Attendance registered.', 'Asistencia registrada.'],
+  ['The event is full: there are no seats left.', 'Esta feria ya no tiene cupos disponibles.'],
   // Works and reviews.
   ['Work not found.', 'No encontramos el trabajo.'],
   [
