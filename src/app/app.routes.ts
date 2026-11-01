@@ -73,6 +73,44 @@ export const routes: Routes = [
         loadComponent: () => import('./features/events/invite/invite-page').then((m) => m.InvitePage),
       },
       {
+        path: 'works',
+        children: [
+          {
+            path: '',
+            title: 'Mis trabajos',
+            loadComponent: () =>
+              import('./features/works/my-works/my-works-page').then((m) => m.MyWorksPage),
+          },
+          {
+            path: ':workId',
+            title: 'Mi trabajo',
+            loadComponent: () =>
+              import('./features/works/work-detail/work-detail-page').then((m) => m.WorkDetailPage),
+          },
+        ],
+      },
+      {
+        path: 'reviews',
+        children: [
+          {
+            path: '',
+            title: 'Revisar trabajos',
+            loadComponent: () =>
+              import('./features/reviews/review-queue/review-queue-page').then(
+                (m) => m.ReviewQueuePage,
+              ),
+          },
+          {
+            path: ':workId',
+            title: 'Revisar trabajo',
+            loadComponent: () =>
+              import('./features/reviews/review-work/review-work-page').then(
+                (m) => m.ReviewWorkPage,
+              ),
+          },
+        ],
+      },
+      {
         path: 'my-qr',
         title: 'Mi QR',
         loadComponent: () =>

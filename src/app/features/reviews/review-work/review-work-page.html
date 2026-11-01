@@ -1,0 +1,183 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>{{ work()?.eventName ?? 'Ferias académicas' }}</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/reviews">Revisar trabajos</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Revisión</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Revisar trabajo</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="text-muted" role="status">Cargando el trabajo…</p>
+  }
+  @case ('error') {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ errorMessage() }}</p>
+    </div>
+  }
+  @case ('not-found') {
+    <div class="state card">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>Este trabajo ya no está en tu bandeja: puede que ya tenga decisión o que no te lo asignaron.</p>
+      <div class="actions">
+        <a class="btn btn--secondary" routerLink="/reviews">Volver a la bandeja</a>
+      </div>
+    </div>
+  }
+  @case ('decided') {
+    <div class="alert alert--success" role="status">
+      <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+      <div class="alert__body">
+        <p class="alert__title">Decisión guardada: {{ decisionLabels[lastDecision()!] }}</p>
+        <p>El participante ya puede ver tu decisión y tu retroalimentación en "Mis trabajos".</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn btn--primary" routerLink="/reviews">Volver a la bandeja</a>
+    </div>
+  }
+  @case ('ready') {
+    @if (work(); as work) {
+      <div class="grid-2">
+        <section class="card" aria-labelledby="review-work-title">
+          <div class="chip-list">
+            <span class="chip" [class]="statusChips[work.status]">{{ statusLabels[work.status] }}</span>
+            <span class="chip chip--neutral">Intento {{ work.currentAttempt }}</span>
+          </div>
+          <h2 class="title-2" id="review-work-title">{{ work.title }}</h2>
+          <p class="text-muted">{{ work.eventName }}</p>
+          @if (work.summary) {
+            <p>{{ work.summary }}</p>
+          }
+
+          <h3 class="title-3">Adjuntos vigentes</h3>
+          @if (artifacts().length) {
+            <div class="table-wrap">
+              <table class="table table--stack">
+                <thead>
+                  <tr>
+                    <th scope="col">Adjunto</th>
+                    <th scope="col">Versión</th>
+                    <th scope="col"><span class="visually-hidden">Acción</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (artifact of artifacts(); track artifact.id) {
+                    <tr>
+                      <td>
+                        {{ artifactLabels[artifact.type] }}
+                        <span class="table__secondary">{{ artifact.uploadedAt | date: 'd MMM y, h:mm a' }}</span>
+                      </td>
+                      <td data-label="Versión">v{{ artifact.version }}</td>
+                      <td>
+                        @if (artifact.linkUrl ?? artifact.fileUrl; as url) {
+                          <a class="table__link" [href]="url" target="_blank" rel="noopener">
+                            {{ artifact.fileUrl ? 'Descargar' : 'Abrir enlace' }}
+                          </a>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="text-muted">El trabajo no tiene adjuntos.</p>
+          }
+          <p class="text-small text-muted">
+            Rechazos para corrección: {{ work.rejectionCount }} de {{ work.maxRejections }} permitidos.
+          </p>
+        </section>
+
+        <section class="card" aria-labelledby="review-decision-title">
+          <h2 class="title-2" id="review-decision-title">Decisión</h2>
+
+          @if (errorMessage(); as message) {
+            <div class="alert alert--danger alert--compact" role="alert">
+              <p>{{ message }}</p>
+            </div>
+          }
+
+          @if (work.status === 'Submitted') {
+            <p>
+              Abre la revisión para registrar tu decisión. Desde ese momento el participante ya no
+              podrá retirar ni reemplazar el trabajo.
+            </p>
+            <div class="actions">
+              <button class="btn btn--primary" type="button" [disabled]="busy()" (click)="startReview()">
+                {{ busy() ? 'Abriendo…' : 'Abrir revisión' }}
+              </button>
+            </div>
+          } @else {
+            <form class="form" (submit)="$event.preventDefault(); save()" novalidate>
+              <fieldset class="choice-list">
+                <legend class="field__label">Resultado</legend>
+                @for (option of decisions; track option) {
+                  <label class="choice">
+                    <input
+                      type="radio"
+                      name="decision"
+                      [value]="option"
+                      [checked]="decision() === option"
+                      (change)="onDecision($event)"
+                    />
+                    <span class="choice__text">
+                      <span class="choice__title">{{ decisionLabels[option] }}</span>
+                      <span class="text-small text-muted">{{ decisionHints[option] }}</span>
+                    </span>
+                  </label>
+                }
+              </fieldset>
+
+              <div class="field">
+                <label class="field__label" for="review-feedback">
+                  Retroalimentación
+                  <span class="field__optional">· {{ feedbackRequired() ? 'Obligatoria' : 'Opcional' }}</span>
+                </label>
+                <div
+                  class="control control--textarea"
+                  [class.control--error]="attempted() && feedbackRequired() && !feedback().trim()"
+                >
+                  <textarea
+                    class="control__input"
+                    id="review-feedback"
+                    rows="5"
+                    maxlength="2000"
+                    placeholder="Escribe los cambios que debe hacer el participante…"
+                    [value]="feedback()"
+                    (input)="onFeedback($event)"
+                    [attr.aria-required]="feedbackRequired()"
+                  ></textarea>
+                </div>
+                <p class="field__hint">Una observación por línea se lee mejor.</p>
+              </div>
+
+              @if (attempted() && validationError(); as message) {
+                <div class="alert alert--danger" role="alert">
+                  <div class="alert__body">
+                    <p class="alert__title">La decisión no se ha guardado</p>
+                    <p>{{ message }} El trabajo sigue En revisión.</p>
+                  </div>
+                </div>
+              }
+
+              <div class="actions">
+                <button class="btn btn--primary" type="submit" [disabled]="busy()">
+                  {{ busy() ? 'Guardando…' : 'Guardar decisión' }}
+                </button>
+                <a class="btn btn--secondary" routerLink="/reviews">Continuar después</a>
+              </div>
+            </form>
+          }
+        </section>
+      </div>
+    }
+  }
+}

@@ -1,0 +1,65 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Ferias académicas</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Revisar trabajos</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Trabajos por revisar</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="queue-title">
+  <h2 class="title-2" id="queue-title">Mi bandeja</h2>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-muted" role="status">Cargando los trabajos asignados…</p>
+  } @else if (!works().length && !errorMessage()) {
+    <div class="state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>No tienes trabajos pendientes de revisión.</p>
+    </div>
+  } @else if (works().length) {
+    <div class="table-wrap">
+      <table class="table table--stack">
+        <thead>
+          <tr>
+            <th scope="col">Trabajo</th>
+            <th scope="col">Estado</th>
+            <th scope="col">En la cola desde</th>
+            <th scope="col"><span class="visually-hidden">Acción</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (work of works(); track work.id) {
+            <tr>
+              <td>
+                <a class="table__link" [routerLink]="['/reviews', work.id]">{{ work.title }}</a>
+                <span class="table__secondary">{{ work.eventName }} · Intento {{ work.currentAttempt }}</span>
+              </td>
+              <td data-label="Estado">
+                <span class="chip" [class]="statusChips[work.status]">{{ statusLabels[work.status] }}</span>
+              </td>
+              <td data-label="En la cola desde">
+                {{ work.enqueuedAt ? (work.enqueuedAt | date: 'd MMM y, h:mm a') : '—' }}
+              </td>
+              <td>
+                <a class="btn btn--secondary" [routerLink]="['/reviews', work.id]">
+                  {{ work.status === 'InReview' ? 'Continuar revisión' : 'Revisar' }}
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

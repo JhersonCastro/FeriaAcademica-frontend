@@ -1,0 +1,265 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>{{ work()?.eventName ?? 'Ferias académicas' }}</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/works">Mis trabajos</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Detalle</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Mi trabajo</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="text-muted" role="status">Cargando tu trabajo…</p>
+  }
+  @case ('error') {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ errorMessage() }}</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn--secondary" routerLink="/works">Volver a Mis trabajos</a>
+    </div>
+  }
+  @case ('ready') {
+    @if (work(); as work) {
+      <!-- What happens next, in one line, depending on the status. -->
+      @if (needsCorrection()) {
+        <div class="alert alert--warning" role="status">
+          <img class="alert__icon" src="assets/icons/circle-alert.svg" width="20" height="20" alt="" />
+          <div class="alert__body">
+            <p class="alert__title">Tu trabajo volvió a Borrador</p>
+            <p>
+              El evaluador pidió correcciones.
+              @if (work.submissionDeadline && !deadlinePassed()) {
+                Puedes corregir y reenviar hasta el
+                {{ work.submissionDeadline | date: "d 'de' MMMM 'de' y, h:mm a" }}
+              }
+            </p>
+          </div>
+        </div>
+      } @else if (work.status === 'Submitted') {
+        <div class="alert alert--info" role="status">
+          <div class="alert__body">
+            <p class="alert__title">Enviado · en espera de revisión</p>
+            <p>Puedes reemplazarlo mientras el evaluador no lo haya abierto.</p>
+          </div>
+        </div>
+      } @else if (work.status === 'InReview') {
+        <div class="alert alert--info" role="status">
+          <div class="alert__body">
+            <p class="alert__title">En revisión</p>
+            <p>El evaluador ya abrió tu trabajo: no se puede reemplazar hasta que registre su decisión.</p>
+          </div>
+        </div>
+      } @else if (work.status === 'Admitted' || work.status === 'Evaluated') {
+        <div class="alert alert--success" role="status">
+          <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+          <div class="alert__body">
+            <p class="alert__title">Tu trabajo fue aprobado</p>
+            <p>Quedó admitido en {{ work.eventName }}.</p>
+          </div>
+        </div>
+      } @else if (work.status === 'RejectedDefinitively') {
+        <div class="alert alert--danger" role="status">
+          <div class="alert__body">
+            <p class="alert__title">Tu trabajo fue rechazado</p>
+            <p>Se cerró en esta feria y ya no admite cambios.</p>
+          </div>
+        </div>
+      } @else if (work.status === 'Cancelled') {
+        <div class="alert alert--warning" role="status">
+          <div class="alert__body">
+            <p class="alert__title">Trabajo cancelado</p>
+            <p>Lo retiraste de la feria.</p>
+          </div>
+        </div>
+      }
+
+      <div class="grid-2">
+        <section class="card" aria-labelledby="work-title">
+          <div class="chip-list">
+            <span class="chip" [class]="statusChips[work.status]">{{ statusLabels[work.status] }}</span>
+            <span class="chip chip--neutral">Intento {{ work.currentAttempt }}</span>
+          </div>
+          <h2 class="title-2" id="work-title">{{ work.title }}</h2>
+          <p class="text-muted">{{ user()?.fullName }} · {{ work.eventName }}</p>
+          @if (work.summary) {
+            <p>{{ work.summary }}</p>
+          }
+
+          <h3 class="title-3">Adjuntos y versiones</h3>
+          @if (artifacts().length) {
+            <div class="table-wrap">
+              <table class="table table--stack">
+                <thead>
+                  <tr>
+                    <th scope="col">Adjunto</th>
+                    <th scope="col">Versión</th>
+                    <th scope="col">Estado</th>
+                    <th scope="col"><span class="visually-hidden">Acción</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (artifact of artifacts(); track artifact.id) {
+                    <tr>
+                      <td>
+                        {{ artifactLabels[artifact.type] }}
+                        <span class="table__secondary">{{ artifact.uploadedAt | date: 'd MMM y, h:mm a' }}</span>
+                      </td>
+                      <td data-label="Versión">v{{ artifact.version }}</td>
+                      <td data-label="Estado">
+                        <span class="chip" [class]="artifact.current ? 'chip--success' : 'chip--neutral'">
+                          {{ artifact.current ? 'Vigente' : 'Conservada' }}
+                        </span>
+                      </td>
+                      <td>
+                        @if (artifact.linkUrl ?? artifact.fileUrl; as url) {
+                          <a class="table__link" [href]="url" target="_blank" rel="noopener">
+                            {{ artifact.fileUrl ? 'Descargar' : 'Abrir enlace' }}
+                          </a>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <p class="text-muted">Este trabajo aún no tiene adjuntos.</p>
+          }
+
+          <p class="text-small text-muted">
+            Rechazos para corrección: {{ work.rejectionCount }} de {{ work.maxRejections }} permitidos.
+            @if (work.submissionDeadline) {
+              Fecha límite de envío: {{ work.submissionDeadline | date: "d 'de' MMMM, h:mm a" }}
+            }
+          </p>
+        </section>
+
+        <section class="card" aria-labelledby="work-feedback-title">
+          <h2 class="title-2" id="work-feedback-title">Retroalimentación del evaluador</h2>
+          @for (review of reviews(); track review.attempt) {
+            <article class="card" [attr.aria-label]="'Revisión del intento ' + review.attempt">
+              <div class="chip-list">
+                <span class="chip" [class]="resultChips[review.result]">{{ resultLabels[review.result] }}</span>
+                <span class="chip chip--neutral">Intento {{ review.attempt }}</span>
+              </div>
+              @if (review.resolvedAt) {
+                <p class="text-small text-muted">{{ review.resolvedAt | date: "d 'de' MMMM 'de' y, h:mm a" }}</p>
+              }
+              @if (review.observations) {
+                <p class="feedback">{{ review.observations }}</p>
+              } @else {
+                <p class="text-muted">El evaluador no dejó observaciones.</p>
+              }
+            </article>
+          } @empty {
+            <div class="state">
+              <span class="diamond" aria-hidden="true"></span>
+              <p>Aún no hay revisiones. Aquí verás la decisión y las observaciones del evaluador.</p>
+            </div>
+          }
+          @if (work.closureReason && work.status === 'RejectedDefinitively') {
+            <p class="text-small text-muted">Motivo de cierre: {{ work.closureReason }}</p>
+          }
+        </section>
+      </div>
+
+      @if (successMessage(); as message) {
+        <div class="alert alert--success" role="status">
+          <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      @if (replaceable()) {
+        <section class="card card--narrow" aria-labelledby="work-replace-title">
+          <h2 class="title-2" id="work-replace-title">
+            {{ work.status === 'Submitted' ? 'Reemplazar mi trabajo' : 'Subir una nueva versión' }}
+          </h2>
+          <p class="text-muted">
+            La versión anterior no se borra: queda conservada en el historial y el evaluador verá la
+            nueva.
+            @if (work.status === 'Submitted') {
+              Al reemplazarlo, el trabajo entra al final de la cola de revisión.
+            }
+          </p>
+
+          <form class="form" [formGroup]="form" (ngSubmit)="replaceAndSubmit()" novalidate>
+            <div class="form-grid">
+              <div class="field">
+                <label class="field__label" for="replace-type">Tipo de adjunto</label>
+                <div class="control">
+                  <select class="control__input" id="replace-type" formControlName="type">
+                    @for (type of artifactTypes; track type) {
+                      <option [value]="type">{{ artifactLabels[type] }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="replace-link">Enlace a la nueva versión</label>
+                <div class="control" [class.control--error]="showLinkError()">
+                  <input
+                    class="control__input"
+                    id="replace-link"
+                    type="url"
+                    inputmode="url"
+                    placeholder="https://…"
+                    formControlName="linkUrl"
+                    [attr.aria-invalid]="showLinkError()"
+                    aria-describedby="replace-link-help"
+                  />
+                </div>
+                @if (showLinkError()) {
+                  <p class="field__error" id="replace-link-help">
+                    Pega una dirección completa que empiece por https://
+                  </p>
+                } @else {
+                  <p class="field__hint" id="replace-link-help">
+                    Por ejemplo, el enlace de Google Drive del PDF con permiso de lectura.
+                  </p>
+                }
+              </div>
+            </div>
+
+            @if (formError(); as message) {
+              <div class="alert alert--danger alert--compact" role="alert">
+                <p>{{ message }}</p>
+              </div>
+            }
+
+            <div class="actions">
+              <button class="btn btn--primary" type="submit" [disabled]="saving()">
+                {{ saving() ? 'Guardando…' : work.status === 'Submitted' ? 'Reemplazar y reenviar' : 'Guardar y enviar' }}
+              </button>
+              @if (work.status === 'Draft') {
+                <button class="btn btn--secondary" type="button" [disabled]="saving()" (click)="saveDraftVersion()">
+                  Solo guardar la versión
+                </button>
+                @if (artifacts().length) {
+                  <button class="btn btn--text" type="button" [disabled]="saving()" (click)="submitDraft()">
+                    Enviar sin cambios
+                  </button>
+                }
+              }
+            </div>
+          </form>
+        </section>
+      } @else if ((work.status === 'Draft' || work.status === 'Submitted') && deadlinePassed()) {
+        <div class="alert alert--warning" role="status">
+          <div class="alert__body">
+            <p class="alert__title">La convocatoria está cerrada</p>
+            <p>Ya pasó la fecha límite de envío: no se pueden subir ni reemplazar versiones.</p>
+          </div>
+        </div>
+      }
+    }
+  }
+}

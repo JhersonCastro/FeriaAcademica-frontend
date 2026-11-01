@@ -75,6 +75,44 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ['This registration was cancelled.', 'Esta inscripción fue cancelada.'],
   ['This person already entered.', 'Esta persona ya ingresó.'],
   ['Attendance registered.', 'Asistencia registrada.'],
+  // Works and reviews.
+  ['Work not found.', 'No encontramos el trabajo.'],
+  [
+    'A work can only be edited while it is a draft.',
+    'Solo puedes cambiar los adjuntos mientras el trabajo está en Borrador.',
+  ],
+  ['Only a draft can be submitted.', 'Solo un trabajo en Borrador se puede enviar.'],
+  [
+    'A work needs at least one artifact to be submitted.',
+    'Agrega al menos un adjunto antes de enviar el trabajo.',
+  ],
+  [
+    'A work in review can no longer be withdrawn.',
+    'El trabajo ya está en revisión: no se puede retirar ni reemplazar.',
+  ],
+  [
+    /A work in state \w+ cannot be withdrawn\./,
+    'En su estado actual el trabajo no se puede retirar.',
+  ],
+  [
+    /The call is closed: the submission deadline was [^.]*\./,
+    'La convocatoria está cerrada: ya pasó la fecha límite de envío.',
+  ],
+  [
+    /The link must be a full http or https address.*/,
+    'El enlace debe ser una dirección completa que empiece por http:// o https://.',
+  ],
+  ['Send either a link or a file.', 'Envía un enlace o un archivo.'],
+  ['Only a submitted work can enter review.', 'Solo un trabajo enviado puede pasar a revisión.'],
+  [
+    'Only the professor assigned to this work can review it.',
+    'Solo el profesor asignado puede revisar este trabajo.',
+  ],
+  ['The work is not in review.', 'El trabajo no está en revisión.'],
+  [
+    'Feedback is required unless the work is approved.',
+    'La retroalimentación es obligatoria si el trabajo no se aprueba.',
+  ],
   [/Passwords must be at least (\d+) characters\./, 'La contraseña debe tener al menos $1 caracteres.'],
   [
     'Passwords must have at least one non alphanumeric character.',

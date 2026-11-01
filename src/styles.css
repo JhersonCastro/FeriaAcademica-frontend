@@ -337,6 +337,73 @@ select.control__input {
   opacity: 0.55;
 }
 
+/* Multi-line text (feedback, observations). */
+.control--textarea {
+  align-items: stretch;
+  padding: 0 12px;
+}
+
+textarea.control__input {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Exclusive choices shown as selectable cards (e.g. the review decision). */
+.choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.choice:has(input:checked) {
+  border-color: var(--color-support);
+  box-shadow: inset 0 0 0 1px var(--color-support);
+  background: var(--color-support-light);
+}
+
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.choice input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--color-support);
+}
+
+.choice__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice__title {
+  font-weight: 600;
+}
+
+/* Reviewer feedback keeps the line breaks it was written with. */
+.feedback {
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 .checkbox {
   display: inline-flex;
   align-items: center;
