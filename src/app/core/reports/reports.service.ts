@@ -3,19 +3,25 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CertificateDto, CertificateKind } from '../models/certificate';
-import { EventReportDto } from '../models/report';
+import { SavedEventReportDto } from '../models/report';
 
-/** HU-031 and HU-032: the consolidated event report, on screen and as a PDF. */
+/** HU-031 and HU-032: the event report the administrator saves, and its PDF. Super admin only. */
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/events`;
 
-  report(eventId: string): Observable<EventReportDto> {
-    return this.http.get<EventReportDto>(`${this.reportUrl(eventId)}`);
+  /** 404 while no report has been saved for the event. */
+  report(eventId: string): Observable<SavedEventReportDto> {
+    return this.http.get<SavedEventReportDto>(this.reportUrl(eventId));
   }
 
-  /** Same figures as `report`, rendered by the backend as `application/pdf`. */
+  /** Creates the report or replaces it. */
+  save(eventId: string, html: string): Observable<void> {
+    return this.http.put<void>(this.reportUrl(eventId), { html });
+  }
+
+  /** The saved report rendered by the backend as `application/pdf`. */
   reportPdf(eventId: string): Observable<Blob> {
     return this.http.get(`${this.reportUrl(eventId)}/pdf`, { responseType: 'blob' });
   }

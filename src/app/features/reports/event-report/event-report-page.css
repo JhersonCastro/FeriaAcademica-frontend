@@ -39,9 +39,6 @@
 }
 
 .stat dt {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-muted);
@@ -58,26 +55,6 @@
   font-size: 40px;
 }
 
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex: none;
-}
-
-.dot--approved {
-  background: var(--color-success-text);
-}
-
-.dot--rejected {
-  background: var(--color-accent);
-}
-
-.dot--progress {
-  background: var(--color-warning-icon);
-}
-
-.split,
 .gauge {
   display: flex;
   height: 10px;
@@ -86,16 +63,28 @@
   background: var(--color-neutral-bg);
 }
 
-.split__part {
-  height: 100%;
-}
-
 .gauge__fill {
   height: 100%;
   background: var(--color-support);
 }
 
-.table .num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+/* Works figures are not available yet: a quiet note instead of empty numbers. */
+.state--compact {
+  padding: 16px 8px;
+}
+
+.state--compact .diamond {
+  margin: 8px auto 20px;
+}
+
+.notes-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.notes-actions {
+  justify-content: flex-start;
 }

@@ -1,22 +1,17 @@
 /**
- * `GET /api/events/{eventId}/report` (HU-031). Proposed contract, pending the backend: every
- * count is computed when the request arrives, so the report always reflects the current data.
+ * `GET /api/events/{eventId}/report` (HU-032): the report the administrator saved, as HTML.
+ * The PDF (`GET …/report/pdf`) is that same HTML. 404 while nothing has been saved.
  */
-export interface EventReportDto {
+export interface SavedEventReportDto {
   eventId: string;
   eventName: string;
-  /** When the backend computed the figures (UTC). */
-  generatedAt: string;
-  /** Works submitted at least once (drafts never sent and cancelled works are left out). */
-  worksReceived: number;
-  /** Admitted or evaluated. */
-  worksApproved: number;
-  /** Rejected definitively. */
-  worksRejected: number;
-  /** Still in the review cycle: submitted, in review, or back in draft for corrections. */
-  worksInProgress: number;
-  /** Registrations that were not cancelled. */
+  html: string;
+  updatedAt: string;
+}
+
+/** The attendance figures the report prints (from `GET /api/events/{id}/attendance/summary`). */
+export interface ReportFigures {
   registered: number;
-  /** Registrations with a QR check-in. */
-  attended: number;
+  entered: number;
+  pending: number;
 }

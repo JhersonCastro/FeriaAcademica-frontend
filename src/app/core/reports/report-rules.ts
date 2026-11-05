@@ -1,5 +1,5 @@
 import { CertificateDto, CertificateKind } from '../models/certificate';
-import { EventReportDto } from '../models/report';
+import { ReportFigures } from '../models/report';
 
 export const CERTIFICATE_KIND_LABELS: Record<CertificateKind, string> = {
   Participation: 'Participación',
@@ -15,27 +15,92 @@ export function certificateKey(certificate: Pick<CertificateDto, 'eventId' | 'ty
 }
 
 /** Whole percentage of registered people who checked in; 0 when nobody registered. */
-export function attendanceRate(report: Pick<EventReportDto, 'registered' | 'attended'>): number {
-  return report.registered > 0 ? Math.round((report.attended / report.registered) * 100) : 0;
+export function attendanceRate(figures: Pick<ReportFigures, 'registered' | 'entered'>): number {
+  return figures.registered > 0 ? Math.round((figures.entered / figures.registered) * 100) : 0;
 }
 
-/** Share of received works with each outcome, for the bar under the totals. */
-export function workShares(
-  report: Pick<
-    EventReportDto,
-    'worksReceived' | 'worksApproved' | 'worksRejected' | 'worksInProgress'
-  >,
-): { approved: number; rejected: number; inProgress: number } {
-  const total = report.worksReceived;
-  if (total <= 0) {
-    return { approved: 0, rejected: 0, inProgress: 0 };
+/** Text that is safe to place inside HTML. */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+export interface ReportContent {
+  eventName: string;
+  generatedAt: Date;
+  figures: ReportFigures;
+  /** What the administrator wrote; blank lines separate paragraphs. */
+  notes: string;
+}
+
+const NUMBER = new Intl.NumberFormat('es-CO');
+const DATE_TIME = new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeStyle: 'short' });
+const CELL = 'padding:6px 8px;border-bottom:1px solid #d9dee7;';
+
+/**
+ * HU-031/HU-032: the report the backend stores and turns into the PDF. Built only from escaped
+ * text, so nothing the administrator types can become markup. The notes go inside
+ * `data-notes` so `reportNotes` can read them back into the text box.
+ */
+export function buildReportHtml(content: ReportContent): string {
+  const { figures } = content;
+  const rows: [string, string][] = [
+    ['Inscritos', NUMBER.format(figures.registered)],
+    ['Asistentes registrados con QR', NUMBER.format(figures.entered)],
+    ['Inscritos que no ingresaron', NUMBER.format(figures.pending)],
+    ['Porcentaje de asistencia', `${attendanceRate(figures)} %`],
+  ];
+  const paragraphs = content.notes
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p style="margin:0 0 8px;">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`);
+
+  return [
+    '<div style="font-family:Arial,sans-serif;color:#0f2041;font-size:12px;">',
+    '<h1 style="font-size:22px;margin:0 0 4px;">Informe del evento</h1>',
+    `<p style="font-size:15px;margin:0 0 2px;"><b>${escapeHtml(content.eventName)}</b></p>`,
+    `<p style="color:#5b6478;margin:0 0 18px;">Cifras calculadas el ${escapeHtml(DATE_TIME.format(content.generatedAt))}</p>`,
+    '<h2 style="font-size:15px;margin:0 0 6px;">Inscripciones y asistencia</h2>',
+    '<table style="border-collapse:collapse;width:100%;margin:0 0 18px;">',
+    `<tr><th style="${CELL}text-align:left;">Indicador</th><th style="${CELL}text-align:right;">Valor</th></tr>`,
+    ...rows.map(
+      ([label, value]) =>
+        `<tr><td style="${CELL}">${label}</td><td style="${CELL}text-align:right;">${value}</td></tr>`,
+    ),
+    '</table>',
+    '<h2 style="font-size:15px;margin:0 0 6px;">Observaciones</h2>',
+    '<div data-notes="true">',
+    paragraphs.length ? paragraphs.join('') : '<p data-empty="true">Sin observaciones.</p>',
+    '</div>',
+    '</div>',
+  ].join('');
+}
+
+/**
+ * The administrator's notes inside a saved report, as plain text for the text box. A report
+ * saved some other way has no `data-notes` block: then its whole text is returned.
+ */
+export function reportNotes(html: string): string {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const block = doc.querySelector('[data-notes]');
+  if (!block) {
+    const parts = [...doc.body.querySelectorAll('h1, h2, h3, h4, p, li')]
+      .map((el) => (el.textContent ?? '').trim())
+      .filter(Boolean);
+    return parts.length ? parts.join('\n\n') : (doc.body.textContent ?? '').trim();
   }
-  const pct = (value: number) => (value / total) * 100;
-  return {
-    approved: pct(report.worksApproved),
-    rejected: pct(report.worksRejected),
-    inProgress: pct(report.worksInProgress),
-  };
+  return [...block.querySelectorAll('p:not([data-empty])')]
+    .map((p) => {
+      p.querySelectorAll('br').forEach((br) => br.replaceWith('\n'));
+      return (p.textContent ?? '').trim();
+    })
+    .filter(Boolean)
+    .join('\n\n');
 }
 
 /** Available certificates first; within each group by event name, attendance before participation. */

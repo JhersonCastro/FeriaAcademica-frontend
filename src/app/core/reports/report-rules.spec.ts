@@ -1,41 +1,70 @@
 import { CertificateDto } from '../models/certificate';
 import {
   attendanceRate,
+  buildReportHtml,
   certificateKey,
+  escapeHtml,
   pdfFileName,
+  reportNotes,
   sortCertificates,
-  workShares,
 } from './report-rules';
 
 describe('attendanceRate (HU-031)', () => {
   it('rounds the share of registered people who checked in', () => {
-    expect(attendanceRate({ registered: 120, attended: 87 })).toBe(73);
+    expect(attendanceRate({ registered: 120, entered: 87 })).toBe(73);
   });
 
   it('is 0 when nobody registered', () => {
-    expect(attendanceRate({ registered: 0, attended: 0 })).toBe(0);
+    expect(attendanceRate({ registered: 0, entered: 0 })).toBe(0);
   });
 });
 
-describe('workShares', () => {
-  it('splits the received works by outcome', () => {
-    const shares = workShares({
-      worksReceived: 40,
-      worksApproved: 20,
-      worksRejected: 10,
-      worksInProgress: 10,
-    });
-    expect(shares).toEqual({ approved: 50, rejected: 25, inProgress: 25 });
+describe('buildReportHtml and reportNotes (HU-031, HU-032)', () => {
+  const content = {
+    eventName: 'FIET 2026',
+    generatedAt: new Date('2026-11-05T15:00:00Z'),
+    figures: { registered: 184, entered: 131, pending: 53 },
+    notes: 'La asistencia fue alta.\nSobre todo en la tarde.\n\nSe recomienda ampliar el aforo.',
+  };
+
+  it('prints the event, the attendance figures and the rate', () => {
+    const html = buildReportHtml(content);
+    expect(html).toContain('FIET 2026');
+    expect(html).toContain('>184<');
+    expect(html).toContain('>131<');
+    expect(html).toContain('>53<');
+    expect(html).toContain('71 %');
   });
 
-  it('is empty when no work was received', () => {
-    expect(
-      workShares({ worksReceived: 0, worksApproved: 0, worksRejected: 0, worksInProgress: 0 }),
-    ).toEqual({
-      approved: 0,
-      rejected: 0,
-      inProgress: 0,
+  it('reads back the notes exactly as they were written', () => {
+    expect(reportNotes(buildReportHtml(content))).toBe(content.notes);
+  });
+
+  it('keeps an empty report readable and gives back no notes', () => {
+    const html = buildReportHtml({ ...content, notes: '  ' });
+    expect(html).toContain('Sin observaciones.');
+    expect(reportNotes(html)).toBe('');
+  });
+
+  it('never turns what the administrator types into markup', () => {
+    const html = buildReportHtml({
+      ...content,
+      eventName: 'Feria <b>2026</b>',
+      notes: '<img src=x onerror=alert(1)>',
     });
+    expect(html).not.toContain('<img');
+    expect(html).not.toContain('<b>2026');
+    expect(reportNotes(html)).toBe('<img src=x onerror=alert(1)>');
+  });
+
+  it('shows the whole text of a report saved some other way', () => {
+    expect(reportNotes('<h1>Informe</h1><p>Texto libre</p>')).toBe('Informe\n\nTexto libre');
+  });
+
+  it('escapes the five HTML special characters', () => {
+    expect(escapeHtml(`<a href="x">'&'</a>`)).toBe(
+      '&lt;a href=&quot;x&quot;&gt;&#39;&amp;&#39;&lt;/a&gt;',
+    );
   });
 });
 

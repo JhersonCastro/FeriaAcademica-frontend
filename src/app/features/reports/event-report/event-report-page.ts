@@ -1,24 +1,28 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, catchError, forkJoin, of, throwError } from 'rxjs';
 import { apiErrorMessage } from '../../../core/api/api-error';
+import { AttendanceService } from '../../../core/attendance/attendance.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { EventSummary, EventsService } from '../../../core/events/events.service';
-import { EventReportDto } from '../../../core/models/report';
+import { ReportFigures, SavedEventReportDto } from '../../../core/models/report';
 import {
   attendanceRate,
+  buildReportHtml,
   pdfFileName,
+  reportNotes,
   saveFile,
-  workShares,
 } from '../../../core/reports/report-rules';
 import { ReportsService } from '../../../core/reports/reports.service';
 
 type ViewState = 'loading' | 'no-events' | 'ready' | 'error';
 
 /**
- * HU-031: consolidated report of one event (works received, approved and rejected; registered
- * and attended), computed when it is requested. HU-032: the same report as a PDF.
+ * HU-031: the event report with the attendance figures computed now, plus the administrator's
+ * observations. Saving stores it in the backend; HU-032: the PDF is exactly what was saved.
+ * The works figures wait for a backend query that does not exist yet.
  */
 @Component({
   selector: 'app-event-report-page',
@@ -29,6 +33,7 @@ type ViewState = 'loading' | 'no-events' | 'ready' | 'error';
 })
 export class EventReportPage {
   private readonly reports = inject(ReportsService);
+  private readonly attendance = inject(AttendanceService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -42,20 +47,30 @@ export class EventReportPage {
   );
 
   protected readonly state = signal<ViewState>('loading');
-  protected readonly report = signal<EventReportDto | null>(null);
-  protected readonly generating = signal(false);
+  protected readonly figures = signal<ReportFigures | null>(null);
+  protected readonly figuresAt = signal<Date | null>(null);
+  protected readonly lastEntryAt = signal<string | null>(null);
+  protected readonly saved = signal<SavedEventReportDto | null>(null);
+  protected readonly notes = signal('');
+  private readonly savedNotes = signal('');
+
+  protected readonly refreshing = signal(false);
+  protected readonly saving = signal(false);
   protected readonly downloading = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
-  protected readonly downloadError = signal<string | null>(null);
+  protected readonly actionError = signal<string | null>(null);
+  protected readonly savedMessage = signal<string | null>(null);
 
   protected readonly rate = computed(() => {
-    const report = this.report();
-    return report ? attendanceRate(report) : 0;
+    const figures = this.figures();
+    return figures ? attendanceRate(figures) : 0;
   });
-  protected readonly shares = computed(() => {
-    const report = this.report();
-    return report ? workShares(report) : { approved: 0, rejected: 0, inProgress: 0 };
-  });
+  /** New figures after "Actualizar cifras" that the saved report does not have yet. */
+  private readonly figuresChanged = signal(false);
+  /** Unsaved changes: the PDF is the saved version, so they must be saved first. */
+  protected readonly dirty = computed(
+    () => !this.saved() || this.figuresChanged() || this.notes() !== this.savedNotes(),
+  );
 
   private loading?: Subscription;
 
@@ -84,45 +99,92 @@ export class EventReportPage {
     this.select((event.target as HTMLSelectElement).value);
   }
 
-  /** Asks the backend again: the figures are computed at request time (HU-031 criterion 3). */
-  protected generate(): void {
+  protected onNotesInput(event: Event): void {
+    this.notes.set((event.target as HTMLTextAreaElement).value);
+    this.savedMessage.set(null);
+  }
+
+  /** Reads the figures again: they are computed when they are requested (HU-031 criterion 3). */
+  protected refresh(): void {
     const eventId = this.selectedEventId();
     if (!eventId) {
       return;
     }
-    this.generating.set(true);
-    this.errorMessage.set(null);
-    this.loading?.unsubscribe();
-    this.loading = this.reports.report(eventId).subscribe({
-      next: (report) => {
-        this.report.set(report);
-        this.generating.set(false);
-        this.state.set('ready');
+    this.refreshing.set(true);
+    this.actionError.set(null);
+    this.attendance.summary(eventId).subscribe({
+      next: (summary) => {
+        const before = this.figures();
+        if (
+          before &&
+          (before.registered !== summary.registered ||
+            before.entered !== summary.entered ||
+            before.pending !== summary.pending)
+        ) {
+          this.figuresChanged.set(true);
+          this.savedMessage.set(null);
+        }
+        this.setFigures(summary);
+        this.refreshing.set(false);
       },
       error: (error: unknown) => {
-        this.generating.set(false);
-        this.report.set(null);
-        this.errorMessage.set(apiErrorMessage(error));
-        this.state.set('error');
+        this.refreshing.set(false);
+        this.actionError.set(apiErrorMessage(error));
+      },
+    });
+  }
+
+  /** Builds the report from the figures on screen and the notes, and stores it. */
+  protected save(): void {
+    const event = this.selectedEvent();
+    const figures = this.figures();
+    if (!event || !figures) {
+      return;
+    }
+    const html = buildReportHtml({
+      eventName: event.name,
+      generatedAt: this.figuresAt() ?? new Date(),
+      figures,
+      notes: this.notes(),
+    });
+    this.saving.set(true);
+    this.actionError.set(null);
+    this.savedMessage.set(null);
+    this.reports.save(event.id, html).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.saved.set({
+          eventId: event.id,
+          eventName: event.name,
+          html,
+          updatedAt: new Date().toISOString(),
+        });
+        this.savedNotes.set(this.notes());
+        this.figuresChanged.set(false);
+        this.savedMessage.set('Informe guardado. El PDF ya tiene estas cifras y observaciones.');
+      },
+      error: (error: unknown) => {
+        this.saving.set(false);
+        this.actionError.set(apiErrorMessage(error));
       },
     });
   }
 
   protected downloadPdf(): void {
-    const report = this.report();
-    if (!report) {
+    const event = this.selectedEvent();
+    if (!event || !this.saved()) {
       return;
     }
     this.downloading.set(true);
-    this.downloadError.set(null);
-    this.reports.reportPdf(report.eventId).subscribe({
+    this.actionError.set(null);
+    this.reports.reportPdf(event.id).subscribe({
       next: (pdf) => {
         this.downloading.set(false);
-        saveFile(pdf, pdfFileName('informe', report.eventName));
+        saveFile(pdf, pdfFileName('informe', event.name));
       },
       error: () => {
         this.downloading.set(false);
-        this.downloadError.set('No pudimos generar el PDF. Intenta de nuevo en un momento.');
+        this.actionError.set('No pudimos generar el PDF. Intenta de nuevo en un momento.');
       },
     });
   }
@@ -136,7 +198,52 @@ export class EventReportPage {
         replaceUrl: true,
       });
     }
-    this.report.set(null);
-    this.generate();
+
+    this.state.set('loading');
+    this.figures.set(null);
+    this.saved.set(null);
+    this.notes.set('');
+    this.savedNotes.set('');
+    this.figuresChanged.set(false);
+    this.errorMessage.set(null);
+    this.actionError.set(null);
+    this.savedMessage.set(null);
+    this.loading?.unsubscribe();
+    this.loading = forkJoin({
+      summary: this.attendance.summary(eventId),
+      // No report saved yet answers 404: that is an empty report, not an error.
+      report: this.reports
+        .report(eventId)
+        .pipe(
+          catchError((error: unknown) =>
+            error instanceof HttpErrorResponse && error.status === 404
+              ? of(null)
+              : throwError(() => error),
+          ),
+        ),
+    }).subscribe({
+      next: ({ summary, report }) => {
+        this.setFigures(summary);
+        this.saved.set(report);
+        const notes = report ? reportNotes(report.html) : '';
+        this.notes.set(notes);
+        this.savedNotes.set(notes);
+        this.state.set('ready');
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(apiErrorMessage(error));
+        this.state.set('error');
+      },
+    });
+  }
+
+  private setFigures(summary: ReportFigures & { lastEntryAt: string | null }): void {
+    this.figures.set({
+      registered: summary.registered,
+      entered: summary.entered,
+      pending: summary.pending,
+    });
+    this.lastEntryAt.set(summary.lastEntryAt);
+    this.figuresAt.set(new Date());
   }
 }

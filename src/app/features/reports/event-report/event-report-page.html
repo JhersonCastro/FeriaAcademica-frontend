@@ -37,26 +37,13 @@
       <button
         class="btn btn--secondary"
         type="button"
-        [disabled]="!selectedEventId() || generating()"
-        (click)="generate()"
+        [disabled]="state() !== 'ready' || refreshing()"
+        (click)="refresh()"
       >
-        {{ generating() ? 'Generando…' : 'Actualizar cifras' }}
-      </button>
-      <button
-        class="btn btn--primary"
-        type="button"
-        [disabled]="!report() || downloading()"
-        (click)="downloadPdf()"
-      >
-        {{ downloading() ? 'Preparando PDF…' : 'Descargar PDF' }}
+        {{ refreshing() ? 'Actualizando…' : 'Actualizar cifras' }}
       </button>
     </div>
   </div>
-  @if (downloadError(); as message) {
-    <div class="alert alert--danger alert--compact" role="alert">
-      <p>{{ message }}</p>
-    </div>
-  }
 </section>
 
 @switch (state()) {
@@ -72,62 +59,33 @@
   @case ('error') {
     <div class="alert alert--danger" role="alert">
       <div class="alert__body">
-        <p class="alert__title">No pudimos generar el informe</p>
+        <p class="alert__title">No pudimos cargar el informe</p>
         <p>{{ errorMessage() }}</p>
       </div>
     </div>
   }
   @case ('ready') {
-    @if (report(); as report) {
+    @if (figures(); as figures) {
       <p class="text-small text-muted report-stamp" aria-live="polite">
-        Cifras de {{ report.eventName }} calculadas el
-        {{ report.generatedAt | date: "d 'de' MMMM 'de' y, h:mm a" }}
+        Cifras de {{ selectedEvent()?.name }} calculadas el
+        {{ figuresAt() | date: "d 'de' MMMM 'de' y, h:mm a" }}
       </p>
 
       <div class="grid-2">
-        <section class="card" aria-labelledby="report-works-title">
-          <h2 class="title-2" id="report-works-title">Trabajos</h2>
-          <dl class="stats">
-            <div class="stat stat--lead">
-              <dt>Recibidos</dt>
-              <dd>{{ report.worksReceived | number }}</dd>
-            </div>
-            <div class="stat">
-              <dt><span class="dot dot--approved" aria-hidden="true"></span>Aprobados</dt>
-              <dd>{{ report.worksApproved | number }}</dd>
-            </div>
-            <div class="stat">
-              <dt><span class="dot dot--rejected" aria-hidden="true"></span>Rechazados</dt>
-              <dd>{{ report.worksRejected | number }}</dd>
-            </div>
-            <div class="stat">
-              <dt>
-                <span class="dot dot--progress" aria-hidden="true"></span>En revisión o corrección
-              </dt>
-              <dd>{{ report.worksInProgress | number }}</dd>
-            </div>
-          </dl>
-          @if (report.worksReceived > 0) {
-            <div class="split" aria-hidden="true">
-              <span class="split__part dot--approved" [style.width.%]="shares().approved"></span>
-              <span class="split__part dot--progress" [style.width.%]="shares().inProgress"></span>
-              <span class="split__part dot--rejected" [style.width.%]="shares().rejected"></span>
-            </div>
-          } @else {
-            <p class="text-muted">Esta feria aún no ha recibido trabajos.</p>
-          }
-        </section>
-
         <section class="card" aria-labelledby="report-attendance-title">
           <h2 class="title-2" id="report-attendance-title">Inscripciones y asistencia</h2>
           <dl class="stats">
             <div class="stat stat--lead">
               <dt>Inscritos</dt>
-              <dd>{{ report.registered | number }}</dd>
+              <dd>{{ figures.registered | number }}</dd>
             </div>
             <div class="stat">
               <dt>Asistentes con QR</dt>
-              <dd>{{ report.attended | number }}</dd>
+              <dd>{{ figures.entered | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>No ingresaron</dt>
+              <dd>{{ figures.pending | number }}</dd>
             </div>
             <div class="stat">
               <dt>Asistencia</dt>
@@ -144,54 +102,100 @@
           >
             <span class="gauge__fill" [style.width.%]="rate()"></span>
           </div>
+          @if (lastEntryAt(); as last) {
+            <p class="text-small text-muted">
+              Último ingreso: {{ last | date: 'd MMM y, h:mm a' }}
+            </p>
+          }
+        </section>
+
+        <section class="card" aria-labelledby="report-works-title">
+          <h2 class="title-2" id="report-works-title">Trabajos</h2>
+          <div class="state state--compact">
+            <span class="diamond" aria-hidden="true"></span>
+            <p>
+              Las cifras de trabajos recibidos, aprobados y rechazados aparecerán aquí cuando el
+              sistema las calcule. Por ahora puedes anotarlas en las observaciones.
+            </p>
+          </div>
         </section>
       </div>
 
-      <section class="card" aria-labelledby="report-table-title">
-        <h2 class="title-2" id="report-table-title">Resumen</h2>
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Indicador</th>
-                <th scope="col" class="num">Valor</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Trabajos recibidos</td>
-                <td class="num">{{ report.worksReceived | number }}</td>
-              </tr>
-              <tr>
-                <td>Trabajos aprobados</td>
-                <td class="num">{{ report.worksApproved | number }}</td>
-              </tr>
-              <tr>
-                <td>Trabajos rechazados</td>
-                <td class="num">{{ report.worksRejected | number }}</td>
-              </tr>
-              <tr>
-                <td>Trabajos en revisión o corrección</td>
-                <td class="num">{{ report.worksInProgress | number }}</td>
-              </tr>
-              <tr>
-                <td>Inscritos</td>
-                <td class="num">{{ report.registered | number }}</td>
-              </tr>
-              <tr>
-                <td>Asistentes registrados con QR</td>
-                <td class="num">{{ report.attended | number }}</td>
-              </tr>
-              <tr>
-                <td>Porcentaje de asistencia</td>
-                <td class="num">{{ rate() }} %</td>
-              </tr>
-            </tbody>
-          </table>
+      <section class="card" aria-labelledby="report-notes-title">
+        <div class="notes-head">
+          <h2 class="title-2" id="report-notes-title">Observaciones del informe</h2>
+          @if (saved()) {
+            <span class="chip" [class.chip--success]="!dirty()" [class.chip--neutral]="dirty()">
+              {{ dirty() ? 'Cambios sin guardar' : 'Guardado' }}
+            </span>
+          } @else {
+            <span class="chip chip--neutral">Sin guardar</span>
+          }
         </div>
-        <p class="text-small text-muted">
-          El PDF trae estas mismas cifras para compartirlo con las directivas de la Facultad.
-        </p>
+        <div class="field">
+          <label class="field__label" for="report-notes">
+            Conclusiones, logros y recomendaciones para las directivas
+            <span class="field__optional">· Opcional</span>
+          </label>
+          <div class="control control--textarea">
+            <textarea
+              class="control__input"
+              id="report-notes"
+              rows="7"
+              maxlength="8000"
+              placeholder="Ejemplo: La feria recibió 40 trabajos y se aprobaron 25. La asistencia fue mayor en la jornada de la tarde…"
+              [value]="notes()"
+              (input)="onNotesInput($event)"
+            ></textarea>
+          </div>
+          <p class="field__hint">
+            Deja una línea en blanco entre párrafos. Al guardar, el informe toma las cifras que ves
+            arriba.
+          </p>
+        </div>
+
+        @if (actionError(); as message) {
+          <div class="alert alert--danger alert--compact" role="alert">
+            <p>{{ message }}</p>
+          </div>
+        }
+        @if (savedMessage(); as message) {
+          <div class="alert alert--success alert--compact" role="status">
+            <p>{{ message }}</p>
+          </div>
+        }
+
+        <div class="actions notes-actions">
+          <button
+            class="btn btn--primary"
+            type="button"
+            [disabled]="saving() || (saved() && !dirty())"
+            (click)="save()"
+          >
+            {{ saving() ? 'Guardando…' : 'Guardar informe' }}
+          </button>
+          <button
+            class="btn btn--secondary"
+            type="button"
+            [disabled]="!saved() || dirty() || downloading()"
+            (click)="downloadPdf()"
+          >
+            {{ downloading() ? 'Preparando PDF…' : 'Descargar PDF' }}
+          </button>
+        </div>
+        @if (saved(); as report) {
+          <p class="text-small text-muted">
+            Última versión guardada: {{ report.updatedAt | date: "d 'de' MMMM, h:mm a" }}
+            @if (dirty()) {
+              · Guarda los cambios para que el PDF los incluya.
+            }
+          </p>
+        } @else {
+          <p class="text-small text-muted">
+            Guarda el informe para poder descargarlo en PDF y compartirlo con las directivas de la
+            Facultad.
+          </p>
+        }
       </section>
     }
   }
