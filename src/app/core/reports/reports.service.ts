@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CertificateDto } from '../models/certificate';
+import { CertificateDto, CertificateKind } from '../models/certificate';
 import { EventReportDto } from '../models/report';
 
 /** HU-031 and HU-032: the consolidated event report, on screen and as a PDF. */
@@ -35,10 +35,14 @@ export class CertificatesService {
     return this.http.get<CertificateDto[]>(`${this.baseUrl}/mine`);
   }
 
-  /** 400 when the condition is not met: the backend checks it again, not only the screen. */
-  pdf(certificateId: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${encodeURIComponent(certificateId)}/pdf`, {
-      responseType: 'blob',
-    });
+  /**
+   * The certificate of one type for one event. The backend checks the condition again (event
+   * finished, attended or final version delivered) and issues the code on the first download.
+   */
+  pdf(eventId: string, type: CertificateKind): Observable<Blob> {
+    return this.http.get(
+      `${this.baseUrl}/events/${encodeURIComponent(eventId)}/${encodeURIComponent(type)}/pdf`,
+      { responseType: 'blob' },
+    );
   }
 }

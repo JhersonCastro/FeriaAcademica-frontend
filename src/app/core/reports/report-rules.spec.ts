@@ -1,5 +1,11 @@
 import { CertificateDto } from '../models/certificate';
-import { attendanceRate, pdfFileName, sortCertificates, workShares } from './report-rules';
+import {
+  attendanceRate,
+  certificateKey,
+  pdfFileName,
+  sortCertificates,
+  workShares,
+} from './report-rules';
 
 describe('attendanceRate (HU-031)', () => {
   it('rounds the share of registered people who checked in', () => {
@@ -35,27 +41,46 @@ describe('workShares', () => {
 
 describe('sortCertificates (HU-061)', () => {
   const cert = (
-    id: string,
+    eventName: string,
     available: boolean,
-    issuedAt: string | null,
-    eventName = 'FIET 2026',
+    type: CertificateDto['type'] = 'Attendance',
   ): CertificateDto => ({
-    id,
-    eventId: 'e1',
+    eventId: eventName,
     eventName,
-    kind: 'Attendance',
+    type,
+    workId: type === 'Participation' ? 'w1' : null,
+    workTitle: type === 'Participation' ? 'Robot seguidor' : null,
     available,
-    issuedAt,
-    verificationCode: available ? `CODE-${id}` : null,
+    code: null,
   });
 
-  it('lists the available ones first, newest first', () => {
+  it('lists the available ones first, then by event name', () => {
     const sorted = sortCertificates([
-      cert('pending', false, null),
-      cert('old', true, '2026-05-01T00:00:00Z'),
-      cert('new', true, '2026-11-01T00:00:00Z'),
+      cert('Feria de Emprendimiento 2026', false),
+      cert('FIET 2026', true),
+      cert('Expo Ingeniería 2025', true),
     ]);
-    expect(sorted.map((c) => c.id)).toEqual(['new', 'old', 'pending']);
+    expect(sorted.map((c) => c.eventName)).toEqual([
+      'Expo Ingeniería 2025',
+      'FIET 2026',
+      'Feria de Emprendimiento 2026',
+    ]);
+  });
+
+  it('puts attendance before participation within the same event', () => {
+    const sorted = sortCertificates([
+      cert('FIET 2026', true, 'Participation'),
+      cert('FIET 2026', true, 'Attendance'),
+    ]);
+    expect(sorted.map((c) => c.type)).toEqual(['Attendance', 'Participation']);
+  });
+});
+
+describe('certificateKey (HU-061)', () => {
+  it('tells apart the two certificates of the same event', () => {
+    expect(certificateKey({ eventId: 'e1', type: 'Attendance' })).not.toBe(
+      certificateKey({ eventId: 'e1', type: 'Participation' }),
+    );
   });
 });
 

@@ -114,6 +114,36 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'Feedback is required unless the work is approved.',
     'La retroalimentación es obligatoria si el trabajo no se aprueba.',
   ],
+  // Final version, event report and certificates (backend PR #11).
+  [
+    'The final version can only be submitted once the work is approved.',
+    'Solo puedes entregar la versión final cuando el trabajo esté aprobado.',
+  ],
+  ['The final version was already submitted.', 'La versión final ya fue entregada.'],
+  [
+    'The final version needs the file, its name and its size.',
+    'Adjunta el archivo de la versión final.',
+  ],
+  ['The report content is required.', 'Escribe el contenido del informe.'],
+  ['The report is empty.', 'Escribe el contenido del informe.'],
+  ['The report is too large.', 'El informe es demasiado grande. Reduce el tamaño de las imágenes.'],
+  [
+    'The event report has not been generated yet.',
+    'El informe de esta feria todavía no se ha guardado.',
+  ],
+  [/An event in state \w+ cannot be closed\./, 'Esta feria no se puede cerrar en su estado actual.'],
+  [
+    'Certificates are available once the event has finished.',
+    'Los certificados se pueden descargar cuando la feria termina.',
+  ],
+  [
+    'An attendance certificate requires having attended the event.',
+    'Para el certificado de asistencia debes haber registrado tu ingreso con el QR.',
+  ],
+  [
+    'A participation certificate requires a work with its final version delivered.',
+    'Para el certificado de participación debes entregar la versión final de tu trabajo.',
+  ],
   [/Passwords must be at least (\d+) characters\./, 'La contraseña debe tener al menos $1 caracteres.'],
   [
     'Passwords must have at least one non alphanumeric character.',

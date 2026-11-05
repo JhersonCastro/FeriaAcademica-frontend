@@ -4,8 +4,9 @@ import { apiErrorMessage } from '../../../core/api/api-error';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CertificateDto } from '../../../core/models/certificate';
 import {
-  CERTIFICATE_CONDITION,
   CERTIFICATE_KIND_LABELS,
+  CERTIFICATE_PENDING,
+  certificateKey,
   pdfFileName,
   saveFile,
   sortCertificates,
@@ -13,8 +14,8 @@ import {
 import { CertificatesService } from '../../../core/reports/reports.service';
 
 /**
- * HU-061: the signed-in person downloads only their own certificates, and only once the
- * condition is met (attended or participated); otherwise the row says what is missing.
+ * HU-061: the signed-in person sees only their own certificates and downloads them once the
+ * event has finished; before that the row says so.
  */
 @Component({
   selector: 'app-my-certificates-page',
@@ -28,7 +29,8 @@ export class MyCertificatesPage {
   protected readonly user = inject(AuthService).user;
   protected readonly today = new Date();
   protected readonly kindLabels = CERTIFICATE_KIND_LABELS;
-  protected readonly conditions = CERTIFICATE_CONDITION;
+  protected readonly pendingText = CERTIFICATE_PENDING;
+  protected readonly key = certificateKey;
 
   protected readonly certificates = signal<CertificateDto[]>([]);
   protected readonly loading = signal(true);
@@ -50,15 +52,21 @@ export class MyCertificatesPage {
   }
 
   protected download(certificate: CertificateDto): void {
-    this.downloadingId.set(certificate.id);
+    this.downloadingId.set(certificateKey(certificate));
     this.downloadError.set(null);
-    this.certificatesApi.pdf(certificate.id).subscribe({
+    this.certificatesApi.pdf(certificate.eventId, certificate.type).subscribe({
       next: (pdf) => {
         this.downloadingId.set(null);
         saveFile(
           pdf,
-          pdfFileName('certificado', this.kindLabels[certificate.kind], certificate.eventName),
+          pdfFileName('certificado', this.kindLabels[certificate.type], certificate.eventName),
         );
+        // The first download issues the code: read the list again so the row shows it.
+        if (!certificate.code) {
+          this.certificatesApi.mine().subscribe({
+            next: (certificates) => this.certificates.set(sortCertificates(certificates)),
+          });
+        }
       },
       error: () => {
         this.downloadingId.set(null);

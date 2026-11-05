@@ -34,8 +34,8 @@
     <div class="state">
       <span class="diamond" aria-hidden="true"></span>
       <p>
-        Aún no tienes certificados. Aparecen aquí cuando asistes a una feria o participas con un
-        trabajo.
+        Aún no tienes certificados. Aparecen aquí cuando registras tu ingreso a una feria con el QR
+        o entregas la versión final de tu trabajo aprobado.
       </p>
     </div>
   } @else if (certificates().length) {
@@ -50,26 +50,24 @@
           </tr>
         </thead>
         <tbody>
-          @for (certificate of certificates(); track certificate.id) {
+          @for (certificate of certificates(); track key(certificate)) {
             <tr>
               <td>
                 <strong>{{ certificate.eventName }}</strong>
-                @if (certificate.verificationCode) {
-                  <span class="table__secondary">Código {{ certificate.verificationCode }}</span>
+                @if (certificate.workTitle) {
+                  <span class="table__secondary">Trabajo: {{ certificate.workTitle }}</span>
+                }
+                @if (certificate.code) {
+                  <span class="table__secondary">Código {{ certificate.code }}</span>
                 }
               </td>
-              <td data-label="Tipo">{{ kindLabels[certificate.kind] }}</td>
+              <td data-label="Tipo">{{ kindLabels[certificate.type] }}</td>
               <td data-label="Estado">
                 @if (certificate.available) {
                   <span class="chip chip--success">Disponible</span>
-                  @if (certificate.issuedAt) {
-                    <span class="table__secondary"
-                      >Emitido el {{ certificate.issuedAt | date: 'd MMM y' }}</span
-                    >
-                  }
                 } @else {
                   <span class="chip chip--neutral">Pendiente</span>
-                  <span class="table__secondary">{{ conditions[certificate.kind] }}</span>
+                  <span class="table__secondary">{{ pendingText }}</span>
                 }
               </td>
               <td>
@@ -77,10 +75,10 @@
                   <button
                     class="btn btn--secondary"
                     type="button"
-                    [disabled]="downloadingId() === certificate.id"
+                    [disabled]="downloadingId() === key(certificate)"
                     (click)="download(certificate)"
                   >
-                    {{ downloadingId() === certificate.id ? 'Descargando…' : 'Descargar PDF' }}
+                    {{ downloadingId() === key(certificate) ? 'Descargando…' : 'Descargar PDF' }}
                   </button>
                 }
               </td>

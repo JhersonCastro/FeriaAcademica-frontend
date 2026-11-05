@@ -4,15 +4,15 @@ import { EventReportDto } from '../models/report';
 export const CERTIFICATE_KIND_LABELS: Record<CertificateKind, string> = {
   Participation: 'Participación',
   Attendance: 'Asistencia',
-  Recognition: 'Reconocimiento',
 };
 
-/** What the person still has to do before the certificate can be downloaded (HU-061 criterion 2). */
-export const CERTIFICATE_CONDITION: Record<CertificateKind, string> = {
-  Participation: 'Disponible cuando tu trabajo sea aprobado.',
-  Attendance: 'Disponible cuando registres tu ingreso con el QR el día de la feria.',
-  Recognition: 'Disponible cuando se publiquen los resultados de la feria.',
-};
+/** Why a certificate the person already qualifies for cannot be downloaded yet (HU-061). */
+export const CERTIFICATE_PENDING = 'Disponible cuando la organización cierre la feria.';
+
+/** One row per event and type: the backend never returns two of the same. */
+export function certificateKey(certificate: Pick<CertificateDto, 'eventId' | 'type'>): string {
+  return `${certificate.eventId}:${certificate.type}`;
+}
 
 /** Whole percentage of registered people who checked in; 0 when nobody registered. */
 export function attendanceRate(report: Pick<EventReportDto, 'registered' | 'attended'>): number {
@@ -38,16 +38,13 @@ export function workShares(
   };
 }
 
-/** Available certificates first, newest first; then the pending ones by event name. */
+/** Available certificates first; within each group by event name, attendance before participation. */
 export function sortCertificates(certificates: readonly CertificateDto[]): CertificateDto[] {
   return [...certificates].sort((a, b) => {
     if (a.available !== b.available) {
       return a.available ? -1 : 1;
     }
-    if (a.available && b.available) {
-      return (b.issuedAt ?? '').localeCompare(a.issuedAt ?? '');
-    }
-    return a.eventName.localeCompare(b.eventName, 'es');
+    return a.eventName.localeCompare(b.eventName, 'es') || a.type.localeCompare(b.type);
   });
 }
 

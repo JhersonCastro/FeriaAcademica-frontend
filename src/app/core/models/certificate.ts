@@ -1,19 +1,20 @@
-/** HU-060: one certificate kind per role. */
-export type CertificateKind = 'Participation' | 'Attendance' | 'Recognition';
+/** HU-060: the certificate types the backend issues today. */
+export type CertificateKind = 'Attendance' | 'Participation';
 
 /**
- * `GET /api/certificates/mine` (HU-061). Proposed contract, pending the backend. The list also
- * includes certificates the person cannot download yet, so the screen can say why.
+ * `GET /api/certificates/mine` (HU-061). One row per certificate the person qualifies for:
+ * attendance when they checked in with the QR, participation when their work has its final
+ * version. A certificate can be downloaded once the event has finished (`available`).
  */
 export interface CertificateDto {
-  id: string;
   eventId: string;
   eventName: string;
-  kind: CertificateKind;
-  /** `true` only when the condition is met (attended, or the work was approved). */
+  type: CertificateKind;
+  /** Only for participation certificates. */
+  workId: string | null;
+  workTitle: string | null;
+  /** `true` once the event is closed or archived. */
   available: boolean;
-  /** Set when `available` is true. */
-  issuedAt: string | null;
-  /** Short code printed on the PDF to verify it. */
-  verificationCode: string | null;
+  /** Printed on the PDF to verify it; set after the first download. */
+  code: string | null;
 }
