@@ -75,6 +75,75 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ['This registration was cancelled.', 'Esta inscripción fue cancelada.'],
   ['This person already entered.', 'Esta persona ya ingresó.'],
   ['Attendance registered.', 'Asistencia registrada.'],
+  ['The event is full: there are no seats left.', 'Esta feria ya no tiene cupos disponibles.'],
+  // Works and reviews.
+  ['Work not found.', 'No encontramos el trabajo.'],
+  [
+    'A work can only be edited while it is a draft.',
+    'Solo puedes cambiar los adjuntos mientras el trabajo está en Borrador.',
+  ],
+  ['Only a draft can be submitted.', 'Solo un trabajo en Borrador se puede enviar.'],
+  [
+    'A work needs at least one artifact to be submitted.',
+    'Agrega al menos un adjunto antes de enviar el trabajo.',
+  ],
+  [
+    'A work in review can no longer be withdrawn.',
+    'El trabajo ya está en revisión: no se puede retirar ni reemplazar.',
+  ],
+  [
+    /A work in state \w+ cannot be withdrawn\./,
+    'En su estado actual el trabajo no se puede retirar.',
+  ],
+  [
+    /The call is closed: the submission deadline was [^.]*\./,
+    'La convocatoria está cerrada: ya pasó la fecha límite de envío.',
+  ],
+  [
+    /The link must be a full http or https address.*/,
+    'El enlace debe ser una dirección completa que empiece por http:// o https://.',
+  ],
+  ['Send either a link or a file.', 'Envía un enlace o un archivo.'],
+  ['Only a submitted work can enter review.', 'Solo un trabajo enviado puede pasar a revisión.'],
+  [
+    'Only the professor assigned to this work can review it.',
+    'Solo el profesor asignado puede revisar este trabajo.',
+  ],
+  ['The work is not in review.', 'El trabajo no está en revisión.'],
+  [
+    'Feedback is required unless the work is approved.',
+    'La retroalimentación es obligatoria si el trabajo no se aprueba.',
+  ],
+  // Final version, event report and certificates (backend PR #11).
+  [
+    'The final version can only be submitted once the work is approved.',
+    'Solo puedes entregar la versión final cuando el trabajo esté aprobado.',
+  ],
+  ['The final version was already submitted.', 'La versión final ya fue entregada.'],
+  [
+    'The final version needs the file, its name and its size.',
+    'Adjunta el archivo de la versión final.',
+  ],
+  ['The report content is required.', 'Escribe el contenido del informe.'],
+  ['The report is empty.', 'Escribe el contenido del informe.'],
+  ['The report is too large.', 'El informe es demasiado grande. Reduce el tamaño de las imágenes.'],
+  [
+    'The event report has not been generated yet.',
+    'El informe de esta feria todavía no se ha guardado.',
+  ],
+  [/An event in state \w+ cannot be closed\./, 'Esta feria no se puede cerrar en su estado actual.'],
+  [
+    'Certificates are available once the event has finished.',
+    'Los certificados se pueden descargar cuando la feria termina.',
+  ],
+  [
+    'An attendance certificate requires having attended the event.',
+    'Para el certificado de asistencia debes haber registrado tu ingreso con el QR.',
+  ],
+  [
+    'A participation certificate requires a work with its final version delivered.',
+    'Para el certificado de participación debes entregar la versión final de tu trabajo.',
+  ],
   [/Passwords must be at least (\d+) characters\./, 'La contraseña debe tener al menos $1 caracteres.'],
   [
     'Passwords must have at least one non alphanumeric character.',

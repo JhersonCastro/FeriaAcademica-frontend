@@ -1,0 +1,72 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Ferias académicas</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Mis trabajos</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Mis trabajos</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="my-works-title">
+  <h2 class="title-2" id="my-works-title">Estado y retroalimentación</h2>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-muted" role="status">Cargando tus trabajos…</p>
+  } @else if (!works().length && !errorMessage()) {
+    <div class="state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>Aún no tienes trabajos en ninguna feria.</p>
+    </div>
+  } @else if (works().length) {
+    <div class="table-wrap">
+      <table class="table table--stack">
+        <thead>
+          <tr>
+            <th scope="col">Trabajo</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Última revisión</th>
+            <th scope="col">Fecha límite</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (work of works(); track work.id) {
+            <tr>
+              <td>
+                <a class="table__link" [routerLink]="['/works', work.id]">{{ work.title }}</a>
+                <span class="table__secondary">{{ work.eventName }}</span>
+              </td>
+              <td data-label="Estado">
+                <span class="chip" [class]="statusChips[work.status]">
+                  {{ statusLabels[work.status] }}
+                </span>
+              </td>
+              <td data-label="Última revisión">
+                @if (work.lastReviewResult; as result) {
+                  <span class="chip" [class]="resultChips[result]">{{ resultLabels[result] }}</span>
+                  @if (work.lastReviewObservations) {
+                    <span class="table__secondary feedback">{{ work.lastReviewObservations }}</span>
+                  }
+                } @else {
+                  <span class="text-muted">Sin revisión todavía</span>
+                }
+              </td>
+              <td data-label="Fecha límite">
+                {{ work.submissionDeadline ? (work.submissionDeadline | date: 'd MMM y, h:mm a') : '—' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

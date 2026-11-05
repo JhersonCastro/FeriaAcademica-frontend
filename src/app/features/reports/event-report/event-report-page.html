@@ -1,0 +1,202 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Informe del evento</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Informe del evento</h1>
+    <p class="text-muted">{{ user()?.fullName }} · Hoy: {{ today | date: 'longDate' }}</p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="report-filter-title">
+  <h2 class="visually-hidden" id="report-filter-title">Feria del informe</h2>
+  <div class="report-filter">
+    <div class="field">
+      <label class="field__label" for="report-event">Feria</label>
+      <div class="control" [class.control--disabled]="!events().length">
+        <select
+          class="control__input"
+          id="report-event"
+          [disabled]="!events().length"
+          (change)="onEventChange($event)"
+        >
+          @for (event of events(); track event.id) {
+            <option [value]="event.id" [selected]="event.id === selectedEventId()">
+              {{ event.name }}
+            </option>
+          } @empty {
+            <option value="">Sin ferias</option>
+          }
+        </select>
+      </div>
+    </div>
+    <div class="actions">
+      <button
+        class="btn btn--secondary"
+        type="button"
+        [disabled]="state() !== 'ready' || refreshing()"
+        (click)="refresh()"
+      >
+        {{ refreshing() ? 'Actualizando…' : 'Actualizar cifras' }}
+      </button>
+    </div>
+  </div>
+</section>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="text-muted" role="status">Cargando el informe…</p>
+  }
+  @case ('no-events') {
+    <div class="card state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>Todavía no hay ferias creadas. Cuando exista una, aquí verás su informe.</p>
+    </div>
+  }
+  @case ('error') {
+    <div class="alert alert--danger" role="alert">
+      <div class="alert__body">
+        <p class="alert__title">No pudimos cargar el informe</p>
+        <p>{{ errorMessage() }}</p>
+      </div>
+    </div>
+  }
+  @case ('ready') {
+    @if (figures(); as figures) {
+      <p class="text-small text-muted report-stamp" aria-live="polite">
+        Cifras de {{ selectedEvent()?.name }} calculadas el
+        {{ figuresAt() | date: "d 'de' MMMM 'de' y, h:mm a" }}
+      </p>
+
+      <div class="grid-2">
+        <section class="card" aria-labelledby="report-attendance-title">
+          <h2 class="title-2" id="report-attendance-title">Inscripciones y asistencia</h2>
+          <dl class="stats">
+            <div class="stat stat--lead">
+              <dt>Inscritos</dt>
+              <dd>{{ figures.registered | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>Asistentes con QR</dt>
+              <dd>{{ figures.entered | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>No ingresaron</dt>
+              <dd>{{ figures.pending | number }}</dd>
+            </div>
+            <div class="stat">
+              <dt>Asistencia</dt>
+              <dd>{{ rate() }} %</dd>
+            </div>
+          </dl>
+          <div
+            class="gauge"
+            role="meter"
+            aria-label="Porcentaje de asistencia"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="rate()"
+          >
+            <span class="gauge__fill" [style.width.%]="rate()"></span>
+          </div>
+          @if (lastEntryAt(); as last) {
+            <p class="text-small text-muted">
+              Último ingreso: {{ last | date: 'd MMM y, h:mm a' }}
+            </p>
+          }
+        </section>
+
+        <section class="card" aria-labelledby="report-works-title">
+          <h2 class="title-2" id="report-works-title">Trabajos</h2>
+          <div class="state state--compact">
+            <span class="diamond" aria-hidden="true"></span>
+            <p>
+              Las cifras de trabajos recibidos, aprobados y rechazados aparecerán aquí cuando el
+              sistema las calcule. Por ahora puedes anotarlas en las observaciones.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <section class="card" aria-labelledby="report-notes-title">
+        <div class="notes-head">
+          <h2 class="title-2" id="report-notes-title">Observaciones del informe</h2>
+          @if (saved()) {
+            <span class="chip" [class.chip--success]="!dirty()" [class.chip--neutral]="dirty()">
+              {{ dirty() ? 'Cambios sin guardar' : 'Guardado' }}
+            </span>
+          } @else {
+            <span class="chip chip--neutral">Sin guardar</span>
+          }
+        </div>
+        <div class="field">
+          <label class="field__label" for="report-notes">
+            Conclusiones, logros y recomendaciones para las directivas
+            <span class="field__optional">· Opcional</span>
+          </label>
+          <div class="control control--textarea">
+            <textarea
+              class="control__input"
+              id="report-notes"
+              rows="7"
+              maxlength="8000"
+              placeholder="Ejemplo: La feria recibió 40 trabajos y se aprobaron 25. La asistencia fue mayor en la jornada de la tarde…"
+              [value]="notes()"
+              (input)="onNotesInput($event)"
+            ></textarea>
+          </div>
+          <p class="field__hint">
+            Deja una línea en blanco entre párrafos. Al guardar, el informe toma las cifras que ves
+            arriba.
+          </p>
+        </div>
+
+        @if (actionError(); as message) {
+          <div class="alert alert--danger alert--compact" role="alert">
+            <p>{{ message }}</p>
+          </div>
+        }
+        @if (savedMessage(); as message) {
+          <div class="alert alert--success alert--compact" role="status">
+            <p>{{ message }}</p>
+          </div>
+        }
+
+        <div class="actions notes-actions">
+          <button
+            class="btn btn--primary"
+            type="button"
+            [disabled]="saving() || (saved() && !dirty())"
+            (click)="save()"
+          >
+            {{ saving() ? 'Guardando…' : 'Guardar informe' }}
+          </button>
+          <button
+            class="btn btn--secondary"
+            type="button"
+            [disabled]="!saved() || dirty() || downloading()"
+            (click)="downloadPdf()"
+          >
+            {{ downloading() ? 'Preparando PDF…' : 'Descargar PDF' }}
+          </button>
+        </div>
+        @if (saved(); as report) {
+          <p class="text-small text-muted">
+            Última versión guardada: {{ report.updatedAt | date: "d 'de' MMMM, h:mm a" }}
+            @if (dirty()) {
+              · Guarda los cambios para que el PDF los incluya.
+            }
+          </p>
+        } @else {
+          <p class="text-small text-muted">
+            Guarda el informe para poder descargarlo en PDF y compartirlo con las directivas de la
+            Facultad.
+          </p>
+        }
+      </section>
+    }
+  }
+}

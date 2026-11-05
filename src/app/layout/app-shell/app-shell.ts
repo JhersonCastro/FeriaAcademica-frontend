@@ -5,6 +5,7 @@ import { filter } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { ActiveEventStore } from '../../core/events/active-event.store';
 import { EVENT_ROLE_LABELS, roleLabel } from '../../core/models/labels';
+import { EventRole } from '../../core/models/user';
 
 /** Signed-in area: institutional sidebar, top bar with the user menu, and the page content. */
 @Component({
@@ -61,6 +62,11 @@ export class AppShell {
     const base = ['/events', event.eventId, 'attendance'];
     return { scan: [...base, 'scan'], turnout: base };
   });
+
+  /** Works are not tied to the active event: show the links when the role exists in any event. */
+  protected hasRole(role: EventRole): boolean {
+    return this.user()?.eventRoles.some((assignment) => assignment.role === role) ?? false;
+  }
 
   constructor() {
     this.router.events

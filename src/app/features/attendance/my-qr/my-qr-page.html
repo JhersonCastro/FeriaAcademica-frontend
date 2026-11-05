@@ -51,6 +51,28 @@
       </div>
     </div>
 
+    @if (selectedEvent()) {
+      <div class="field">
+        <label class="field__label" for="my-qr-seats">Cupos disponibles</label>
+        <div class="control control--readonly">
+          <input class="control__input" id="my-qr-seats" type="text" [value]="seats()" readonly />
+        </div>
+      </div>
+    }
+
+    @if (full() && state() === 'not-registered') {
+      <div class="alert alert--danger" role="status">
+        <img class="alert__icon" src="assets/icons/circle-alert.svg" width="20" height="20" alt="" />
+        <div class="alert__body">
+          <p class="alert__title">Cupo agotado</p>
+          <p>
+            Esta feria ya no tiene cupos disponibles. Si alguien cancela su inscripción, podrás
+            registrarte.
+          </p>
+        </div>
+      </div>
+    }
+
     @if (errorMessage(); as message) {
       <div class="alert alert--danger alert--compact" role="alert">
         <p>{{ message }}</p>
@@ -64,7 +86,7 @@
         <button
           class="btn btn--primary"
           type="button"
-          [disabled]="state() !== 'not-registered' || registering()"
+          [disabled]="state() !== 'not-registered' || registering() || full()"
           (click)="register()"
         >
           {{ registering() ? 'Registrando…' : 'Registrarme' }}

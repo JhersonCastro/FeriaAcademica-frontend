@@ -21,6 +21,12 @@ export interface EventSummary {
   status: EventStatus;
   startDate: string | null;
   endDate: string | null;
+  /** Seats for registrations; `null` means unlimited. */
+  capacity: number | null;
+  /** Registrations that were not cancelled. */
+  registered: number;
+  /** `null` when the event has no capacity. */
+  availableSeats: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
