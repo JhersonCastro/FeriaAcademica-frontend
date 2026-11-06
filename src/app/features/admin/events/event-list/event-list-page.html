@@ -35,6 +35,7 @@
             <th scope="col">Feria</th>
             <th scope="col">Estado</th>
             <th scope="col">Fechas</th>
+            <th scope="col">Límite de envío</th>
             <th scope="col">Cupos libres</th>
             <th scope="col">Inscritos</th>
           </tr>
@@ -58,6 +59,9 @@
                 } @else {
                   <span class="text-muted">Sin programar</span>
                 }
+              </td>
+              <td data-label="Límite de envío">
+                {{ event.submissionDeadline ? (event.submissionDeadline | date: 'd MMM y, h:mm a') : '—' }}
               </td>
               <td data-label="Cupos libres">{{ seats(event) }}</td>
               <td data-label="Inscritos">{{ event.registered }}</td>

@@ -127,6 +127,31 @@ export function decisionError(decision: ReviewDecision | null, feedback: string)
   return null;
 }
 
+/** What the backend accepts as an uploaded artifact (`ArtifactFileRules`): a PDF up to 10 MB. */
+export const MAX_FILE_MB = 10;
+export const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024;
+
+/** Message for a file that cannot be uploaded, or `null` when it can (mirrors the backend). */
+export function fileError(file: { name: string; size: number }): string | null {
+  if (!file.name.trim().toLowerCase().endsWith('.pdf')) {
+    return 'Solo se aceptan archivos PDF.';
+  }
+  if (file.size === 0) {
+    return 'El archivo está vacío.';
+  }
+  if (file.size > MAX_FILE_BYTES) {
+    return `El archivo supera el tamaño máximo de ${MAX_FILE_MB} MB.`;
+  }
+  return null;
+}
+
+/** "2,4 MB" / "340 KB": the size shown next to a chosen file. */
+export function fileSizeLabel(bytes: number): string {
+  return bytes >= 1024 * 1024
+    ? `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`
+    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+}
+
 /** Same check the backend applies to artifact links: an absolute http or https URL. */
 export function isHttpUrl(value: string): boolean {
   try {

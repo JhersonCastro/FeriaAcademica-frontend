@@ -1,9 +1,10 @@
 import { CertificateDto, CertificateKind } from '../models/certificate';
-import { ReportFigures } from '../models/report';
+import { ReportFigures, WorkFigures } from '../models/report';
 
 export const CERTIFICATE_KIND_LABELS: Record<CertificateKind, string> = {
   Participation: 'Participación',
   Attendance: 'Asistencia',
+  Recognition: 'Reconocimiento',
 };
 
 /** Why a certificate the person already qualifies for cannot be downloaded yet (HU-061). */
@@ -29,10 +30,29 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/** The works figures the report prints, in the order they are shown. */
+export const WORK_FIGURE_ROWS: readonly [keyof WorkFigures, string][] = [
+  ['worksReceived', 'Trabajos recibidos'],
+  ['worksApproved', 'Aprobados'],
+  ['worksInReview', 'En revisión'],
+  ['worksReturnedForChanges', 'Devueltos con cambios'],
+  ['worksRejected', 'Rechazados'],
+  ['worksWithdrawn', 'Retirados'],
+];
+
+export function sameWorkFigures(a: WorkFigures | null, b: WorkFigures | null): boolean {
+  if (!a || !b) {
+    return a === b;
+  }
+  return WORK_FIGURE_ROWS.every(([key]) => a[key] === b[key]);
+}
+
 export interface ReportContent {
   eventName: string;
   generatedAt: Date;
   figures: ReportFigures;
+  /** Missing when the backend could not provide them (the report then prints attendance only). */
+  works?: WorkFigures | null;
   /** What the administrator wrote; blank lines separate paragraphs. */
   notes: string;
 }
@@ -73,12 +93,29 @@ export function buildReportHtml(content: ReportContent): string {
         `<tr><td style="${CELL}">${label}</td><td style="${CELL}text-align:right;">${value}</td></tr>`,
     ),
     '</table>',
+    ...worksSection(content.works),
     '<h2 style="font-size:15px;margin:0 0 6px;">Observaciones</h2>',
     '<div data-notes="true">',
     paragraphs.length ? paragraphs.join('') : '<p data-empty="true">Sin observaciones.</p>',
     '</div>',
     '</div>',
   ].join('');
+}
+
+function worksSection(works: WorkFigures | null | undefined): string[] {
+  if (!works) {
+    return [];
+  }
+  return [
+    '<h2 style="font-size:15px;margin:0 0 6px;">Trabajos</h2>',
+    '<table style="border-collapse:collapse;width:100%;margin:0 0 18px;">',
+    `<tr><th style="${CELL}text-align:left;">Estado</th><th style="${CELL}text-align:right;">Trabajos</th></tr>`,
+    ...WORK_FIGURE_ROWS.map(
+      ([key, label]) =>
+        `<tr><td style="${CELL}">${label}</td><td style="${CELL}text-align:right;">${NUMBER.format(works[key])}</td></tr>`,
+    ),
+    '</table>',
+  ];
 }
 
 /**

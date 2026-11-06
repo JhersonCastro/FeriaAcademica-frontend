@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CertificateDto, CertificateKind } from '../models/certificate';
-import { SavedEventReportDto } from '../models/report';
+import { EventSummaryDto, SavedEventReportDto } from '../models/report';
 
 /** HU-031 and HU-032: the event report the administrator saves, and its PDF. Super admin only. */
 @Injectable({ providedIn: 'root' })
@@ -19,6 +19,11 @@ export class ReportsService {
   /** Creates the report or replaces it. */
   save(eventId: string, html: string): Observable<void> {
     return this.http.put<void>(this.reportUrl(eventId), { html });
+  }
+
+  /** The event's consolidated figures, calculated when asked for. */
+  summary(eventId: string): Observable<EventSummaryDto> {
+    return this.http.get<EventSummaryDto>(`${this.reportUrl(eventId)}/summary`);
   }
 
   /** The saved report rendered by the backend as `application/pdf`. */

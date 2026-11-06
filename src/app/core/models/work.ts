@@ -109,3 +109,17 @@ export interface AddedArtifact {
   id: string;
   version: number;
 }
+
+/** `POST /api/works` (HU-010): the work is created as a draft under the author's participation. */
+export interface CreateWorkRequest {
+  participationId: string;
+  /** The reviewer, picked among the professors of the event. */
+  professorId: string;
+  title: string;
+  summary: string | null;
+}
+
+/** Progress of a file upload: `percent` while it goes, then the artifact the backend created. */
+export type UploadProgress =
+  | { kind: 'progress'; percent: number }
+  | { kind: 'done'; artifact: AddedArtifact };

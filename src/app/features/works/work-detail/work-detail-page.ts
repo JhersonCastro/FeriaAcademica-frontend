@@ -2,19 +2,22 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Observable, concatMap, of } from 'rxjs';
+import { Observable, concatMap, filter, finalize, map, of, tap } from 'rxjs';
 import { apiErrorMessage } from '../../../core/api/api-error';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ArtifactTypeName, WorkDto } from '../../../core/models/work';
+import { AddedArtifact, ArtifactTypeName, UploadProgress, WorkDto } from '../../../core/models/work';
 import {
   ARTIFACT_TYPES,
   ARTIFACT_TYPE_LABELS,
+  MAX_FILE_MB,
   REVIEW_RESULT_CHIPS,
   REVIEW_RESULT_LABELS,
   WORK_STATUS_CHIPS,
   WORK_STATUS_LABELS,
   artifactRows,
   canReplace,
+  fileError,
+  fileSizeLabel,
   isDeadlinePassed,
   isHttpUrl,
   reviewsNewestFirst,
@@ -32,6 +35,7 @@ type ViewState = 'loading' | 'ready' | 'error';
   selector: 'app-work-detail-page',
   imports: [DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './work-detail-page.html',
+  styleUrl: './work-detail-page.css',
   host: { class: 'page-content' },
 })
 export class WorkDetailPage {
@@ -77,13 +81,70 @@ export class WorkDetailPage {
   protected readonly formError = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(null);
 
+  // HU-015: the new version is a PDF file (default) or a link.
+  protected readonly maxFileMb = MAX_FILE_MB;
+  protected readonly fileSizeLabel = fileSizeLabel;
+  protected readonly source = signal<'file' | 'link'>('file');
+  protected readonly file = signal<File | null>(null);
+  protected readonly fileProblem = signal<string | null>(null);
+  protected readonly dragging = signal(false);
+  /** Upload percentage while a file goes up; `null` otherwise. */
+  protected readonly progress = signal<number | null>(null);
+
   constructor() {
     this.load();
   }
 
+  protected chooseSource(source: 'file' | 'link'): void {
+    this.source.set(source);
+    this.formError.set(null);
+  }
+
+  protected onFileChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.setFile(input.files?.[0] ?? null);
+    input.value = '';
+  }
+
+  protected onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging.set(true);
+  }
+
+  protected onDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.dragging.set(false);
+    this.setFile(event.dataTransfer?.files?.[0] ?? null);
+  }
+
+  protected clearFile(): void {
+    this.file.set(null);
+    this.fileProblem.set(null);
+  }
+
+  private setFile(file: File | null): void {
+    if (!file) {
+      return;
+    }
+    const problem = fileError(file);
+    this.fileProblem.set(problem);
+    this.file.set(problem ? null : file);
+  }
+
+  /** The chosen source is ready to be sent: a valid PDF, or a valid link. */
+  private sourceReady(): boolean {
+    return this.source() === 'file'
+      ? this.file() !== null
+      : isHttpUrl(this.form.controls.linkUrl.value);
+  }
+
   protected showLinkError(): boolean {
     const control = this.form.controls.linkUrl;
-    return (control.touched || this.submitted()) && !isHttpUrl(control.value);
+    return this.source() === 'link' && (control.touched || this.submitted()) && !isHttpUrl(control.value);
+  }
+
+  protected showFileError(): boolean {
+    return this.source() === 'file' && this.submitted() && !this.file();
   }
 
   /** Uploads the new version and sends the work to review again. */
@@ -108,17 +169,22 @@ export class WorkDetailPage {
   private replace(submitAfterwards: boolean): void {
     const work = this.work();
     this.submitted.set(true);
-    if (!work || this.form.invalid || !isHttpUrl(this.form.controls.linkUrl.value)) {
+    if (!work || !this.sourceReady()) {
       return;
     }
     const { type, linkUrl } = this.form.getRawValue();
+    const file = this.file();
 
     // A submitted work must go back to draft first. Never withdraw a draft: that cancels it.
     const toDraft: Observable<unknown> =
       work.status === 'Submitted' ? this.works.withdraw(work.id) : of(null);
     let version = 0;
     const steps = toDraft.pipe(
-      concatMap(() => this.works.addLink(work.id, { type, linkUrl: linkUrl.trim() })),
+      concatMap(() =>
+        this.source() === 'file' && file
+          ? this.upload(work.id, type, file)
+          : this.works.addLink(work.id, { type, linkUrl: linkUrl.trim() }),
+      ),
       concatMap((added) => {
         version = added.version;
         return submitAfterwards ? this.works.submit(work.id) : of(null);
@@ -132,6 +198,21 @@ export class WorkDetailPage {
     });
   }
 
+  /** Uploads the PDF, publishing the percentage, and emits the artifact once it is stored. */
+  private upload(workId: string, type: ArtifactTypeName, file: File): Observable<AddedArtifact> {
+    this.progress.set(0);
+    return this.works.uploadFile(workId, type, file).pipe(
+      tap((event) => {
+        if (event.kind === 'progress') {
+          this.progress.set(event.percent);
+        }
+      }),
+      filter((event): event is Extract<UploadProgress, { kind: 'done' }> => event.kind === 'done'),
+      map((event) => event.artifact),
+      finalize(() => this.progress.set(null)),
+    );
+  }
+
   private run(action: Observable<unknown>, success: string | (() => string)): void {
     this.saving.set(true);
     this.formError.set(null);
@@ -141,6 +222,7 @@ export class WorkDetailPage {
         this.saving.set(false);
         this.submitted.set(false);
         this.form.controls.linkUrl.reset('');
+        this.clearFile();
         this.successMessage.set(typeof success === 'function' ? success() : success);
         this.load();
       },

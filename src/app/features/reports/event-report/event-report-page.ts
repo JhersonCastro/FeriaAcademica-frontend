@@ -2,18 +2,20 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, catchError, forkJoin, of, throwError } from 'rxjs';
+import { Observable, Subscription, catchError, forkJoin, map, of, throwError } from 'rxjs';
 import { apiErrorMessage } from '../../../core/api/api-error';
 import { AttendanceService } from '../../../core/attendance/attendance.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { EventSummary, EventsService } from '../../../core/events/events.service';
-import { ReportFigures, SavedEventReportDto } from '../../../core/models/report';
+import { ReportFigures, SavedEventReportDto, WorkFigures } from '../../../core/models/report';
 import {
+  WORK_FIGURE_ROWS,
   attendanceRate,
   buildReportHtml,
   pdfFileName,
   reportNotes,
   saveFile,
+  sameWorkFigures,
 } from '../../../core/reports/report-rules';
 import { ReportsService } from '../../../core/reports/reports.service';
 
@@ -22,7 +24,8 @@ type ViewState = 'loading' | 'no-events' | 'ready' | 'error';
 /**
  * HU-031: the event report with the attendance figures computed now, plus the administrator's
  * observations. Saving stores it in the backend; HU-032: the PDF is exactly what was saved.
- * The works figures wait for a backend query that does not exist yet.
+ * The works figures come from `report/summary`; if that call fails the report keeps working with
+ * the attendance figures only.
  */
 @Component({
   selector: 'app-event-report-page',
@@ -48,6 +51,8 @@ export class EventReportPage {
 
   protected readonly state = signal<ViewState>('loading');
   protected readonly figures = signal<ReportFigures | null>(null);
+  protected readonly works = signal<WorkFigures | null>(null);
+  protected readonly workRows = WORK_FIGURE_ROWS;
   protected readonly figuresAt = signal<Date | null>(null);
   protected readonly lastEntryAt = signal<string | null>(null);
   protected readonly saved = signal<SavedEventReportDto | null>(null);
@@ -112,19 +117,24 @@ export class EventReportPage {
     }
     this.refreshing.set(true);
     this.actionError.set(null);
-    this.attendance.summary(eventId).subscribe({
-      next: (summary) => {
+    forkJoin({
+      summary: this.attendance.summary(eventId),
+      works: this.worksFigures(eventId),
+    }).subscribe({
+      next: ({ summary, works }) => {
         const before = this.figures();
         if (
           before &&
           (before.registered !== summary.registered ||
             before.entered !== summary.entered ||
-            before.pending !== summary.pending)
+            before.pending !== summary.pending ||
+            !sameWorkFigures(this.works(), works))
         ) {
           this.figuresChanged.set(true);
           this.savedMessage.set(null);
         }
         this.setFigures(summary);
+        this.works.set(works);
         this.refreshing.set(false);
       },
       error: (error: unknown) => {
@@ -145,6 +155,7 @@ export class EventReportPage {
       eventName: event.name,
       generatedAt: this.figuresAt() ?? new Date(),
       figures,
+      works: this.works(),
       notes: this.notes(),
     });
     this.saving.set(true);
@@ -201,6 +212,7 @@ export class EventReportPage {
 
     this.state.set('loading');
     this.figures.set(null);
+    this.works.set(null);
     this.saved.set(null);
     this.notes.set('');
     this.savedNotes.set('');
@@ -211,6 +223,7 @@ export class EventReportPage {
     this.loading?.unsubscribe();
     this.loading = forkJoin({
       summary: this.attendance.summary(eventId),
+      works: this.worksFigures(eventId),
       // No report saved yet answers 404: that is an empty report, not an error.
       report: this.reports
         .report(eventId)
@@ -222,8 +235,9 @@ export class EventReportPage {
           ),
         ),
     }).subscribe({
-      next: ({ summary, report }) => {
+      next: ({ summary, works, report }) => {
         this.setFigures(summary);
+        this.works.set(works);
         this.saved.set(report);
         const notes = report ? reportNotes(report.html) : '';
         this.notes.set(notes);
@@ -235,6 +249,21 @@ export class EventReportPage {
         this.state.set('error');
       },
     });
+  }
+
+  /** `null` when the backend cannot provide them: the page still works with attendance only. */
+  private worksFigures(eventId: string): Observable<WorkFigures | null> {
+    return this.reports.summary(eventId).pipe(
+      map((summary) => ({
+        worksReceived: summary.worksReceived,
+        worksApproved: summary.worksApproved,
+        worksRejected: summary.worksRejected,
+        worksInReview: summary.worksInReview,
+        worksReturnedForChanges: summary.worksReturnedForChanges,
+        worksWithdrawn: summary.worksWithdrawn,
+      })),
+      catchError(() => of(null)),
+    );
   }
 
   private setFigures(summary: ReportFigures & { lastEntryAt: string | null }): void {

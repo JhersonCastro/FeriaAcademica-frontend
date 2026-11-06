@@ -82,6 +82,14 @@ export const routes: Routes = [
               import('./features/works/my-works/my-works-page').then((m) => m.MyWorksPage),
           },
           {
+            path: 'new',
+            title: 'Nuevo trabajo',
+            loadComponent: () =>
+              import('./features/works/create-work/create-work-page').then(
+                (m) => m.CreateWorkPage,
+              ),
+          },
+          {
             path: ':workId',
             title: 'Mi trabajo',
             loadComponent: () =>
