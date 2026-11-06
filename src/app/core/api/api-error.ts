@@ -124,6 +124,16 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'El enlace debe ser una dirección completa que empiece por http:// o https://.',
   ],
   ['Send either a link or a file.', 'Envía un enlace o un archivo.'],
+  ['Title is required.', 'El título es obligatorio.'],
+  ['Only the author can manage this work.', 'Solo el autor puede gestionar este trabajo.'],
+  [
+    /The file format is not allowed\. Allowed formats: .*\.pdf\./,
+    'El formato del archivo no está permitido. Solo se aceptan archivos PDF.',
+  ],
+  [
+    /The file exceeds the maximum size of (\d+) MB\./,
+    'El archivo supera el tamaño máximo de $1 MB.',
+  ],
   ['Only a submitted work can enter review.', 'Solo un trabajo enviado puede pasar a revisión.'],
   [
     'Only the professor assigned to this work can review it.',

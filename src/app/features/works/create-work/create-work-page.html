@@ -1,0 +1,145 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Ferias académicas</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/works">Mis trabajos</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Nuevo trabajo</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Nuevo trabajo</h1>
+    <p class="text-muted">
+      Se crea como borrador. Después le adjuntas el PDF o los enlaces y lo envías a revisión.
+    </p>
+  </div>
+</header>
+
+@if (!participantEvents().length) {
+  <div class="card state">
+    <span class="diamond" aria-hidden="true"></span>
+    <p>
+      Aún no participas en ninguna feria. Cuando un profesor te invite y aceptes, podrás crear tu
+      trabajo aquí.
+    </p>
+  </div>
+} @else {
+  <section class="card card--narrow" aria-labelledby="new-work-title">
+    <h2 class="title-2" id="new-work-title">Datos del trabajo</h2>
+
+    @if (submitted() && form.invalid) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>Corrige los campos marcados para poder crear el trabajo.</p>
+      </div>
+    }
+
+    <form class="form" [formGroup]="form" (ngSubmit)="create()" novalidate>
+      <div class="field">
+        <label class="field__label" for="work-event">Feria</label>
+        <div class="control">
+          <select
+            class="control__input"
+            id="work-event"
+            formControlName="eventId"
+            (change)="onEventChange()"
+          >
+            @for (event of participantEvents(); track event.eventId) {
+              <option [value]="event.eventId">{{ event.eventName }}</option>
+            }
+          </select>
+        </div>
+        @if (deadline(); as limit) {
+          <p class="field__hint">
+            Fecha límite de envío: {{ limit | date: "d 'de' MMMM 'de' y, h:mm a" }}
+          </p>
+        }
+      </div>
+
+      @if (loadError(); as message) {
+        <div class="alert alert--warning" role="status">
+          <div class="alert__body">
+            <p>{{ message }}</p>
+          </div>
+        </div>
+      }
+      @if (deadlinePassed()) {
+        <div class="alert alert--warning" role="status">
+          <div class="alert__body">
+            <p class="alert__title">La convocatoria está cerrada</p>
+            <p>Ya pasó la fecha límite de envío: no se pueden crear trabajos en esta feria.</p>
+          </div>
+        </div>
+      }
+
+      <div class="field">
+        <label class="field__label" for="work-professor">Profesor revisor</label>
+        <div class="control" [class.control--error]="showError('professorId')">
+          <select
+            class="control__input"
+            id="work-professor"
+            formControlName="professorId"
+            [attr.aria-invalid]="showError('professorId')"
+          >
+            <option value="" disabled>
+              {{ loadingEvent() ? 'Cargando profesores…' : 'Selecciona un profesor' }}
+            </option>
+            @for (professor of professors(); track professor.id) {
+              <option [value]="professor.id">{{ professor.fullName }}</option>
+            }
+          </select>
+        </div>
+        @if (showError('professorId')) {
+          <p class="field__error">Selecciona quién revisará tu trabajo.</p>
+        } @else {
+          <p class="field__hint">Solo este profesor podrá revisar y decidir sobre tu trabajo.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="work-title">Título</label>
+        <div class="control" [class.control--error]="showError('title')">
+          <input
+            class="control__input"
+            id="work-title"
+            type="text"
+            maxlength="300"
+            autocomplete="off"
+            formControlName="title"
+            [attr.aria-invalid]="showError('title')"
+          />
+        </div>
+        @if (showError('title')) {
+          <p class="field__error">Escribe el título del trabajo.</p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="work-summary">
+          Resumen <span class="field__optional">· Opcional</span>
+        </label>
+        <div class="control control--textarea">
+          <textarea
+            class="control__input"
+            id="work-summary"
+            rows="5"
+            maxlength="2000"
+            formControlName="summary"
+          ></textarea>
+        </div>
+      </div>
+
+      @if (errorMessage(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="saving() || !canCreate()">
+          {{ saving() ? 'Creando…' : 'Crear trabajo' }}
+        </button>
+        <a class="btn btn--text" routerLink="/works">Cancelar</a>
+      </div>
+    </form>
+  </section>
+}

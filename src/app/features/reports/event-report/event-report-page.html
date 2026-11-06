@@ -111,13 +111,24 @@
 
         <section class="card" aria-labelledby="report-works-title">
           <h2 class="title-2" id="report-works-title">Trabajos</h2>
-          <div class="state state--compact">
-            <span class="diamond" aria-hidden="true"></span>
-            <p>
-              Las cifras de trabajos recibidos, aprobados y rechazados aparecerán aquí cuando el
-              sistema las calcule. Por ahora puedes anotarlas en las observaciones.
-            </p>
-          </div>
+          @if (works(); as works) {
+            <dl class="stats">
+              @for (row of workRows; track row[0]) {
+                <div class="stat" [class.stat--lead]="$first">
+                  <dt>{{ row[1] }}</dt>
+                  <dd>{{ works[row[0]] | number }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <div class="state state--compact">
+              <span class="diamond" aria-hidden="true"></span>
+              <p>
+                No pudimos calcular las cifras de trabajos en este momento. Pulsa «Actualizar
+                cifras» para intentarlo de nuevo.
+              </p>
+            </div>
+          }
         </section>
       </div>
 

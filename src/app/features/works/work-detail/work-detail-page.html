@@ -191,6 +191,31 @@
           </p>
 
           <form class="form" [formGroup]="form" (ngSubmit)="replaceAndSubmit()" novalidate>
+            <div class="source-toggle" role="group" aria-label="Cómo entregas la nueva versión">
+              <button
+                type="button"
+                class="btn"
+                [class.btn--primary]="source() === 'file'"
+                [class.btn--secondary]="source() !== 'file'"
+                [attr.aria-pressed]="source() === 'file'"
+                [disabled]="saving()"
+                (click)="chooseSource('file')"
+              >
+                Subir un PDF
+              </button>
+              <button
+                type="button"
+                class="btn"
+                [class.btn--primary]="source() === 'link'"
+                [class.btn--secondary]="source() !== 'link'"
+                [attr.aria-pressed]="source() === 'link'"
+                [disabled]="saving()"
+                (click)="chooseSource('link')"
+              >
+                Pegar un enlace
+              </button>
+            </div>
+
             <div class="form-grid">
               <div class="field">
                 <label class="field__label" for="replace-type">Tipo de adjunto</label>
@@ -203,6 +228,7 @@
                 </div>
               </div>
 
+              @if (source() === 'link') {
               <div class="field">
                 <label class="field__label" for="replace-link">Enlace a la nueva versión</label>
                 <div class="control" [class.control--error]="showLinkError()">
@@ -227,6 +253,64 @@
                   </p>
                 }
               </div>
+              } @else {
+              <div class="field">
+                <span class="field__label" id="replace-file-label">Archivo PDF</span>
+                <div
+                  class="dropzone"
+                  [class.dropzone--active]="dragging()"
+                  [class.dropzone--error]="showFileError() || fileProblem()"
+                  (dragover)="onDragOver($event)"
+                  (dragleave)="dragging.set(false)"
+                  (drop)="onDrop($event)"
+                >
+                  @if (file(); as chosen) {
+                    <p class="dropzone__name">{{ chosen.name }}</p>
+                    <p class="text-small text-muted">{{ fileSizeLabel(chosen.size) }}</p>
+                    @if (progress() === null) {
+                      <button class="btn btn--text" type="button" [disabled]="saving()" (click)="clearFile()">
+                        Quitar archivo
+                      </button>
+                    }
+                  } @else {
+                    <p>Arrastra aquí tu PDF o</p>
+                    <label class="btn btn--secondary dropzone__pick" for="replace-file">
+                      Elegir archivo
+                    </label>
+                  }
+                  <input
+                    class="visually-hidden"
+                    id="replace-file"
+                    type="file"
+                    accept="application/pdf,.pdf"
+                    aria-labelledby="replace-file-label"
+                    (change)="onFileChosen($event)"
+                  />
+                  @if (progress(); as percent) {
+                    <div
+                      class="gauge"
+                      role="progressbar"
+                      aria-label="Progreso de la subida"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      [attr.aria-valuenow]="percent"
+                    >
+                      <span class="gauge__fill" [style.width.%]="percent"></span>
+                    </div>
+                    <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
+                  } @else if (progress() === 0) {
+                    <p class="text-small text-muted" role="status">Subiendo…</p>
+                  }
+                </div>
+                @if (fileProblem(); as problem) {
+                  <p class="field__error">{{ problem }}</p>
+                } @else if (showFileError()) {
+                  <p class="field__error">Elige un archivo PDF para continuar.</p>
+                } @else {
+                  <p class="field__hint">Solo PDF, de hasta {{ maxFileMb }} MB.</p>
+                }
+              </div>
+              }
             </div>
 
             @if (formError(); as message) {

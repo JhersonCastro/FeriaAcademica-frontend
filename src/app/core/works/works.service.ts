@@ -1,14 +1,17 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpEventType } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, filter, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   ARTIFACT_TYPE_CODES,
   AddLinkArtifactRequest,
   AddedArtifact,
+  ArtifactTypeName,
   AssignedWorkDto,
+  CreateWorkRequest,
   MyWorkDto,
   ReviewDecision,
+  UploadProgress,
   WorkDto,
 } from '../models/work';
 
@@ -33,6 +36,41 @@ export class WorksService {
       type: ARTIFACT_TYPE_CODES[request.type],
       linkUrl: request.linkUrl,
     });
+  }
+
+  /** Creates a draft work; the backend answers with its id. Needs the author's participation. */
+  create(request: CreateWorkRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(this.baseUrl, request);
+  }
+
+  /**
+   * Uploads a file as a new version of the artifact of that type (multipart). Emits the upload
+   * percentage and finally the created artifact. Only while the work is a draft.
+   */
+  uploadFile(workId: string, type: ArtifactTypeName, file: File): Observable<UploadProgress> {
+    const body = new FormData();
+    body.append('type', type);
+    body.append('file', file, file.name);
+    return this.http
+      .post<AddedArtifact>(`${this.workUrl(workId)}/artifacts/file`, body, {
+        observe: 'events',
+        reportProgress: true,
+      })
+      .pipe(
+        filter(
+          (event) => event.type === HttpEventType.UploadProgress || event.type === HttpEventType.Response,
+        ),
+        map((event): UploadProgress => {
+          if (event.type === HttpEventType.Response) {
+            return { kind: 'done', artifact: event.body as AddedArtifact };
+          }
+          const total = 'total' in event && event.total ? event.total : file.size;
+          return {
+            kind: 'progress',
+            percent: Math.min(100, Math.round((event.loaded / total) * 100)),
+          };
+        }),
+      );
   }
 
   submit(workId: string): Observable<void> {

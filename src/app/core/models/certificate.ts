@@ -1,5 +1,8 @@
-/** HU-060: the certificate types the backend issues today. */
-export type CertificateKind = 'Attendance' | 'Participation';
+/**
+ * HU-060: the certificate types the backend issues today. Recognition is for the coordinators,
+ * teachers and jury of the event.
+ */
+export type CertificateKind = 'Attendance' | 'Participation' | 'Recognition';
 
 /**
  * `GET /api/certificates/mine` (HU-061). One row per certificate the person qualifies for:

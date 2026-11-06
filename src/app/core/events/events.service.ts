@@ -27,6 +27,22 @@ export interface EventSummary {
   registered: number;
   /** `null` when the event has no capacity. */
   availableSeats: number | null;
+  /** End of the Reception stage: no work can be created, attached or submitted after it. */
+  submissionDeadline: string | null;
+}
+
+/** `GET /api/events/{id}/participations/me`: what a new work is created under. */
+export interface ParticipationDto {
+  id: string;
+  eventId: string;
+  /** The professor whose invitation made the person a participant, if there was one. */
+  invitedBy: string | null;
+}
+
+/** A person with the Teacher role in an event: the author picks the reviewer from them. */
+export interface ProfessorDto {
+  id: string;
+  fullName: string;
 }
 
 export type StageType =
@@ -53,6 +69,15 @@ export class EventsService {
 
   list(): Observable<EventSummary[]> {
     return this.http.get<EventSummary[]>(this.baseUrl);
+  }
+
+  /** 404 when the signed-in person has no participation in the event. */
+  myParticipation(eventId: string): Observable<ParticipationDto> {
+    return this.http.get<ParticipationDto>(`${this.eventUrl(eventId)}/participations/me`);
+  }
+
+  professors(eventId: string): Observable<ProfessorDto[]> {
+    return this.http.get<ProfessorDto[]>(`${this.eventUrl(eventId)}/professors`);
   }
 
   /** Super admin: opens a configured event to registrations. Needs at least one active stage. */
