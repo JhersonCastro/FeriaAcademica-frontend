@@ -96,7 +96,24 @@
         ariaCurrentWhenActive="page"
         >Mis certificados</a
       >
+      <a
+        class="nav__link"
+        routerLink="/notifications"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >Notificaciones
+        @if (unreadCount()) {
+          <span class="nav__count" aria-hidden="true">{{ unreadCount() }}</span>
+        }</a
+      >
       @if (isSuperAdmin()) {
+        <a
+          class="nav__link"
+          routerLink="/admin/events"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >Ferias</a
+        >
         <a
           class="nav__link"
           routerLink="/admin/report"
@@ -150,6 +167,18 @@
       @if (roleSummary()) {
         <span class="chip chip--info topbar__roles">{{ roleSummary() }}</span>
       }
+      <a
+        class="topbar__bell"
+        routerLink="/notifications"
+        [attr.aria-label]="
+          unreadCount() ? 'Notificaciones: ' + unreadCount() + ' sin leer' : 'Notificaciones'
+        "
+      >
+        <img src="assets/icons/bell.svg" width="20" height="20" alt="" />
+        @if (unreadCount()) {
+          <span class="topbar__badge" aria-hidden="true">{{ unreadCount() }}</span>
+        }
+      </a>
       <div class="user-menu">
         <button
           type="button"
@@ -176,6 +205,24 @@
         }
       </div>
     </header>
+
+    @if (incoming(); as arrived) {
+      <div class="toast" role="status">
+        <img src="assets/icons/bell-ring.svg" width="20" height="20" alt="" />
+        <a class="toast__body" routerLink="/notifications">
+          <span class="toast__title">{{ arrivedView(arrived).title }}</span>
+          <span class="toast__hint">Nueva notificación · recibida sin recargar</span>
+        </a>
+        <button
+          type="button"
+          class="toast__close"
+          aria-label="Cerrar aviso"
+          (click)="dismissIncoming()"
+        >
+          ×
+        </button>
+      </div>
+    }
 
     <main class="page">
       <router-outlet />
