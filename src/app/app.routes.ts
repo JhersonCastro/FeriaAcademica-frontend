@@ -119,6 +119,34 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'notifications',
+        title: 'Notificaciones',
+        loadComponent: () =>
+          import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
+      },
+      {
+        path: 'admin/events',
+        canActivate: [superAdminGuard],
+        children: [
+          {
+            path: '',
+            title: 'Ferias',
+            loadComponent: () =>
+              import('./features/admin/events/event-list/event-list-page').then(
+                (m) => m.EventListPage,
+              ),
+          },
+          {
+            path: ':eventId',
+            title: 'Configurar feria',
+            loadComponent: () =>
+              import('./features/admin/events/event-config/event-config-page').then(
+                (m) => m.EventConfigPage,
+              ),
+          },
+        ],
+      },
+      {
         path: 'admin/report',
         title: 'Informe del evento',
         canActivate: [superAdminGuard],

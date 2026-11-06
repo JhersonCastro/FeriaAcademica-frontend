@@ -1,0 +1,239 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/admin/events">Ferias</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">{{ event()?.name ?? 'Configurar' }}</span>
+</nav>
+
+@if (loading()) {
+  <p class="state">Cargando la feria…</p>
+} @else if (loadError(); as message) {
+  <div class="alert alert--danger" role="alert">
+    <p>{{ message }}</p>
+  </div>
+} @else if (event(); as event) {
+  <header class="page-header">
+    <div class="page-header__text">
+      <h1 class="title-1">{{ event.name }}</h1>
+      <p class="text-muted">
+        <span class="chip" [class]="statusChips[event.status]">{{ statusLabel(event.status) }}</span>
+        · {{ event.registered }} inscritos · Cupos libres: {{ seats(event) }}
+      </p>
+    </div>
+  </header>
+
+  @if (notice(); as message) {
+    <div class="alert alert--success" role="status">
+      <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+      <div class="alert__body">
+        <p>{{ message }}</p>
+      </div>
+    </div>
+  }
+  @if (actionError(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  <section class="card card--narrow" aria-labelledby="state-title">
+    <h2 class="title-2" id="state-title">Estado de la feria</h2>
+    @if (publishable()) {
+      <p class="text-muted">
+        Está en configuración. Programa al menos una etapa y publícala para abrir las inscripciones.
+      </p>
+    } @else if (closable()) {
+      <p class="text-muted">
+        Está abierta. Al cerrarla se detienen las inscripciones y se habilitan los certificados.
+      </p>
+    } @else {
+      <p class="text-muted">Esta feria ya no admite cambios de estado.</p>
+    }
+
+    @if (confirming(); as action) {
+      <div class="alert alert--warning" role="alertdialog" aria-labelledby="confirm-title">
+        <div class="alert__body">
+          <p class="alert__title" id="confirm-title">
+            {{ action === 'publish' ? '¿Publicar esta feria?' : '¿Cerrar esta feria?' }}
+          </p>
+          <p>
+            {{
+              action === 'publish'
+                ? 'Quedará abierta a inscripciones y asistencia.'
+                : 'Esta acción no se puede deshacer: se detienen las inscripciones y se habilitan los certificados.'
+            }}
+          </p>
+          <div class="actions">
+            <button
+              class="btn"
+              [class.btn--primary]="action === 'publish'"
+              [class.btn--accent]="action === 'close'"
+              type="button"
+              [disabled]="acting()"
+              (click)="runAction()"
+            >
+              {{
+                acting()
+                  ? 'Procesando…'
+                  : action === 'publish'
+                    ? 'Sí, publicar'
+                    : 'Sí, cerrar'
+              }}
+            </button>
+            <button
+              class="btn btn--text"
+              type="button"
+              [disabled]="acting()"
+              (click)="confirming.set(null)"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      </div>
+    } @else if (publishable() || closable()) {
+      <div class="actions">
+        @if (publishable()) {
+          <button class="btn btn--primary" type="button" (click)="confirming.set('publish')">
+            Publicar feria
+          </button>
+        }
+        @if (closable()) {
+          <button class="btn btn--accent" type="button" (click)="confirming.set('close')">
+            Cerrar feria
+          </button>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="card card--narrow" aria-labelledby="capacity-title">
+    <h2 class="title-2" id="capacity-title">Cupo de inscripciones</h2>
+    <form class="form" [formGroup]="capacityForm" (ngSubmit)="saveCapacity()" novalidate>
+      <div class="field">
+        <label class="field__label" for="capacity">Cupo máximo</label>
+        <div class="control" [class.control--error]="capacityForm.controls.capacity.invalid">
+          <input
+            class="control__input"
+            id="capacity"
+            type="number"
+            min="1"
+            step="1"
+            inputmode="numeric"
+            formControlName="capacity"
+            [attr.aria-invalid]="capacityForm.controls.capacity.invalid"
+            aria-describedby="capacity-hint"
+          />
+        </div>
+        <p class="field__hint" id="capacity-hint">
+          Déjalo vacío para quitar el límite. No puede ser menor que los {{ event.registered }}
+          inscritos actuales.
+        </p>
+        @if (capacityForm.controls.capacity.invalid) {
+          <p class="field__error">El cupo debe ser de al menos 1.</p>
+        }
+      </div>
+
+      @if (capacityError(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+      @if (capacitySaved()) {
+        <div class="alert alert--success alert--compact" role="status">
+          <p>Cupo actualizado.</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="capacitySaving()">
+          {{ capacitySaving() ? 'Guardando…' : 'Guardar cupo' }}
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card card--narrow" aria-labelledby="stages-title">
+    <h2 class="title-2" id="stages-title">Etapas</h2>
+    @if (schedulable()) {
+      <p class="text-muted">
+        Programa las fechas de cada etapa. El fin de <strong>Recepción de trabajos</strong> es la
+        fecha límite de envío de los trabajos.
+      </p>
+
+      <form class="form" [formGroup]="stageForm" (ngSubmit)="scheduleStage()" novalidate>
+        <div class="field">
+          <label class="field__label" for="stage-type">Etapa</label>
+          <div class="control">
+            <select class="control__input" id="stage-type" formControlName="type">
+              @for (type of stageTypes; track type) {
+                <option [value]="type">{{ stageLabels[type] }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label class="field__label" for="stage-start">Inicio</label>
+            <div class="control" [class.control--error]="showStageError('start')">
+              <input
+                class="control__input"
+                id="stage-start"
+                type="datetime-local"
+                formControlName="start"
+                [attr.aria-invalid]="showStageError('start')"
+              />
+            </div>
+            @if (showStageError('start')) {
+              <p class="field__error">Indica la fecha de inicio.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="stage-end">Fin</label>
+            <div class="control" [class.control--error]="showStageError('end')">
+              <input
+                class="control__input"
+                id="stage-end"
+                type="datetime-local"
+                formControlName="end"
+                [attr.aria-invalid]="showStageError('end')"
+              />
+            </div>
+            @if (showStageError('end')) {
+              <p class="field__error">Indica la fecha de fin.</p>
+            }
+          </div>
+        </div>
+
+        @if (stageError(); as message) {
+          <div class="alert alert--danger alert--compact" role="alert">
+            <p>{{ message }}</p>
+          </div>
+        }
+
+        <div class="actions">
+          <button class="btn btn--primary" type="submit" [disabled]="stageSaving()">
+            {{ stageSaving() ? 'Guardando…' : 'Programar etapa' }}
+          </button>
+        </div>
+      </form>
+
+      @if (scheduled().length) {
+        <h3 class="title-3">Programadas en esta sesión</h3>
+        <ul class="chip-list">
+          @for (stage of scheduled(); track stage.type) {
+            <li class="chip chip--success">
+              {{ stageLabels[stage.type] }}: {{ stage.start | date: 'd MMM y, h:mm a' }} →
+              {{ stage.end | date: 'd MMM y, h:mm a' }}
+            </li>
+          }
+        </ul>
+      }
+    } @else {
+      <p class="text-muted">Las etapas de una feria cerrada o cancelada ya no se pueden cambiar.</p>
+    }
+  </section>
+}

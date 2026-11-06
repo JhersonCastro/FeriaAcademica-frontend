@@ -1,0 +1,70 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Ferias</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Ferias</h1>
+    <p class="text-muted">Estado, fechas y cupos de cada feria. Abre una para configurarla.</p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="events-title">
+  <h2 class="title-2" id="events-title">Ferias académicas</h2>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-muted" role="status">Cargando las ferias…</p>
+  } @else if (!events().length && !errorMessage()) {
+    <div class="state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>Todavía no hay ferias creadas.</p>
+    </div>
+  } @else if (events().length) {
+    <div class="table-wrap">
+      <table class="table table--stack">
+        <thead>
+          <tr>
+            <th scope="col">Feria</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Fechas</th>
+            <th scope="col">Cupos libres</th>
+            <th scope="col">Inscritos</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (event of events(); track event.id) {
+            <tr>
+              <td>
+                <a class="table__link" [routerLink]="['/admin/events', event.id]">{{
+                  event.name
+                }}</a>
+              </td>
+              <td data-label="Estado">
+                <span class="chip" [class]="statusChips[event.status]">{{
+                  statusLabel(event.status)
+                }}</span>
+              </td>
+              <td data-label="Fechas">
+                @if (event.startDate && event.endDate) {
+                  {{ event.startDate | date: 'd MMM y' }} – {{ event.endDate | date: 'd MMM y' }}
+                } @else {
+                  <span class="text-muted">Sin programar</span>
+                }
+              </td>
+              <td data-label="Cupos libres">{{ seats(event) }}</td>
+              <td data-label="Inscritos">{{ event.registered }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

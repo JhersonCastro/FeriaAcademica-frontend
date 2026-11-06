@@ -48,6 +48,26 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'Solo puedes invitar estudiantes participantes o invitados.',
   ],
   ['Event not found.', 'No encontramos la feria.'],
+  [/An event in state \w+ cannot be published\./, 'Solo una feria en configuración se puede publicar.'],
+  [
+    'At least one stage must be active.',
+    'Programa al menos una etapa antes de publicar la feria.',
+  ],
+  [
+    /An event in state \w+ cannot be closed\./,
+    'Solo una feria publicada o en curso se puede cerrar.',
+  ],
+  [
+    /The stages of an event in state \w+ cannot be rescheduled\./,
+    'Las etapas de una feria cerrada o cancelada ya no se pueden cambiar.',
+  ],
+  [/The \w+ stage is disabled and cannot be scheduled\./, 'Esa etapa está desactivada.'],
+  ['A stage must end after it starts.', 'La etapa debe terminar después de empezar.'],
+  ['Capacity must be at least one.', 'El cupo debe ser de al menos 1.'],
+  [
+    /The capacity cannot be lower than the (\d+) people already registered\./,
+    'El cupo no puede ser menor que las $1 personas ya inscritas.',
+  ],
   ['User not found.', 'No encontramos el usuario.'],
   ['Full name is required.', 'El nombre completo es obligatorio.'],
   ['Full name cannot exceed 200 characters.', 'El nombre completo no puede superar 200 caracteres.'],
