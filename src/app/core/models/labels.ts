@@ -1,3 +1,4 @@
+import { StageType } from '../events/events.service';
 import { InvitationRole } from './invitation';
 import { EventRole, UserRoleFilter, UserStatus } from './user';
 
@@ -42,6 +43,30 @@ export function roleLabel(role: string): string {
 export function userStatusLabel(status: string): string {
   return USER_STATUS_LABELS[status as UserStatus] ?? status;
 }
+
+export const STAGE_TYPES: readonly StageType[] = [
+  'Configuration',
+  'Call',
+  'Nomination',
+  'Reception',
+  'Admission',
+  'Registration',
+  'Evaluation',
+  'Results',
+  'Publication',
+];
+
+export const STAGE_LABELS: Record<StageType, string> = {
+  Configuration: 'Configuración',
+  Call: 'Convocatoria',
+  Nomination: 'Nominación',
+  Reception: 'Recepción de trabajos',
+  Admission: 'Admisión',
+  Registration: 'Inscripciones',
+  Evaluation: 'Evaluación',
+  Results: 'Resultados',
+  Publication: 'Publicación',
+};
 
 const EVENT_STATUS_LABELS: Record<string, string> = {
   Configuration: 'En configuración',

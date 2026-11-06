@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -6,6 +6,11 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ActiveEventStore } from '../../core/events/active-event.store';
 import { EVENT_ROLE_LABELS, roleLabel } from '../../core/models/labels';
 import { EventRole } from '../../core/models/user';
+import { describeNotification } from '../../core/notifications/notification-rules';
+import { NotificationsStore } from '../../core/notifications/notifications.store';
+
+/** How long the "new notification" notice stays on screen. */
+const TOAST_MS = 8000;
 
 /** Signed-in area: institutional sidebar, top bar with the user menu, and the page content. */
 @Component({
@@ -24,8 +29,13 @@ export class AppShell {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly activeEvents = inject(ActiveEventStore);
 
+  private readonly notifications = inject(NotificationsStore);
+
   protected readonly user = this.auth.user;
   protected readonly isSuperAdmin = this.auth.isSuperAdmin;
+  protected readonly unreadCount = this.notifications.unreadCount;
+  protected readonly incoming = this.notifications.incoming;
+  protected readonly arrivedView = describeNotification;
   protected readonly navOpen = signal(false);
   protected readonly userMenuOpen = signal(false);
 
@@ -75,6 +85,17 @@ export class AppShell {
         takeUntilDestroyed(),
       )
       .subscribe(() => this.closeMenus());
+
+    effect((onCleanup) => {
+      if (this.incoming()) {
+        const timer = setTimeout(() => this.dismissIncoming(), TOAST_MS);
+        onCleanup(() => clearTimeout(timer));
+      }
+    });
+  }
+
+  protected dismissIncoming(): void {
+    this.notifications.dismissIncoming();
   }
 
   protected selectEvent(event: Event): void {
