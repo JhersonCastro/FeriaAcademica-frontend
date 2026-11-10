@@ -1,0 +1,152 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/admin/events">Ferias</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Crear feria</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Crear feria</h1>
+    <p class="text-muted">
+      La feria nace en configuración: después programas sus etapas y la publicas.
+    </p>
+  </div>
+</header>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="create-event-title">
+    <h2 class="title-2" id="create-event-title">Datos de la feria</h2>
+
+    @if (loading()) {
+      <p class="state" role="status">Cargando…</p>
+    } @else if (loadError(); as message) {
+      <div class="alert alert--danger" role="alert">
+        <p>{{ message }}</p>
+      </div>
+    } @else if (!institutions().length) {
+      <div class="alert alert--warning" role="status">
+        <div class="alert__body">
+          <p class="alert__title">Todavía no hay una institución disponible</p>
+          <p>
+            La plataforma aún no permite listar instituciones: por ahora solo se puede crear una
+            feria en una institución que ya tenga alguna.
+          </p>
+        </div>
+      </div>
+    } @else {
+      <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label class="field__label" for="create-event-name">Nombre de la feria</label>
+          <div class="control" [class.control--error]="showError('name')">
+            <input
+              class="control__input"
+              id="create-event-name"
+              type="text"
+              autocomplete="off"
+              formControlName="name"
+              [attr.maxlength]="nameMaxLength"
+              [attr.aria-invalid]="showError('name')"
+              [attr.aria-describedby]="showError('name') ? 'create-event-name-error' : null"
+            />
+            @if (showError('name')) {
+              <img
+                class="control__icon"
+                src="assets/icons/circle-alert.svg"
+                width="16"
+                height="16"
+                alt=""
+              />
+            }
+          </div>
+          @if (showError('name')) {
+            <p class="field__error" id="create-event-name-error">Ingresa el nombre de la feria.</p>
+          }
+        </div>
+
+        @if (institutions().length > 1) {
+          <div class="field">
+            <label class="field__label" for="create-event-institution">Institución</label>
+            <div class="control" [class.control--error]="showError('institutionId')">
+              <select
+                class="control__input"
+                id="create-event-institution"
+                formControlName="institutionId"
+                [attr.aria-invalid]="showError('institutionId')"
+              >
+                <option value="" disabled>Selecciona una institución</option>
+                @for (institution of institutions(); track institution.id) {
+                  <option [value]="institution.id">Institución de: {{ institution.label }}</option>
+                }
+              </select>
+            </div>
+            @if (showError('institutionId')) {
+              <p class="field__error">Selecciona una institución.</p>
+            }
+          </div>
+        } @else {
+          <p class="field__hint">Se crea en la misma institución de las ferias existentes.</p>
+        }
+
+        <div class="field">
+          <label class="field__label" for="create-event-capacity">
+            Cupo de inscripciones <span class="field__optional">(opcional)</span>
+          </label>
+          <div class="control" [class.control--error]="showError('capacity')">
+            <input
+              class="control__input"
+              id="create-event-capacity"
+              type="number"
+              min="1"
+              step="1"
+              inputmode="numeric"
+              formControlName="capacity"
+              [attr.aria-invalid]="showError('capacity')"
+              aria-describedby="create-event-capacity-hint"
+            />
+          </div>
+          @if (showError('capacity')) {
+            <p class="field__error" id="create-event-capacity-hint">
+              El cupo debe ser de al menos 1.
+            </p>
+          } @else {
+            <p class="field__hint" id="create-event-capacity-hint">
+              Déjalo vacío para no limitar los cupos.
+            </p>
+          }
+        </div>
+
+        @if (errorMessage(); as message) {
+          <div class="alert alert--danger alert--compact" role="alert">
+            <p>{{ message }}</p>
+          </div>
+        }
+
+        <div class="actions">
+          <button class="btn btn--primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Creando…' : 'Crear feria' }}
+          </button>
+          <a class="btn btn--text" routerLink="/admin/events">Cancelar</a>
+        </div>
+      </form>
+    }
+  </section>
+
+  <section class="card" aria-labelledby="create-event-help-title">
+    <h2 class="title-2" id="create-event-help-title">Qué pasa después</h2>
+    <div class="alert alert--info">
+      <div class="alert__body">
+        <p class="alert__title">La feria queda en configuración</p>
+        <p>
+          Programa al menos una etapa desde su pantalla de configuración y publícala para abrir las
+          inscripciones.
+        </p>
+      </div>
+    </div>
+    <p class="text-muted">
+      Los coordinadores, profesores y demás roles se asignan por feria desde el detalle de cada
+      usuario.
+    </p>
+  </section>
+</div>

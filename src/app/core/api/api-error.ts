@@ -48,6 +48,7 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'Solo puedes invitar estudiantes participantes o invitados.',
   ],
   ['Event not found.', 'No encontramos la feria.'],
+  ['Name is required.', 'El nombre de la feria es obligatorio.'],
   [/An event in state \w+ cannot be published\./, 'Solo una feria en configuración se puede publicar.'],
   [
     'At least one stage must be active.',
