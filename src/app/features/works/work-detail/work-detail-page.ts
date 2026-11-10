@@ -16,15 +16,52 @@ import {
   WORK_STATUS_LABELS,
   artifactRows,
   canReplace,
+  canReturnToDraft,
+  canWithdraw,
   fileError,
   fileSizeLabel,
   isDeadlinePassed,
   isHttpUrl,
   reviewsNewestFirst,
+  sendRequirements,
 } from '../../../core/works/work-rules';
 import { WorksService } from '../../../core/works/works.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
+
+/** Actions that ask for confirmation first: sending (two ways), withdrawing, going back to draft. */
+type PendingAction = 'send-version' | 'send-draft' | 'withdraw' | 'return-to-draft';
+
+interface Confirmation {
+  title: string;
+  text: string;
+  button: string;
+  destructive: boolean;
+}
+
+const SEND_CONFIRMATION: Confirmation = {
+  title: '¿Enviar el trabajo a revisión?',
+  text: 'Entrará al final de la cola de revisión de tu profesor. Mientras nadie lo abra podrás devolverlo a Borrador; una vez en revisión ya no podrás cambiarlo.',
+  button: 'Sí, enviar',
+  destructive: false,
+};
+
+const CONFIRMATIONS: Record<PendingAction, Confirmation> = {
+  'send-version': SEND_CONFIRMATION,
+  'send-draft': SEND_CONFIRMATION,
+  withdraw: {
+    title: '¿Retirar este trabajo?',
+    text: 'Quedará Cancelado y no participará en esta feria. Esta acción no se puede deshacer.',
+    button: 'Sí, retirar',
+    destructive: true,
+  },
+  'return-to-draft': {
+    title: '¿Devolver el trabajo a Borrador?',
+    text: 'Perderás tu lugar en la cola de revisión. Podrás editarlo y volver a enviarlo antes del cierre; el reenvío entrará al final de la cola.',
+    button: 'Sí, devolver',
+    destructive: false,
+  },
+};
 
 /**
  * The author's view of one work.
@@ -71,6 +108,26 @@ export class WorkDetailPage {
   protected readonly needsCorrection = computed(
     () => this.work()?.status === 'Draft' && this.latestReview()?.result === 'Rejected',
   );
+  protected readonly withdrawable = computed(() => {
+    const work = this.work();
+    return work !== null && canWithdraw(work.status);
+  });
+  protected readonly returnable = computed(() => {
+    const work = this.work();
+    return work !== null && canReturnToDraft(work.status, work.submissionDeadline);
+  });
+  protected readonly inReview = computed(() => this.work()?.status === 'InReview');
+  /** HU-017: what a draft needs before it can be sent. */
+  protected readonly requirements = computed(() => {
+    const work = this.work();
+    return work ? sendRequirements(work.artifacts.length, work.submissionDeadline) : [];
+  });
+
+  protected readonly confirming = signal<PendingAction | null>(null);
+  protected readonly confirmation = computed(() => {
+    const action = this.confirming();
+    return action ? CONFIRMATIONS[action] : null;
+  });
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     type: ['Document' as ArtifactTypeName, Validators.required],
@@ -147,23 +204,61 @@ export class WorkDetailPage {
     return this.source() === 'file' && this.submitted() && !this.file();
   }
 
-  /** Uploads the new version and sends the work to review again. */
-  protected replaceAndSubmit(): void {
-    this.replace(true);
+  /**
+   * Sending (a new version, or the draft as it is) and the two ways of taking a work back ask
+   * for confirmation first; `confirm` runs what was asked.
+   */
+  protected askSend(action: 'send-version' | 'send-draft'): void {
+    if (action === 'send-version') {
+      this.submitted.set(true);
+      if (!this.work() || !this.sourceReady()) {
+        return;
+      }
+    }
+    this.confirming.set(action);
+  }
+
+  protected askWithdraw(): void {
+    this.confirming.set('withdraw');
+  }
+
+  protected askReturnToDraft(): void {
+    this.confirming.set('return-to-draft');
+  }
+
+  protected cancelConfirmation(): void {
+    this.confirming.set(null);
+  }
+
+  protected confirm(): void {
+    const action = this.confirming();
+    const work = this.work();
+    this.confirming.set(null);
+    if (!action || !work) {
+      return;
+    }
+    switch (action) {
+      case 'send-version':
+        this.replace(true);
+        break;
+      case 'send-draft':
+        this.run(this.works.submit(work.id), 'Enviaste tu trabajo a revisión.');
+        break;
+      case 'withdraw':
+        this.run(this.works.withdraw(work.id), 'Retiraste el trabajo: quedó cancelado.');
+        break;
+      case 'return-to-draft':
+        this.run(
+          this.works.withdraw(work.id),
+          'Tu trabajo volvió a Borrador. Puedes corregirlo y reenviarlo antes del cierre.',
+        );
+        break;
+    }
   }
 
   /** Draft only: keeps the new version without sending it yet. */
   protected saveDraftVersion(): void {
     this.replace(false);
-  }
-
-  /** Draft only: sends the current versions to review without adding another one. */
-  protected submitDraft(): void {
-    const work = this.work();
-    if (!work) {
-      return;
-    }
-    this.run(this.works.submit(work.id), 'Enviaste tu trabajo a revisión.');
   }
 
   private replace(submitAfterwards: boolean): void {

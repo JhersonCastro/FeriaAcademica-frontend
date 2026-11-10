@@ -148,6 +148,14 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'new',
+            title: 'Crear feria',
+            loadComponent: () =>
+              import('./features/admin/events/event-create/event-create-page').then(
+                (m) => m.EventCreatePage,
+              ),
+          },
+          {
             path: ':eventId',
             title: 'Configurar feria',
             loadComponent: () =>

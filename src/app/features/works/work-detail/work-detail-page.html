@@ -109,6 +109,9 @@
                     <tr>
                       <td>
                         {{ artifactLabels[artifact.type] }}
+                        @if (artifact.isFinal) {
+                          <span class="chip chip--success">Versión final</span>
+                        }
                         <span class="table__secondary">{{ artifact.uploadedAt | date: 'd MMM y, h:mm a' }}</span>
                       </td>
                       <td data-label="Versión">v{{ artifact.version }}</td>
@@ -177,6 +180,52 @@
         </div>
       }
 
+      @if (confirmation(); as ask) {
+        <div class="alert alert--warning" role="alertdialog" aria-labelledby="work-confirm-title">
+          <div class="alert__body">
+            <p class="alert__title" id="work-confirm-title">{{ ask.title }}</p>
+            <p>{{ ask.text }}</p>
+            <div class="actions">
+              <button
+                class="btn"
+                [class.btn--accent]="ask.destructive"
+                [class.btn--primary]="!ask.destructive"
+                type="button"
+                (click)="confirm()"
+              >
+                {{ ask.button }}
+              </button>
+              <button class="btn btn--text" type="button" (click)="cancelConfirmation()">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (work.status === 'Draft') {
+        <section class="card card--narrow" aria-labelledby="work-requirements-title">
+          <h2 class="title-2" id="work-requirements-title">Antes de enviar</h2>
+          <ul class="checklist">
+            @for (item of requirements(); track item.label) {
+              <li class="checklist__item" [class.checklist__item--pending]="!item.met">
+                <img
+                  class="checklist__icon"
+                  [src]="
+                    item.met ? 'assets/icons/circle-check.svg' : 'assets/icons/circle-alert.svg'
+                  "
+                  width="16"
+                  height="16"
+                  alt=""
+                />
+                <span>{{ item.label }}</span>
+                <span class="visually-hidden">{{ item.met ? ' (cumplido)' : ' (pendiente)' }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
       @if (replaceable()) {
         <section class="card card--narrow" aria-labelledby="work-replace-title">
           <h2 class="title-2" id="work-replace-title">
@@ -190,7 +239,7 @@
             }
           </p>
 
-          <form class="form" [formGroup]="form" (ngSubmit)="replaceAndSubmit()" novalidate>
+          <form class="form" [formGroup]="form" (ngSubmit)="askSend('send-version')" novalidate>
             <div class="source-toggle" role="group" aria-label="Cómo entregas la nueva versión">
               <button
                 type="button"
@@ -328,7 +377,12 @@
                   Solo guardar la versión
                 </button>
                 @if (artifacts().length) {
-                  <button class="btn btn--text" type="button" [disabled]="saving()" (click)="submitDraft()">
+                  <button
+                    class="btn btn--text"
+                    type="button"
+                    [disabled]="saving()"
+                    (click)="askSend('send-draft')"
+                  >
                     Enviar sin cambios
                   </button>
                 }
@@ -343,6 +397,57 @@
             <p>Ya pasó la fecha límite de envío: no se pueden subir ni reemplazar versiones.</p>
           </div>
         </div>
+      }
+
+      @if (withdrawable() || returnable() || inReview()) {
+        <section class="card card--narrow" aria-labelledby="work-withdraw-title">
+          <h2 class="title-2" id="work-withdraw-title">Retirar el trabajo</h2>
+          @if (withdrawable()) {
+            <p class="text-muted">
+              Mientras es un borrador puedes retirarlo: queda Cancelado y no participa en esta
+              feria.
+            </p>
+            <div class="actions">
+              <button
+                class="btn btn--accent"
+                type="button"
+                [disabled]="saving()"
+                (click)="askWithdraw()"
+              >
+                Retirar trabajo
+              </button>
+            </div>
+          } @else if (returnable()) {
+            <p class="text-muted">
+              Nadie ha abierto tu trabajo todavía. Puedes devolverlo a Borrador para editarlo, pero
+              perderás tu lugar en la cola.
+            </p>
+            <div class="actions">
+              <button
+                class="btn btn--secondary"
+                type="button"
+                [disabled]="saving()"
+                (click)="askReturnToDraft()"
+              >
+                Devolver a Borrador
+              </button>
+            </div>
+          } @else {
+            <p class="text-muted" id="work-in-review-hint">
+              Una vez en revisión no puedes retirar el trabajo.
+            </p>
+            <div class="actions">
+              <button
+                class="btn btn--secondary"
+                type="button"
+                disabled
+                aria-describedby="work-in-review-hint"
+              >
+                Devolver a Borrador
+              </button>
+            </div>
+          }
+        </section>
       }
     }
   }

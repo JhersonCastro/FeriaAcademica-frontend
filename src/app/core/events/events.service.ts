@@ -62,6 +62,14 @@ export interface StageSchedule {
   endDate: string;
 }
 
+/** `POST /api/events` (super admin): the event is born in configuration. */
+export interface CreateEventRequest {
+  institutionId: string;
+  name: string;
+  /** `null` leaves the seats unlimited. */
+  capacity: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EventsService {
   private readonly http = inject(HttpClient);
@@ -69,6 +77,11 @@ export class EventsService {
 
   list(): Observable<EventSummary[]> {
     return this.http.get<EventSummary[]>(this.baseUrl);
+  }
+
+  /** Super admin: creates an event in configuration; the backend answers with its id. */
+  create(request: CreateEventRequest): Observable<{ id: string }> {
+    return this.http.post<{ id: string }>(this.baseUrl, request);
   }
 
   /** 404 when the signed-in person has no participation in the event. */

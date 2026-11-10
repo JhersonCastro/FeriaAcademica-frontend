@@ -2,10 +2,13 @@ import { WorkArtifactDto } from '../models/work';
 import {
   artifactRows,
   canReplace,
+  canReturnToDraft,
+  canWithdraw,
   decisionError,
   isDeadlinePassed,
   isHttpUrl,
   reviewsNewestFirst,
+  sendRequirements,
 } from './work-rules';
 
 function artifact(type: WorkArtifactDto['type'], version: number): WorkArtifactDto {
@@ -78,6 +81,54 @@ describe('canReplace', () => {
       expect(canReplace(status, open, now)).toBe(false);
     },
   );
+});
+
+describe('canWithdraw', () => {
+  it('lets only a draft be withdrawn, which cancels it', () => {
+    expect(canWithdraw('Draft')).toBe(true);
+    expect(canWithdraw('Submitted')).toBe(false);
+    expect(canWithdraw('InReview')).toBe(false);
+    expect(canWithdraw('Cancelled')).toBe(false);
+  });
+});
+
+describe('canReturnToDraft (HU-018)', () => {
+  const now = new Date('2026-10-30T12:00:00Z');
+
+  it('allows a submitted work before the deadline', () => {
+    expect(canReturnToDraft('Submitted', '2026-11-05T00:00:00Z', now)).toBe(true);
+    expect(canReturnToDraft('Submitted', null, now)).toBe(true);
+  });
+
+  it('blocks it after the deadline', () => {
+    expect(canReturnToDraft('Submitted', '2026-10-01T00:00:00Z', now)).toBe(false);
+  });
+
+  it.each(['Draft', 'InReview', 'Admitted', 'RejectedDefinitively', 'Cancelled'] as const)(
+    'blocks %s: once a reviewer opens it, it can no longer be withdrawn',
+    (status) => {
+      expect(canReturnToDraft(status, '2026-11-05T00:00:00Z', now)).toBe(false);
+    },
+  );
+});
+
+describe('sendRequirements (HU-017)', () => {
+  const now = new Date('2026-10-30T12:00:00Z');
+
+  it('asks for an artifact and an open call', () => {
+    expect(sendRequirements(0, '2026-11-05T00:00:00Z', now).map((item) => item.met)).toEqual([
+      false,
+      true,
+    ]);
+    expect(sendRequirements(2, '2026-10-01T00:00:00Z', now).map((item) => item.met)).toEqual([
+      true,
+      false,
+    ]);
+  });
+
+  it('is complete with an artifact and no deadline problem', () => {
+    expect(sendRequirements(1, null, now).every((item) => item.met)).toBe(true);
+  });
 });
 
 describe('decisionError (HU-021)', () => {

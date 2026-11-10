@@ -27,6 +27,12 @@ describe('apiErrorMessage', () => {
     expect(apiErrorMessage(businessError('Something new.'))).toBe('Something new.');
   });
 
+  it('translates the rule for creating a fair without a name', () => {
+    expect(apiErrorMessage(businessError('Name is required.'))).toBe(
+      'El nombre de la feria es obligatorio.',
+    );
+  });
+
   it('translates the registration and attendance rules', () => {
     expect(
       apiErrorMessage(

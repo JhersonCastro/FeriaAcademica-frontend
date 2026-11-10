@@ -52,6 +52,8 @@ export interface WorkArtifactDto {
   fileUrl: string | null;
   linkUrl: string | null;
   uploadedAt: string;
+  /** Marks the definitive document of an approved work. Only `GET /api/works/{id}` sends it. */
+  isFinal?: boolean;
 }
 
 /** The reviewer's decision and feedback on one attempt. */

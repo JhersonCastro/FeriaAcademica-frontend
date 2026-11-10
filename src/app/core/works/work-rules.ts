@@ -116,6 +116,40 @@ export function canReplace(
   return (status === 'Draft' || status === 'Submitted') && !isDeadlinePassed(deadline, now);
 }
 
+/** A draft can be withdrawn at any time: that cancels the work (`Work.Withdraw`). */
+export function canWithdraw(status: WorkStatus): boolean {
+  return status === 'Draft';
+}
+
+/**
+ * A submitted work that nobody opened yet goes back to draft, losing its place in the queue.
+ * Only until the submission deadline; once a reviewer opens it, it can no longer be withdrawn.
+ */
+export function canReturnToDraft(
+  status: WorkStatus,
+  deadline: string | null,
+  now: Date = new Date(),
+): boolean {
+  return status === 'Submitted' && !isDeadlinePassed(deadline, now);
+}
+
+export interface SendRequirement {
+  label: string;
+  met: boolean;
+}
+
+/** What `Work.Submit` checks before a draft enters the queue: an artifact and an open call. */
+export function sendRequirements(
+  artifactCount: number,
+  deadline: string | null,
+  now: Date = new Date(),
+): SendRequirement[] {
+  return [
+    { label: 'Al menos un adjunto (archivo o enlace)', met: artifactCount > 0 },
+    { label: 'Dentro de la fecha límite de envío', met: !isDeadlinePassed(deadline, now) },
+  ];
+}
+
 /** Message for the decision form, or `null` when it can be sent (mirrors `Work.Decide`). */
 export function decisionError(decision: ReviewDecision | null, feedback: string): string | null {
   if (!decision) {

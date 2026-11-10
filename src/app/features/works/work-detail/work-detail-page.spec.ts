@@ -1,0 +1,171 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { WorkArtifactDto, WorkDto } from '../../../core/models/work';
+import { WorkDetailPage } from './work-detail-page';
+
+const OPEN_CALL = '2099-01-01T00:00:00Z';
+const CLOSED_CALL = '2020-01-01T00:00:00Z';
+
+const LINK: WorkArtifactDto = {
+  id: 'a1',
+  type: 'Document',
+  version: 1,
+  fileUrl: null,
+  linkUrl: 'https://example.org/informe',
+  uploadedAt: '2026-10-28T12:00:00Z',
+};
+
+function work(overrides: Partial<WorkDto> = {}): WorkDto {
+  return {
+    id: 'w1',
+    participationId: 'p1',
+    eventId: 'e1',
+    eventName: 'FIET 2026',
+    professorId: 'prof1',
+    title: 'Sistema de riego',
+    summary: null,
+    status: 'Draft',
+    currentAttempt: 1,
+    rejectionCount: 0,
+    maxRejections: 3,
+    submittedAt: null,
+    submissionDeadline: OPEN_CALL,
+    closure: null,
+    closureReason: null,
+    closedAt: null,
+    artifacts: [],
+    reviews: [],
+    ...overrides,
+  };
+}
+
+describe('WorkDetailPage actions', () => {
+  let http: HttpTestingController;
+  let harness: RouterTestingHarness;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'works/:workId', component: WorkDetailPage }]),
+      ],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  async function open(dto: WorkDto): Promise<HTMLElement> {
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl(`/works/${dto.id}`, WorkDetailPage);
+    http.expectOne(`/api/works/${dto.id}`).flush(dto);
+    harness.detectChanges();
+    return harness.routeNativeElement as HTMLElement;
+  }
+
+  function button(root: HTMLElement, label: string): HTMLButtonElement | undefined {
+    return [...root.querySelectorAll('button')].find((item) => item.textContent?.trim() === label);
+  }
+
+  function click(root: HTMLElement, label: string): void {
+    const target = button(root, label);
+    expect(target, `button "${label}"`).toBeDefined();
+    target!.click();
+    harness.detectChanges();
+  }
+
+  it('lists what a draft still needs before it can be sent', async () => {
+    const root = await open(work());
+    const items = [...root.querySelectorAll('.checklist__item')].map((item) =>
+      item.classList.contains('checklist__item--pending'),
+    );
+    expect(root.textContent).toContain('Antes de enviar');
+    expect(items).toEqual([true, false]);
+  });
+
+  it('asks before withdrawing a draft and only then calls the API', async () => {
+    const root = await open(work());
+
+    click(root, 'Retirar trabajo');
+    expect(root.textContent).toContain('¿Retirar este trabajo?');
+    http.expectNone('/api/works/w1/withdraw');
+
+    click(root, 'Sí, retirar');
+    const request = http.expectOne('/api/works/w1/withdraw');
+    expect(request.request.method).toBe('POST');
+    request.flush(null);
+    http.expectOne('/api/works/w1').flush(work({ status: 'Cancelled' }));
+    harness.detectChanges();
+
+    expect(root.textContent).toContain('Retiraste el trabajo: quedó cancelado.');
+    expect(root.textContent).toContain('Trabajo cancelado');
+  });
+
+  it('does nothing when the confirmation is cancelled', async () => {
+    const root = await open(work());
+
+    click(root, 'Retirar trabajo');
+    click(root, 'Cancelar');
+
+    expect(root.textContent).not.toContain('¿Retirar este trabajo?');
+    http.expectNone('/api/works/w1/withdraw');
+  });
+
+  it('asks before sending a draft and posts the submission afterwards', async () => {
+    const root = await open(work({ artifacts: [LINK] }));
+
+    click(root, 'Enviar sin cambios');
+    expect(root.textContent).toContain('¿Enviar el trabajo a revisión?');
+    http.expectNone('/api/works/w1/submit');
+
+    click(root, 'Sí, enviar');
+    http.expectOne('/api/works/w1/submit').flush(null);
+    http.expectOne('/api/works/w1').flush(work({ status: 'Submitted', artifacts: [LINK] }));
+  });
+
+  it('lets a submitted work nobody opened go back to draft after confirming', async () => {
+    const root = await open(work({ status: 'Submitted', artifacts: [LINK] }));
+
+    click(root, 'Devolver a Borrador');
+    expect(root.textContent).toContain('Perderás tu lugar en la cola de revisión');
+
+    click(root, 'Sí, devolver');
+    const request = http.expectOne('/api/works/w1/withdraw');
+    expect(request.request.method).toBe('POST');
+    request.flush(null);
+    http.expectOne('/api/works/w1').flush(work({ status: 'Draft', artifacts: [LINK] }));
+  });
+
+  it('blocks withdrawing a work that is already in review', async () => {
+    const root = await open(work({ status: 'InReview', artifacts: [LINK] }));
+
+    const blocked = button(root, 'Devolver a Borrador');
+    expect(blocked?.disabled).toBe(true);
+    expect(root.textContent).toContain('Una vez en revisión no puedes retirar el trabajo.');
+    expect(button(root, 'Retirar trabajo')).toBeUndefined();
+  });
+
+  it('offers no way back once the deadline has passed', async () => {
+    const root = await open(
+      work({ status: 'Submitted', artifacts: [LINK], submissionDeadline: CLOSED_CALL }),
+    );
+
+    expect(button(root, 'Devolver a Borrador')).toBeUndefined();
+    expect(root.textContent).toContain('La convocatoria está cerrada');
+  });
+
+  it('marks the final version in the list of attachments', async () => {
+    const root = await open(
+      work({
+        status: 'Admitted',
+        artifacts: [LINK, { ...LINK, id: 'a2', version: 2, isFinal: true }],
+      }),
+    );
+
+    expect(root.textContent?.match(/Versión final/g)).toHaveLength(1);
+  });
+});
