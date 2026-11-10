@@ -65,6 +65,22 @@
           >Revisar trabajos</a
         >
       }
+      @if (evaluationLink(); as link) {
+        <a
+          class="nav__link"
+          [routerLink]="link"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >Preguntas de evaluación</a
+        >
+      }
+      <a
+        class="nav__link"
+        routerLink="/evaluate"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >Evaluar trabajos</a
+      >
       <a
         class="nav__link"
         routerLink="/my-qr"

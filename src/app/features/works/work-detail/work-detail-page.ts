@@ -14,6 +14,7 @@ import {
   REVIEW_RESULT_LABELS,
   WORK_STATUS_CHIPS,
   WORK_STATUS_LABELS,
+  artifactHref,
   artifactRows,
   canReplace,
   canReturnToDraft,
@@ -83,6 +84,7 @@ export class WorkDetailPage {
   protected readonly today = new Date();
 
   protected readonly statusLabels = WORK_STATUS_LABELS;
+  protected readonly artifactHref = artifactHref;
   protected readonly statusChips = WORK_STATUS_CHIPS;
   protected readonly resultLabels = REVIEW_RESULT_LABELS;
   protected readonly resultChips = REVIEW_RESULT_CHIPS;

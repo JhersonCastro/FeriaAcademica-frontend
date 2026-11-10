@@ -72,28 +72,31 @@
       }
 
       <div class="field">
-        <label class="field__label" for="work-professor">Profesor revisor</label>
-        <div class="control" [class.control--error]="showError('professorId')">
-          <select
-            class="control__input"
-            id="work-professor"
-            formControlName="professorId"
-            [attr.aria-invalid]="showError('professorId')"
-          >
-            <option value="" disabled>
-              {{ loadingEvent() ? 'Cargando profesores…' : 'Selecciona un profesor' }}
-            </option>
-            @for (professor of professors(); track professor.id) {
-              <option [value]="professor.id">{{ professor.fullName }}</option>
+        <span class="field__label" id="work-reviewer-label">Profesor revisor</span>
+        <div class="control control--readonly" aria-labelledby="work-reviewer-label">
+          <span class="control__input" id="work-reviewer">
+            @if (loadingEvent()) {
+              Buscando al profesor que te invitó…
+            } @else {
+              {{ reviewer()?.fullName ?? 'Sin profesor asignado' }}
             }
-          </select>
+          </span>
         </div>
-        @if (showError('professorId')) {
-          <p class="field__error">Selecciona quién revisará tu trabajo.</p>
-        } @else {
-          <p class="field__hint">Solo este profesor podrá revisar y decidir sobre tu trabajo.</p>
-        }
+        <p class="field__hint">
+          Es el profesor que te invitó a esta feria. Solo él revisará y decidirá sobre tu trabajo.
+        </p>
       </div>
+      @if (noReviewer()) {
+        <div class="alert alert--warning" role="status">
+          <div class="alert__body">
+            <p class="alert__title">Tu participación no tiene profesor revisor</p>
+            <p>
+              Para crear un trabajo, un profesor de esta feria tiene que invitarte. Pídele que te
+              envíe la invitación desde "Mis invitados".
+            </p>
+          </div>
+        </div>
+      }
 
       <div class="field">
         <label class="field__label" for="work-title">Título</label>

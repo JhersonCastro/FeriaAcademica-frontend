@@ -63,6 +63,14 @@ export class AppShell {
       : null;
   });
 
+  /** HU-023: the active event's evaluation questions, for its coordinators and teachers. */
+  protected readonly evaluationLink = computed(() => {
+    const event = this.activeEvents.activeEvent();
+    return event && this.auth.canManageEvaluation(event.eventId)
+      ? ['/events', event.eventId, 'evaluation']
+      : null;
+  });
+
   /** Check-in and turnout links for the active event, when the user is staff there. */
   protected readonly attendanceLinks = computed(() => {
     const event = this.activeEvents.activeEvent();

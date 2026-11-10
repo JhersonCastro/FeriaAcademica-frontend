@@ -1,0 +1,106 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Ferias académicas</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Evaluar trabajos</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Evaluar trabajos</h1>
+    <p class="text-muted">
+      Cuando una feria a la que asististe se cierra, puedes calificar sus trabajos. Responder es
+      voluntario y puedes cambiar tus respuestas después.
+    </p>
+  </div>
+</header>
+
+@if (loading()) {
+  <p class="text-muted" role="status">Cargando los trabajos por evaluar…</p>
+} @else if (errorMessage(); as message) {
+  <div class="alert alert--danger" role="alert">
+    <div class="alert__body">
+      <p class="alert__title">No pudimos cargar los trabajos</p>
+      <p>{{ message }}</p>
+    </div>
+  </div>
+} @else if (!events().length) {
+  <div class="card state">
+    <span class="diamond" aria-hidden="true"></span>
+    <p>
+      No tienes trabajos por evaluar. Aparecen aquí cuando se cierra una feria a la que asististe y
+      que tiene preguntas de evaluación.
+    </p>
+  </div>
+} @else {
+  @for (event of events(); track event.eventId) {
+    <section class="card" [attr.aria-labelledby]="'evaluate-' + event.eventId">
+      <div class="event-head">
+        <h2 class="title-2" [id]="'evaluate-' + event.eventId">{{ event.eventName }}</h2>
+        <span class="text-small text-muted">
+          {{ event.questionsCount }} {{ event.questionsCount === 1 ? 'pregunta' : 'preguntas' }}
+          por trabajo
+        </span>
+      </div>
+
+      <div class="progress">
+        <p class="progress__label">
+          Evaluaste <strong>{{ evaluatedCount(event.works) }}</strong> de
+          <strong>{{ event.works.length }}</strong> trabajos
+        </p>
+        <div
+          class="gauge"
+          role="meter"
+          aria-label="Trabajos evaluados"
+          aria-valuemin="0"
+          [attr.aria-valuemax]="event.works.length"
+          [attr.aria-valuenow]="evaluatedCount(event.works)"
+        >
+          <span class="gauge__fill" [style.width.%]="percent(event)"></span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table table--stack">
+          <thead>
+            <tr>
+              <th scope="col">Trabajo</th>
+              <th scope="col">Estado</th>
+              <th scope="col"><span class="visually-hidden">Acción</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (work of event.works; track work.workId) {
+              <tr>
+                <td>
+                  <a class="table__link" [routerLink]="['/evaluate', event.eventId, work.workId]">
+                    {{ work.title }}
+                  </a>
+                  @if (work.summary) {
+                    <span class="table__secondary summary">{{ work.summary }}</span>
+                  }
+                </td>
+                <td data-label="Estado">
+                  @if (work.answered) {
+                    <span class="chip chip--success">Evaluado</span>
+                  } @else {
+                    <span class="chip chip--neutral">Sin evaluar</span>
+                  }
+                </td>
+                <td>
+                  <a
+                    class="btn"
+                    [class.btn--primary]="!work.answered"
+                    [class.btn--secondary]="work.answered"
+                    [routerLink]="['/evaluate', event.eventId, work.workId]"
+                  >
+                    {{ work.answered ? 'Cambiar respuestas' : 'Evaluar' }}
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+}

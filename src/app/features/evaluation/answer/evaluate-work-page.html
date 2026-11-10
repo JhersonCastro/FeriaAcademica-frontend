@@ -1,0 +1,182 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <a routerLink="/evaluate">Evaluar trabajos</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">{{ data()?.eventName ?? 'Trabajo' }}</span>
+</nav>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="text-muted" role="status">Cargando el trabajo…</p>
+  }
+  @case ('error') {
+    <div class="alert alert--danger" role="alert">
+      <div class="alert__body">
+        <p class="alert__title">No pudimos abrir este trabajo</p>
+        <p>{{ errorMessage() }}</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="btn btn--secondary" routerLink="/evaluate">Volver a Evaluar trabajos</a>
+    </div>
+  }
+  @case ('ready') {
+    @if (data(); as work) {
+      <header class="page-header">
+        <div class="page-header__text">
+          <h1 class="title-1">{{ work.workTitle }}</h1>
+          @if (work.workSummary) {
+            <p class="text-muted work-summary">{{ work.workSummary }}</p>
+          }
+        </div>
+      </header>
+
+      <section class="card card--narrow" aria-labelledby="answers-title">
+        <div class="answers-head">
+          <h2 class="title-2" id="answers-title">Tu evaluación</h2>
+          @if (work.answeredAt && !dirty()) {
+            <span class="chip chip--success">
+              Guardada el {{ work.answeredAt | date: "d 'de' MMMM, h:mm a" }}
+            </span>
+          } @else if (dirty()) {
+            <span class="chip chip--warning">Sin guardar</span>
+          } @else {
+            <span class="chip chip--neutral">Sin evaluar</span>
+          }
+        </div>
+        <p class="text-small text-muted">
+          Todas las preguntas son opcionales: responde las que quieras. En las escalas, el número
+          más bajo es la peor calificación y el más alto la mejor.
+        </p>
+
+        <form class="form" (submit)="$event.preventDefault(); save()" novalidate>
+          @for (question of questions(); track question.id; let i = $index) {
+            @let selected = values()[question.id];
+            <fieldset class="answer">
+              <legend class="answer__legend">
+                <span class="answer__number">{{ i + 1 }}.</span> {{ question.text }}
+              </legend>
+
+              @switch (question.type) {
+                @case ('Text') {
+                  <div class="field">
+                    <label class="visually-hidden" [for]="'text-' + question.id">
+                      Tu respuesta a la pregunta {{ i + 1 }}
+                    </label>
+                    <div class="control control--textarea">
+                      <textarea
+                        class="control__input"
+                        rows="3"
+                        [id]="'text-' + question.id"
+                        [maxLength]="maxText"
+                        [value]="texts()[question.id] ?? ''"
+                        placeholder="Escribe tu respuesta…"
+                        (input)="onText(question, $event)"
+                      ></textarea>
+                    </div>
+                    <p class="field__hint">
+                      {{ (texts()[question.id] ?? '').length }} de {{ maxText }} caracteres
+                    </p>
+                  </div>
+                }
+                @case ('YesNo') {
+                  <div class="scale" role="presentation">
+                    @for (option of [yes, no]; track option) {
+                      <label class="scale__option scale__option--wide">
+                        <input
+                          type="radio"
+                          [name]="'q-' + question.id"
+                          [value]="option"
+                          [checked]="selected === option"
+                          (change)="pick(question, option)"
+                        />
+                        <span>{{ option === yes ? 'Sí' : 'No' }}</span>
+                      </label>
+                    }
+                    @if (selected !== undefined) {
+                      <button
+                        class="btn btn--text answer__clear"
+                        type="button"
+                        (click)="clear(question)"
+                      >
+                        Quitar respuesta
+                      </button>
+                    }
+                  </div>
+                }
+                @default {
+                  <div class="scale" role="presentation">
+                    @for (value of scaleValues(question.scaleMin, question.scaleMax); track value) {
+                      <label class="scale__option">
+                        <input
+                          type="radio"
+                          [name]="'q-' + question.id"
+                          [value]="value"
+                          [checked]="selected === value"
+                          (change)="pick(question, value)"
+                        />
+                        <span>{{ value }}</span>
+                      </label>
+                    }
+                  </div>
+                  <div class="scale__meta">
+                    <span class="text-small text-muted">
+                      {{ question.scaleMin }} = más bajo · {{ question.scaleMax }} = más alto
+                    </span>
+                    @if (selected !== undefined) {
+                      <button
+                        class="btn btn--text answer__clear"
+                        type="button"
+                        (click)="clear(question)"
+                      >
+                        Quitar respuesta
+                      </button>
+                    }
+                  </div>
+                }
+              }
+            </fieldset>
+          }
+
+          <p class="text-small text-muted tally" aria-live="polite">
+            Respondiste {{ answeredCount() }} de {{ questions().length }}
+            {{ questions().length === 1 ? 'pregunta' : 'preguntas' }}.
+          </p>
+
+          @if (attempted() && !answeredCount()) {
+            <div class="alert alert--danger alert--compact" role="alert">
+              <p>Responde al menos una pregunta para guardar tu evaluación.</p>
+            </div>
+          }
+          @if (actionError(); as message) {
+            <div class="alert alert--danger alert--compact" role="alert">
+              <p>{{ message }}</p>
+            </div>
+          }
+          @if (justSaved()) {
+            <div class="alert alert--success alert--compact" role="status">
+              <p>
+                Evaluación guardada. Gracias por calificar este trabajo.
+                @if (next(); as nextWork) {
+                  Siguiente sin evaluar:
+                  <a [routerLink]="['/evaluate', work.eventId, nextWork.workId]">{{
+                    nextWork.title
+                  }}</a
+                  >.
+                }
+              </p>
+            </div>
+          }
+
+          <div class="actions">
+            <button class="btn btn--primary" type="submit" [disabled]="saving() || !dirty()">
+              {{
+                saving() ? 'Guardando…' : work.answeredAt ? 'Guardar cambios' : 'Guardar evaluación'
+              }}
+            </button>
+            <a class="btn btn--text" routerLink="/evaluate">Volver a la lista</a>
+          </div>
+        </form>
+      </section>
+    }
+  }
+}

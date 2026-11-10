@@ -16,8 +16,9 @@ import { isDeadlinePassed } from '../../../core/works/work-rules';
 import { WorksService } from '../../../core/works/works.service';
 
 /**
- * HU-010: the participant creates a work (a draft) in one of their fairs, picking its reviewer
- * among the professors of that fair. Files and links are added afterwards, in the work itself.
+ * HU-010: the participant creates a work (a draft) in one of their fairs. The reviewer is not
+ * chosen: it is the professor who invited the participant to that fair (acta 08, T-12). Files and
+ * links are added afterwards, in the work itself.
  */
 @Component({
   selector: 'app-create-work-page',
@@ -38,7 +39,6 @@ export class CreateWorkPage {
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     eventId: ['', Validators.required],
-    professorId: ['', Validators.required],
     title: ['', [Validators.required, Validators.maxLength(300)]],
     summary: ['', Validators.maxLength(2000)],
   });
@@ -61,8 +61,21 @@ export class CreateWorkPage {
         ?.submissionDeadline ?? null,
   );
   protected readonly deadlinePassed = computed(() => isDeadlinePassed(this.deadline()));
+  /** The professor who invited the participant: the work's reviewer. */
+  protected readonly reviewer = computed(() => {
+    const invitedBy = this.participation()?.invitedBy;
+    return invitedBy ? (this.professors().find((p) => p.id === invitedBy) ?? null) : null;
+  });
+  /** Participating without an invitation from a professor of the fair: nobody can review it. */
+  protected readonly noReviewer = computed(
+    () => this.participation() !== null && !this.loadingEvent() && this.reviewer() === null,
+  );
   protected readonly canCreate = computed(
-    () => this.participation() !== null && !this.deadlinePassed() && !this.loadingEvent(),
+    () =>
+      this.participation() !== null &&
+      this.reviewer() !== null &&
+      !this.deadlinePassed() &&
+      !this.loadingEvent(),
   );
 
   constructor() {
@@ -85,7 +98,7 @@ export class CreateWorkPage {
     this.loadEvent(this.form.controls.eventId.value);
   }
 
-  protected showError(control: 'professorId' | 'title'): boolean {
+  protected showError(control: 'title'): boolean {
     const field = this.form.controls[control];
     return field.invalid && (field.touched || this.submitted());
   }
@@ -93,17 +106,18 @@ export class CreateWorkPage {
   protected create(): void {
     this.submitted.set(true);
     const participation = this.participation();
-    if (this.form.invalid || !participation || this.deadlinePassed()) {
+    const reviewer = this.reviewer();
+    if (this.form.invalid || !participation || !reviewer || this.deadlinePassed()) {
       this.form.markAllAsTouched();
       return;
     }
-    const { professorId, title, summary } = this.form.getRawValue();
+    const { title, summary } = this.form.getRawValue();
     this.saving.set(true);
     this.errorMessage.set(null);
     this.works
       .create({
         participationId: participation.id,
-        professorId,
+        professorId: reviewer.id,
         title: title.trim(),
         summary: summary.trim() || null,
       })
@@ -116,12 +130,11 @@ export class CreateWorkPage {
       });
   }
 
-  /** Loads what the chosen fair needs: the participation to create under and its professors. */
+  /** Loads what the chosen fair needs: the participation to create under and who reviews it. */
   private loadEvent(eventId: string): void {
     this.selectedEventId.set(eventId);
     this.participation.set(null);
     this.professors.set([]);
-    this.form.controls.professorId.reset('');
     this.loadError.set(null);
     if (!eventId) {
       return;
@@ -134,10 +147,6 @@ export class CreateWorkPage {
       next: ({ participation, professors }) => {
         this.participation.set(participation);
         this.professors.set(professors);
-        // The professor who invited the student is the natural reviewer.
-        if (participation.invitedBy && professors.some((p) => p.id === participation.invitedBy)) {
-          this.form.controls.professorId.setValue(participation.invitedBy);
-        }
         this.loadingEvent.set(false);
       },
       error: (error: unknown) => {
