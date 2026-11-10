@@ -13,6 +13,64 @@
   </div>
 </header>
 
+<!-- The PDF field, shared by the new version of a work and its final version. -->
+<ng-template #pdfField>
+  <div class="field">
+    <span class="field__label" id="replace-file-label">Archivo PDF</span>
+    <div
+      class="dropzone"
+      [class.dropzone--active]="dragging()"
+      [class.dropzone--error]="showFileError() || fileProblem()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="dragging.set(false)"
+      (drop)="onDrop($event)"
+    >
+      @if (file(); as chosen) {
+        <p class="dropzone__name">{{ chosen.name }}</p>
+        <p class="text-small text-muted">{{ fileSizeLabel(chosen.size) }}</p>
+        @if (progress() === null) {
+          <button class="btn btn--text" type="button" [disabled]="saving()" (click)="clearFile()">
+            Quitar archivo
+          </button>
+        }
+      } @else {
+        <p>Arrastra aquí tu PDF o</p>
+        <label class="btn btn--secondary dropzone__pick" for="replace-file">Elegir archivo</label>
+      }
+      <input
+        class="visually-hidden"
+        id="replace-file"
+        type="file"
+        accept="application/pdf,.pdf"
+        aria-labelledby="replace-file-label"
+        (change)="onFileChosen($event)"
+      />
+      @if (progress(); as percent) {
+        <div
+          class="gauge"
+          role="progressbar"
+          aria-label="Progreso de la subida"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="percent"
+        >
+          <span class="gauge__fill" [style.width.%]="percent"></span>
+        </div>
+        <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
+      } @else if (progress() === 0) {
+        <p class="text-small text-muted" role="status">Subiendo…</p>
+      }
+    </div>
+    @if (fileProblem(); as problem) {
+      <p class="field__error">{{ problem }}</p>
+    } @else if (showFileError()) {
+      <p class="field__error">Elige un archivo PDF para continuar.</p>
+    } @else {
+      <p class="field__hint">Solo PDF, de hasta {{ maxFileMb }} MB.</p>
+    }
+  </div>
+</ng-template>
+
 @switch (state()) {
   @case ('loading') {
     <p class="text-muted" role="status">Cargando tu trabajo…</p>
@@ -62,6 +120,9 @@
           <div class="alert__body">
             <p class="alert__title">Tu trabajo fue aprobado</p>
             <p>Quedó admitido en {{ work.eventName }}.</p>
+            @if (finalDelivered()) {
+              <p>Ya entregaste la versión final.</p>
+            }
           </div>
         </div>
       } @else if (work.status === 'RejectedDefinitively') {
@@ -303,62 +364,7 @@
                 }
               </div>
               } @else {
-              <div class="field">
-                <span class="field__label" id="replace-file-label">Archivo PDF</span>
-                <div
-                  class="dropzone"
-                  [class.dropzone--active]="dragging()"
-                  [class.dropzone--error]="showFileError() || fileProblem()"
-                  (dragover)="onDragOver($event)"
-                  (dragleave)="dragging.set(false)"
-                  (drop)="onDrop($event)"
-                >
-                  @if (file(); as chosen) {
-                    <p class="dropzone__name">{{ chosen.name }}</p>
-                    <p class="text-small text-muted">{{ fileSizeLabel(chosen.size) }}</p>
-                    @if (progress() === null) {
-                      <button class="btn btn--text" type="button" [disabled]="saving()" (click)="clearFile()">
-                        Quitar archivo
-                      </button>
-                    }
-                  } @else {
-                    <p>Arrastra aquí tu PDF o</p>
-                    <label class="btn btn--secondary dropzone__pick" for="replace-file">
-                      Elegir archivo
-                    </label>
-                  }
-                  <input
-                    class="visually-hidden"
-                    id="replace-file"
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    aria-labelledby="replace-file-label"
-                    (change)="onFileChosen($event)"
-                  />
-                  @if (progress(); as percent) {
-                    <div
-                      class="gauge"
-                      role="progressbar"
-                      aria-label="Progreso de la subida"
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      [attr.aria-valuenow]="percent"
-                    >
-                      <span class="gauge__fill" [style.width.%]="percent"></span>
-                    </div>
-                    <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
-                  } @else if (progress() === 0) {
-                    <p class="text-small text-muted" role="status">Subiendo…</p>
-                  }
-                </div>
-                @if (fileProblem(); as problem) {
-                  <p class="field__error">{{ problem }}</p>
-                } @else if (showFileError()) {
-                  <p class="field__error">Elige un archivo PDF para continuar.</p>
-                } @else {
-                  <p class="field__hint">Solo PDF, de hasta {{ maxFileMb }} MB.</p>
-                }
-              </div>
+                <ng-container [ngTemplateOutlet]="pdfField" />
               }
             </div>
 
@@ -397,6 +403,33 @@
             <p>Ya pasó la fecha límite de envío: no se pueden subir ni reemplazar versiones.</p>
           </div>
         </div>
+      }
+
+      @if (finalizable()) {
+        <section class="card card--narrow" aria-labelledby="work-final-title">
+          <h2 class="title-2" id="work-final-title">Entregar la versión final</h2>
+          <p class="text-muted">
+            Sube el documento definitivo de tu trabajo en PDF. Solo se puede entregar una versión
+            final y, con ella, podrás descargar tu certificado de participación cuando termine la
+            feria.
+          </p>
+
+          <form class="form" [formGroup]="form" (ngSubmit)="askFinal()" novalidate>
+            <ng-container [ngTemplateOutlet]="pdfField" />
+
+            @if (formError(); as message) {
+              <div class="alert alert--danger alert--compact" role="alert">
+                <p>{{ message }}</p>
+              </div>
+            }
+
+            <div class="actions">
+              <button class="btn btn--primary" type="submit" [disabled]="saving()">
+                {{ saving() ? 'Subiendo…' : 'Entregar versión final' }}
+              </button>
+            </div>
+          </form>
+        </section>
       }
 
       @if (withdrawable() || returnable() || inReview()) {

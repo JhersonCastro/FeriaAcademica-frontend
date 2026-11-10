@@ -116,6 +116,17 @@ export function canReplace(
   return (status === 'Draft' || status === 'Submitted') && !isDeadlinePassed(deadline, now);
 }
 
+/**
+ * An approved work (`Admitted` or `Evaluated`) that has no final version yet can receive it, once
+ * (`Work.SubmitFinalVersion`).
+ */
+export function canSubmitFinalVersion(
+  status: WorkStatus,
+  artifacts: readonly Pick<WorkArtifactDto, 'isFinal'>[],
+): boolean {
+  return (status === 'Admitted' || status === 'Evaluated') && !artifacts.some((a) => a.isFinal);
+}
+
 /** A draft can be withdrawn at any time: that cancels the work (`Work.Withdraw`). */
 export function canWithdraw(status: WorkStatus): boolean {
   return status === 'Draft';
