@@ -40,6 +40,15 @@ export function eventRoleGuard(role: EventRole): CanActivateFn {
   };
 }
 
+/** Requires `role` in at least one event: for the sections that don't depend on the active event. */
+export function anyEventRoleGuard(role: EventRole): CanActivateFn {
+  return () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+    return auth.hasRoleInAnyEvent(role) ? true : router.createUrlTree(['/unauthorized']);
+  };
+}
+
 /** Check-in and turnout of `:eventId`: super admin, or a coordinator or teacher of the event. */
 export const attendanceStaffGuard: CanActivateFn = (route) => {
   const auth = inject(AuthService);

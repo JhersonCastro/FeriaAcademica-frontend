@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import {
+  anyEventRoleGuard,
   attendanceStaffGuard,
   authGuard,
   eventRoleGuard,
@@ -74,6 +75,7 @@ export const routes: Routes = [
       },
       {
         path: 'works',
+        canActivate: [anyEventRoleGuard('Participant')],
         children: [
           {
             path: '',
@@ -99,6 +101,7 @@ export const routes: Routes = [
       },
       {
         path: 'reviews',
+        canActivate: [anyEventRoleGuard('Teacher')],
         children: [
           {
             path: '',
