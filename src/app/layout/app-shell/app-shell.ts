@@ -75,7 +75,7 @@ export class AppShell {
 
   /** Works are not tied to the active event: show the links when the role exists in any event. */
   protected hasRole(role: EventRole): boolean {
-    return this.user()?.eventRoles.some((assignment) => assignment.role === role) ?? false;
+    return this.auth.hasRoleInAnyEvent(role);
   }
 
   constructor() {

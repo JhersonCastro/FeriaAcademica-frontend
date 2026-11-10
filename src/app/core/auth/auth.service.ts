@@ -71,6 +71,11 @@ export class AuthService {
     );
   }
 
+  /** The role in at least one event, whichever it is: works and reviews don't depend on the active event. */
+  hasRoleInAnyEvent(role: EventRole): boolean {
+    return this.currentUser()?.eventRoles.some((assignment) => assignment.role === role) ?? false;
+  }
+
   /** Same rule as the backend: the super admin, or a coordinator or teacher of the event. */
   canTakeAttendance(eventId: string): boolean {
     return (
