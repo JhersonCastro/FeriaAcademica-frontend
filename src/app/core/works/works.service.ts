@@ -51,26 +51,14 @@ export class WorksService {
     const body = new FormData();
     body.append('type', type);
     body.append('file', file, file.name);
-    return this.postFile(`${this.workUrl(workId)}/artifacts/file`, body, file);
-  }
-
-  /**
-   * Delivers the definitive PDF of an approved work (multipart, only `file`). Emits the upload
-   * percentage and finally the created artifact. The work keeps one final version only.
-   */
-  submitFinalVersion(workId: string, file: File): Observable<UploadProgress> {
-    const body = new FormData();
-    body.append('file', file, file.name);
-    return this.postFile(`${this.workUrl(workId)}/final-version`, body, file);
-  }
-
-  private postFile(url: string, body: FormData, file: File): Observable<UploadProgress> {
     return this.http
-      .post<AddedArtifact>(url, body, { observe: 'events', reportProgress: true })
+      .post<AddedArtifact>(`${this.workUrl(workId)}/artifacts/file`, body, {
+        observe: 'events',
+        reportProgress: true,
+      })
       .pipe(
         filter(
-          (event) =>
-            event.type === HttpEventType.UploadProgress || event.type === HttpEventType.Response,
+          (event) => event.type === HttpEventType.UploadProgress || event.type === HttpEventType.Response,
         ),
         map((event): UploadProgress => {
           if (event.type === HttpEventType.Response) {

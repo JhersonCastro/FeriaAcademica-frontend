@@ -1,4 +1,4 @@
-import { DatePipe, NgTemplateOutlet } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -17,7 +17,6 @@ import {
   artifactRows,
   canReplace,
   canReturnToDraft,
-  canSubmitFinalVersion,
   canWithdraw,
   fileError,
   fileSizeLabel,
@@ -30,8 +29,8 @@ import { WorksService } from '../../../core/works/works.service';
 
 type ViewState = 'loading' | 'ready' | 'error';
 
-/** Actions that ask for confirmation first: sending (two ways), the final version, withdrawing, going back to draft. */
-type PendingAction = 'send-version' | 'send-draft' | 'send-final' | 'withdraw' | 'return-to-draft';
+/** Actions that ask for confirmation first: sending (two ways), withdrawing, going back to draft. */
+type PendingAction = 'send-version' | 'send-draft' | 'withdraw' | 'return-to-draft';
 
 interface Confirmation {
   title: string;
@@ -50,12 +49,6 @@ const SEND_CONFIRMATION: Confirmation = {
 const CONFIRMATIONS: Record<PendingAction, Confirmation> = {
   'send-version': SEND_CONFIRMATION,
   'send-draft': SEND_CONFIRMATION,
-  'send-final': {
-    title: '¿Entregar la versión final?',
-    text: 'Solo se puede entregar una versión final por trabajo: después no podrás cambiarla.',
-    button: 'Sí, entregar',
-    destructive: false,
-  },
   withdraw: {
     title: '¿Retirar este trabajo?',
     text: 'Quedará Cancelado y no participará en esta feria. Esta acción no se puede deshacer.',
@@ -77,7 +70,7 @@ const CONFIRMATIONS: Record<PendingAction, Confirmation> = {
  */
 @Component({
   selector: 'app-work-detail-page',
-  imports: [DatePipe, NgTemplateOutlet, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './work-detail-page.html',
   styleUrl: './work-detail-page.css',
   host: { class: 'page-content' },
@@ -124,14 +117,6 @@ export class WorkDetailPage {
     return work !== null && canReturnToDraft(work.status, work.submissionDeadline);
   });
   protected readonly inReview = computed(() => this.work()?.status === 'InReview');
-  /** HU-030: approved and still without its final version. */
-  protected readonly finalizable = computed(() => {
-    const work = this.work();
-    return work !== null && canSubmitFinalVersion(work.status, work.artifacts);
-  });
-  protected readonly finalDelivered = computed(
-    () => this.work()?.artifacts.some((artifact) => artifact.isFinal) ?? false,
-  );
   /** HU-017: what a draft needs before it can be sent. */
   protected readonly requirements = computed(() => {
     const work = this.work();
@@ -233,15 +218,6 @@ export class WorkDetailPage {
     this.confirming.set(action);
   }
 
-  /** The final version needs its PDF; the delivery is final, so it asks first. */
-  protected askFinal(): void {
-    this.submitted.set(true);
-    if (!this.work() || !this.file()) {
-      return;
-    }
-    this.confirming.set('send-final');
-  }
-
   protected askWithdraw(): void {
     this.confirming.set('withdraw');
   }
@@ -268,16 +244,6 @@ export class WorkDetailPage {
       case 'send-draft':
         this.run(this.works.submit(work.id), 'Enviaste tu trabajo a revisión.');
         break;
-      case 'send-final': {
-        const file = this.file();
-        if (file) {
-          this.run(
-            this.track(this.works.submitFinalVersion(work.id, file)),
-            'Entregaste la versión final de tu trabajo.',
-          );
-        }
-        break;
-      }
       case 'withdraw':
         this.run(this.works.withdraw(work.id), 'Retiraste el trabajo: quedó cancelado.');
         break;
@@ -327,14 +293,10 @@ export class WorkDetailPage {
     });
   }
 
+  /** Uploads the PDF, publishing the percentage, and emits the artifact once it is stored. */
   private upload(workId: string, type: ArtifactTypeName, file: File): Observable<AddedArtifact> {
-    return this.track(this.works.uploadFile(workId, type, file));
-  }
-
-  /** Publishes the percentage while a PDF goes up and emits the artifact once it is stored. */
-  private track(upload: Observable<UploadProgress>): Observable<AddedArtifact> {
     this.progress.set(0);
-    return upload.pipe(
+    return this.works.uploadFile(workId, type, file).pipe(
       tap((event) => {
         if (event.kind === 'progress') {
           this.progress.set(event.percent);

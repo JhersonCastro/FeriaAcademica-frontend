@@ -3,7 +3,6 @@ import {
   artifactRows,
   canReplace,
   canReturnToDraft,
-  canSubmitFinalVersion,
   canWithdraw,
   decisionError,
   isDeadlinePassed,
@@ -80,27 +79,6 @@ describe('canReplace', () => {
     'blocks %s even with time left',
     (status) => {
       expect(canReplace(status, open, now)).toBe(false);
-    },
-  );
-});
-
-describe('canSubmitFinalVersion (HU-030)', () => {
-  it.each(['Admitted', 'Evaluated'] as const)(
-    'allows an approved work (%s) without one',
-    (status) => {
-      expect(canSubmitFinalVersion(status, [])).toBe(true);
-      expect(canSubmitFinalVersion(status, [{ isFinal: false }, {}])).toBe(true);
-    },
-  );
-
-  it('allows it only once', () => {
-    expect(canSubmitFinalVersion('Admitted', [{ isFinal: false }, { isFinal: true }])).toBe(false);
-  });
-
-  it.each(['Draft', 'Submitted', 'InReview', 'RejectedDefinitively', 'Cancelled'] as const)(
-    'blocks a work that is not approved (%s)',
-    (status) => {
-      expect(canSubmitFinalVersion(status, [])).toBe(false);
     },
   );
 });
