@@ -3,6 +3,7 @@ import {
   anyEventRoleGuard,
   attendanceStaffGuard,
   authGuard,
+  evaluationEditorGuard,
   eventRoleGuard,
   guestGuard,
   superAdminGuard,
@@ -117,6 +118,36 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/reviews/review-work/review-work-page').then(
                 (m) => m.ReviewWorkPage,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'events/:eventId/evaluation',
+        title: 'Preguntas de evaluación',
+        canActivate: [evaluationEditorGuard],
+        loadComponent: () =>
+          import('./features/evaluation/questions/evaluation-questions-page').then(
+            (m) => m.EvaluationQuestionsPage,
+          ),
+      },
+      {
+        path: 'evaluate',
+        children: [
+          {
+            path: '',
+            title: 'Evaluar trabajos',
+            loadComponent: () =>
+              import('./features/evaluation/pending/evaluate-list-page').then(
+                (m) => m.EvaluateListPage,
+              ),
+          },
+          {
+            path: ':eventId/:workId',
+            title: 'Evaluar trabajo',
+            loadComponent: () =>
+              import('./features/evaluation/answer/evaluate-work-page').then(
+                (m) => m.EvaluateWorkPage,
               ),
           },
         ],

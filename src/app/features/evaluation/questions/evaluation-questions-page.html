@@ -1,0 +1,286 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>{{ evaluation()?.eventName ?? 'Ferias académicas' }}</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Preguntas de evaluación</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Preguntas de evaluación</h1>
+    <p class="text-muted">
+      Son opcionales. Si la feria las tiene, quienes asistieron las responden por cada trabajo
+      cuando la feria se cierra.
+    </p>
+  </div>
+</header>
+
+@switch (state()) {
+  @case ('loading') {
+    <p class="text-muted" role="status">Cargando las preguntas…</p>
+  }
+  @case ('error') {
+    <div class="alert alert--danger" role="alert">
+      <div class="alert__body">
+        <p class="alert__title">No pudimos cargar las preguntas</p>
+        <p>{{ errorMessage() }}</p>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn--secondary" type="button" (click)="load()">Intentar de nuevo</button>
+    </div>
+  }
+  @case ('ready') {
+    @if (!canEdit()) {
+      <div class="alert alert--warning" role="status">
+        <div class="alert__body">
+          <p class="alert__title">Las preguntas ya no se pueden cambiar</p>
+          <p>
+            La feria se cerró y ya tiene {{ evaluation()?.answersCount }}
+            {{ evaluation()?.answersCount === 1 ? 'respuesta' : 'respuestas' }}.
+          </p>
+        </div>
+      </div>
+    }
+
+    <section class="card" aria-labelledby="questions-title">
+      <div class="questions-head">
+        <h2 class="title-2" id="questions-title">Preguntas</h2>
+        @if (dirty()) {
+          <span class="chip chip--warning">Cambios sin guardar</span>
+        } @else if (drafts().length) {
+          <span class="chip chip--success">
+            {{ drafts().length }}
+            {{ drafts().length === 1 ? 'pregunta guardada' : 'preguntas guardadas' }}
+          </span>
+        } @else {
+          <span class="chip chip--neutral">Sin preguntas</span>
+        }
+      </div>
+
+      @if (!drafts().length) {
+        <div class="state state--compact">
+          <span class="diamond" aria-hidden="true"></span>
+          <p>
+            Esta feria no tiene preguntas de evaluación. Si no agregas ninguna, nadie tendrá que
+            responder nada.
+          </p>
+          @if (canEdit()) {
+            <div class="actions actions--center">
+              <button class="btn btn--secondary" type="button" (click)="addSuggested()">
+                Usar preguntas sugeridas
+              </button>
+              <button class="btn btn--text" type="button" (click)="add()">
+                Escribir mi primera pregunta
+              </button>
+            </div>
+          }
+        </div>
+      } @else {
+        <ol class="question-list">
+          @for (draft of drafts(); track draft.key; let i = $index, first = $first, last = $last) {
+            @let error = attempted() ? questionError(draft) : null;
+            <li class="question" [class.question--error]="error">
+              <div class="question__head">
+                <span class="question__number">Pregunta {{ i + 1 }}</span>
+                @if (canEdit()) {
+                  <div class="question__tools">
+                    <button
+                      class="icon-btn"
+                      type="button"
+                      [disabled]="first"
+                      [attr.aria-label]="'Subir la pregunta ' + (i + 1)"
+                      (click)="move(i, -1)"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      class="icon-btn"
+                      type="button"
+                      [disabled]="last"
+                      [attr.aria-label]="'Bajar la pregunta ' + (i + 1)"
+                      (click)="move(i, 1)"
+                    >
+                      ↓
+                    </button>
+                    <button
+                      class="btn btn--text question__remove"
+                      type="button"
+                      [attr.aria-label]="'Eliminar la pregunta ' + (i + 1)"
+                      (click)="remove(draft.key)"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <div class="field">
+                <label class="visually-hidden" [for]="'question-text-' + draft.key">
+                  Texto de la pregunta {{ i + 1 }}
+                </label>
+                <div class="control control--textarea" [class.control--error]="error">
+                  <textarea
+                    class="control__input"
+                    rows="2"
+                    [id]="'question-text-' + draft.key"
+                    [maxLength]="maxLength"
+                    [value]="draft.text"
+                    [readOnly]="!canEdit()"
+                    [attr.aria-invalid]="error ? true : null"
+                    placeholder="Ejemplo: ¿Qué tan clara fue la presentación del trabajo?"
+                    (input)="onText(draft.key, $event)"
+                  ></textarea>
+                </div>
+                @if (error) {
+                  <p class="field__error">{{ error }}</p>
+                }
+              </div>
+
+              <fieldset class="types" [disabled]="!canEdit()">
+                <legend class="types__legend">Tipo de respuesta</legend>
+                <div class="types__options">
+                  @for (type of types; track type) {
+                    <label class="types__option">
+                      <input
+                        type="radio"
+                        [name]="'type-' + draft.key"
+                        [value]="type"
+                        [checked]="draft.type === type"
+                        (change)="onType(draft.key, type)"
+                      />
+                      <span>{{ typeLabels[type] }}</span>
+                    </label>
+                  }
+                </div>
+              </fieldset>
+
+              <div class="answer-preview">
+                @switch (draft.type) {
+                  @case ('Scale') {
+                    <div class="scale__ends">
+                      <label class="text-small" [for]="'scale-min-' + draft.key">De</label>
+                      <div class="control control--compact">
+                        <select
+                          class="control__input"
+                          [id]="'scale-min-' + draft.key"
+                          [disabled]="!canEdit()"
+                          (change)="onScale(draft.key, 'scaleMin', $event)"
+                        >
+                          @for (value of minOptions; track value) {
+                            <option [value]="value" [selected]="value === draft.scaleMin">
+                              {{ value }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                      <label class="text-small" [for]="'scale-max-' + draft.key">a</label>
+                      <div class="control control--compact">
+                        <select
+                          class="control__input"
+                          [id]="'scale-max-' + draft.key"
+                          [disabled]="!canEdit()"
+                          (change)="onScale(draft.key, 'scaleMax', $event)"
+                        >
+                          @for (value of maxOptions; track value) {
+                            <option [value]="value" [selected]="value === draft.scaleMax">
+                              {{ value }}
+                            </option>
+                          }
+                        </select>
+                      </div>
+                    </div>
+                    <div class="preview" aria-hidden="true">
+                      @for (value of scaleValues(draft.scaleMin, draft.scaleMax); track value) {
+                        <span class="preview__dot">{{ value }}</span>
+                      }
+                    </div>
+                  }
+                  @case ('YesNo') {
+                    <span class="text-small text-muted">{{ typeHints.YesNo }}</span>
+                    <div class="preview" aria-hidden="true">
+                      <span class="preview__pill">Sí</span>
+                      <span class="preview__pill">No</span>
+                    </div>
+                  }
+                  @case ('Text') {
+                    <span class="text-small text-muted">{{ typeHints.Text }}</span>
+                    <div class="preview preview--text" aria-hidden="true">
+                      <span>Respuesta de quien evalúa…</span>
+                    </div>
+                  }
+                }
+              </div>
+            </li>
+          }
+        </ol>
+
+        @if (canEdit()) {
+          <div class="actions">
+            <button
+              class="btn btn--secondary"
+              type="button"
+              [disabled]="drafts().length >= maxQuestions"
+              (click)="add()"
+            >
+              Agregar pregunta
+            </button>
+            <span class="text-small text-muted">
+              {{ drafts().length }} de {{ maxQuestions }} preguntas
+            </span>
+          </div>
+        }
+      }
+
+      @if (attempted() && invalidCount()) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>
+            Revisa
+            {{
+              invalidCount() === 1
+                ? 'la pregunta marcada'
+                : 'las ' + invalidCount() + ' preguntas marcadas'
+            }}: las preguntas no se han guardado.
+          </p>
+        </div>
+      }
+      @if (actionError(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+      @if (savedMessage(); as message) {
+        <div class="alert alert--success alert--compact" role="status">
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      @if (canEdit()) {
+        <div class="actions questions-actions">
+          <button
+            class="btn btn--primary"
+            type="button"
+            [disabled]="saving() || !dirty()"
+            (click)="save()"
+          >
+            {{ saving() ? 'Guardando…' : 'Guardar preguntas' }}
+          </button>
+          @if (dirty()) {
+            <button class="btn btn--text" type="button" (click)="discard()">
+              Descartar cambios
+            </button>
+          }
+        </div>
+      }
+      @if (evaluation()?.updatedAt; as updatedAt) {
+        <p class="text-small text-muted">
+          Última vez guardadas: {{ updatedAt | date: "d 'de' MMMM, h:mm a" }}
+        </p>
+      }
+    </section>
+
+    <p class="text-small text-muted">
+      ¿Quieres ver cómo las responde un asistente? Cuando la feria se cierre, aparecen en
+      <a routerLink="/evaluate">Evaluar trabajos</a>.
+    </p>
+  }
+}

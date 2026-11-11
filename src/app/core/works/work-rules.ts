@@ -1,3 +1,4 @@
+import { environment } from '../../../environments/environment';
 import {
   ArtifactTypeName,
   ReviewDecision,
@@ -93,6 +94,24 @@ export function artifactRows(artifacts: readonly WorkArtifactDto[]): ArtifactRow
         ARTIFACT_TYPES.indexOf(a.type) - ARTIFACT_TYPES.indexOf(b.type) || b.version - a.version,
     )
     .map((artifact) => ({ ...artifact, current: latest.get(artifact.type) === artifact.version }));
+}
+
+/**
+ * Where to open an artifact. Links go as they are; an uploaded file is an API path
+ * (`/api/works/{id}/files/{fileId}`), so it needs the API's origin when the front is deployed on
+ * another one. `null` when the artifact has neither.
+ */
+export function artifactHref(
+  artifact: Pick<WorkArtifactDto, 'fileUrl' | 'linkUrl'>,
+  apiBaseUrl: string = environment.apiBaseUrl,
+): string | null {
+  if (artifact.linkUrl) {
+    return artifact.linkUrl;
+  }
+  if (!artifact.fileUrl) {
+    return null;
+  }
+  return artifact.fileUrl.startsWith('/') ? `${apiBaseUrl}${artifact.fileUrl}` : artifact.fileUrl;
 }
 
 /** Most recent review first (the backend lists them by attempt). */

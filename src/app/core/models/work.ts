@@ -115,7 +115,10 @@ export interface AddedArtifact {
 /** `POST /api/works` (HU-010): the work is created as a draft under the author's participation. */
 export interface CreateWorkRequest {
   participationId: string;
-  /** The reviewer, picked among the professors of the event. */
+  /**
+   * The reviewer: the professor who invited the participant (`ParticipationDto.invitedBy`).
+   * Once the backend assigns it by itself (T-12) this field can be dropped.
+   */
   professorId: string;
   title: string;
   summary: string | null;

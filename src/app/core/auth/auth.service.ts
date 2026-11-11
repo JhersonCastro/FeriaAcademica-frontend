@@ -76,6 +76,11 @@ export class AuthService {
     return this.currentUser()?.eventRoles.some((assignment) => assignment.role === role) ?? false;
   }
 
+  /** HU-023: who defines the fair's evaluation questions. Same people as attendance. */
+  canManageEvaluation(eventId: string): boolean {
+    return this.canTakeAttendance(eventId);
+  }
+
   /** Same rule as the backend: the super admin, or a coordinator or teacher of the event. */
   canTakeAttendance(eventId: string): boolean {
     return (

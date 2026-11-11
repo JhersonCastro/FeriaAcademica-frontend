@@ -11,6 +11,7 @@ import {
   REVIEW_DECISION_LABELS,
   WORK_STATUS_CHIPS,
   WORK_STATUS_LABELS,
+  artifactHref,
   artifactRows,
   decisionError,
 } from '../../../core/works/work-rules';
@@ -35,6 +36,7 @@ export class ReviewWorkPage {
   protected readonly user = inject(AuthService).user;
   protected readonly today = new Date();
   protected readonly statusLabels = WORK_STATUS_LABELS;
+  protected readonly artifactHref = artifactHref;
   protected readonly statusChips = WORK_STATUS_CHIPS;
   protected readonly artifactLabels = ARTIFACT_TYPE_LABELS;
   protected readonly decisions = REVIEW_DECISIONS;

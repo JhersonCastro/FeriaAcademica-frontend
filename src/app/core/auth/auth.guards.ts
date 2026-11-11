@@ -49,6 +49,16 @@ export function anyEventRoleGuard(role: EventRole): CanActivateFn {
   };
 }
 
+/** Evaluation questions of `:eventId` (HU-023): super admin, or a coordinator or teacher of it. */
+export const evaluationEditorGuard: CanActivateFn = (route) => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  const eventId = route.paramMap.get('eventId');
+  return eventId && auth.canManageEvaluation(eventId)
+    ? true
+    : router.createUrlTree(['/unauthorized']);
+};
+
 /** Check-in and turnout of `:eventId`: super admin, or a coordinator or teacher of the event. */
 export const attendanceStaffGuard: CanActivateFn = (route) => {
   const auth = inject(AuthService);

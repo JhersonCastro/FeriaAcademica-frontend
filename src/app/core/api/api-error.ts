@@ -189,6 +189,35 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     "Passwords must have at least one uppercase ('A'-'Z').",
     'La contraseña debe incluir al menos una mayúscula.',
   ],
+  // HU-023: evaluation questions and answers.
+  ['Criterion text is required.', 'Escribe el texto de cada pregunta.'],
+  [
+    'The scale maximum must be greater than the minimum.',
+    'El valor más alto de la escala debe ser mayor que el más bajo.',
+  ],
+  ['The value is outside the criterion scale.', 'Una respuesta está fuera de la escala de su pregunta.'],
+  [
+    'The evaluation can no longer be changed.',
+    'Las preguntas ya no se pueden cambiar: la feria se cerró y ya tiene respuestas.',
+  ],
+  [
+    'Only a coordinator or teacher of the event can manage its evaluation.',
+    'Solo un coordinador o un profesor de la feria puede definir sus preguntas de evaluación.',
+  ],
+  [
+    'The event has not finished yet.',
+    'La feria todavía no se ha cerrado: podrás evaluar los trabajos cuando termine.',
+  ],
+  [
+    'Only people who attended the event can evaluate its works.',
+    'Solo quienes asistieron a la feria pueden evaluar sus trabajos.',
+  ],
+  ['You cannot evaluate your own work.', 'No puedes evaluar tu propio trabajo.'],
+  ['Answer at least one question.', 'Responde al menos una pregunta para guardar tu evaluación.'],
+  [
+    'The answer does not match the question type.',
+    'Una respuesta no corresponde al tipo de su pregunta.',
+  ],
 ];
 
 const DEFAULT_MESSAGE = 'No pudimos completar la solicitud. Intenta de nuevo.';

@@ -1,5 +1,6 @@
 import { WorkArtifactDto } from '../models/work';
 import {
+  artifactHref,
   artifactRows,
   canReplace,
   canReturnToDraft,
@@ -157,4 +158,28 @@ describe('isHttpUrl', () => {
       expect(isHttpUrl(url)).toBe(false);
     },
   );
+});
+
+describe('artifactHref (T-12)', () => {
+  it('opens a link as it is', () => {
+    expect(
+      artifactHref({ fileUrl: null, linkUrl: 'https://youtu.be/x' }, 'https://api.feria.co'),
+    ).toBe('https://youtu.be/x');
+  });
+
+  it('puts the API origin in front of an uploaded file', () => {
+    expect(
+      artifactHref({ fileUrl: '/api/works/w1/files/f1', linkUrl: null }, 'https://api.feria.co'),
+    ).toBe('https://api.feria.co/api/works/w1/files/f1');
+  });
+
+  it('keeps the file path when the API is on the same origin', () => {
+    expect(artifactHref({ fileUrl: '/api/works/w1/files/f1', linkUrl: null }, '')).toBe(
+      '/api/works/w1/files/f1',
+    );
+  });
+
+  it('is null when there is nothing to open', () => {
+    expect(artifactHref({ fileUrl: null, linkUrl: null })).toBeNull();
+  });
 });
