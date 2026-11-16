@@ -4,12 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type EventStatus =
-  | 'Configuration'
-  | 'Published'
-  | 'InProgress'
-  | 'Closed'
-  | 'Archived'
-  | 'Cancelled';
+  'Configuration' | 'Published' | 'InProgress' | 'Closed' | 'Archived' | 'Cancelled';
 
 /** Only these accept registrations and attendance. */
 export const OPEN_EVENT_STATUSES: readonly EventStatus[] = ['Published', 'InProgress'];
@@ -62,6 +57,17 @@ export interface StageSchedule {
   endDate: string;
 }
 
+/** Where a stage is in its own schedule, as the backend computes it from today's date. */
+export type StageStatus = 'Scheduled' | 'Open' | 'Closed';
+
+/** `GET /api/events/{id}/stages`: a stage of the fair's timeline (UTC instants, `null` if none). */
+export interface EventStageDto {
+  type: StageType;
+  status: StageStatus;
+  startDate: string | null;
+  endDate: string | null;
+}
+
 /** `POST /api/events` (super admin): the event is born in configuration. */
 export interface CreateEventRequest {
   institutionId: string;
@@ -111,6 +117,19 @@ export class EventsService {
   /** Super admin: the end of the Reception stage is the submission deadline of the works. */
   scheduleStage(eventId: string, type: StageType, schedule: StageSchedule): Observable<void> {
     return this.http.put<void>(`${this.eventUrl(eventId)}/stages/${type}`, schedule);
+  }
+
+  /** Super admin (T-13): the stages in the fair's timeline, in date order. Removed ones are not listed. */
+  stages(eventId: string): Observable<EventStageDto[]> {
+    return this.http.get<EventStageDto[]>(`${this.eventUrl(eventId)}/stages`);
+  }
+
+  /**
+   * Super admin: takes a stage out of the timeline (it keeps no dates; scheduling it again puts it
+   * back). A published fair keeps at least one active stage.
+   */
+  removeStage(eventId: string, type: StageType): Observable<void> {
+    return this.http.delete<void>(`${this.eventUrl(eventId)}/stages/${type}`);
   }
 
   private eventUrl(eventId: string): string {
