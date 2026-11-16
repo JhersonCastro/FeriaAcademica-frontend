@@ -30,7 +30,13 @@
       <!-- What happens next, in one line, depending on the status. -->
       @if (needsCorrection()) {
         <div class="alert alert--warning" role="status">
-          <img class="alert__icon" src="assets/icons/circle-alert.svg" width="20" height="20" alt="" />
+          <img
+            class="alert__icon"
+            src="assets/icons/circle-alert.svg"
+            width="20"
+            height="20"
+            alt=""
+          />
           <div class="alert__body">
             <p class="alert__title">Tu trabajo volvió a Borrador</p>
             <p>
@@ -53,12 +59,21 @@
         <div class="alert alert--info" role="status">
           <div class="alert__body">
             <p class="alert__title">En revisión</p>
-            <p>El evaluador ya abrió tu trabajo: no se puede reemplazar hasta que registre su decisión.</p>
+            <p>
+              El evaluador ya abrió tu trabajo: no se puede reemplazar hasta que registre su
+              decisión.
+            </p>
           </div>
         </div>
       } @else if (work.status === 'Admitted' || work.status === 'Evaluated') {
         <div class="alert alert--success" role="status">
-          <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+          <img
+            class="alert__icon"
+            src="assets/icons/circle-check.svg"
+            width="20"
+            height="20"
+            alt=""
+          />
           <div class="alert__body">
             <p class="alert__title">Tu trabajo fue aprobado</p>
             <p>Quedó admitido en {{ work.eventName }}.</p>
@@ -83,7 +98,9 @@
       <div class="grid-2">
         <section class="card" aria-labelledby="work-title">
           <div class="chip-list">
-            <span class="chip" [class]="statusChips[work.status]">{{ statusLabels[work.status] }}</span>
+            <span class="chip" [class]="statusChips[work.status]">{{
+              statusLabels[work.status]
+            }}</span>
             <span class="chip chip--neutral">Intento {{ work.currentAttempt }}</span>
           </div>
           <h2 class="title-2" id="work-title">{{ work.title }}</h2>
@@ -112,11 +129,16 @@
                         @if (artifact.isFinal) {
                           <span class="chip chip--success">Versión final</span>
                         }
-                        <span class="table__secondary">{{ artifact.uploadedAt | date: 'd MMM y, h:mm a' }}</span>
+                        <span class="table__secondary">{{
+                          artifact.uploadedAt | date: 'd MMM y, h:mm a'
+                        }}</span>
                       </td>
                       <td data-label="Versión">v{{ artifact.version }}</td>
                       <td data-label="Estado">
-                        <span class="chip" [class]="artifact.current ? 'chip--success' : 'chip--neutral'">
+                        <span
+                          class="chip"
+                          [class]="artifact.current ? 'chip--success' : 'chip--neutral'"
+                        >
                           {{ artifact.current ? 'Vigente' : 'Conservada' }}
                         </span>
                       </td>
@@ -137,7 +159,8 @@
           }
 
           <p class="text-small text-muted">
-            Rechazos para corrección: {{ work.rejectionCount }} de {{ work.maxRejections }} permitidos.
+            Rechazos para corrección: {{ work.rejectionCount }} de
+            {{ work.maxRejections }} permitidos.
             @if (work.submissionDeadline) {
               Fecha límite de envío: {{ work.submissionDeadline | date: "d 'de' MMMM, h:mm a" }}
             }
@@ -149,11 +172,15 @@
           @for (review of reviews(); track review.attempt) {
             <article class="card" [attr.aria-label]="'Revisión del intento ' + review.attempt">
               <div class="chip-list">
-                <span class="chip" [class]="resultChips[review.result]">{{ resultLabels[review.result] }}</span>
+                <span class="chip" [class]="resultChips[review.result]">{{
+                  resultLabels[review.result]
+                }}</span>
                 <span class="chip chip--neutral">Intento {{ review.attempt }}</span>
               </div>
               @if (review.resolvedAt) {
-                <p class="text-small text-muted">{{ review.resolvedAt | date: "d 'de' MMMM 'de' y, h:mm a" }}</p>
+                <p class="text-small text-muted">
+                  {{ review.resolvedAt | date: "d 'de' MMMM 'de' y, h:mm a" }}
+                </p>
               }
               @if (review.observations) {
                 <p class="feedback">{{ review.observations }}</p>
@@ -164,7 +191,9 @@
           } @empty {
             <div class="state">
               <span class="diamond" aria-hidden="true"></span>
-              <p>Aún no hay revisiones. Aquí verás la decisión y las observaciones del evaluador.</p>
+              <p>
+                Aún no hay revisiones. Aquí verás la decisión y las observaciones del evaluador.
+              </p>
             </div>
           }
           @if (work.closureReason && work.status === 'RejectedDefinitively') {
@@ -175,31 +204,14 @@
 
       @if (successMessage(); as message) {
         <div class="alert alert--success" role="status">
-          <img class="alert__icon" src="assets/icons/circle-check.svg" width="20" height="20" alt="" />
+          <img
+            class="alert__icon"
+            src="assets/icons/circle-check.svg"
+            width="20"
+            height="20"
+            alt=""
+          />
           <p>{{ message }}</p>
-        </div>
-      }
-
-      @if (confirmation(); as ask) {
-        <div class="alert alert--warning" role="alertdialog" aria-labelledby="work-confirm-title">
-          <div class="alert__body">
-            <p class="alert__title" id="work-confirm-title">{{ ask.title }}</p>
-            <p>{{ ask.text }}</p>
-            <div class="actions">
-              <button
-                class="btn"
-                [class.btn--accent]="ask.destructive"
-                [class.btn--primary]="!ask.destructive"
-                type="button"
-                (click)="confirm()"
-              >
-                {{ ask.button }}
-              </button>
-              <button class="btn btn--text" type="button" (click)="cancelConfirmation()">
-                Cancelar
-              </button>
-            </div>
-          </div>
         </div>
       }
 
@@ -278,87 +290,92 @@
               </div>
 
               @if (source() === 'link') {
-              <div class="field">
-                <label class="field__label" for="replace-link">Enlace a la nueva versión</label>
-                <div class="control" [class.control--error]="showLinkError()">
-                  <input
-                    class="control__input"
-                    id="replace-link"
-                    type="url"
-                    inputmode="url"
-                    placeholder="https://…"
-                    formControlName="linkUrl"
-                    [attr.aria-invalid]="showLinkError()"
-                    aria-describedby="replace-link-help"
-                  />
-                </div>
-                @if (showLinkError()) {
-                  <p class="field__error" id="replace-link-help">
-                    Pega una dirección completa que empiece por https://
-                  </p>
-                } @else {
-                  <p class="field__hint" id="replace-link-help">
-                    Por ejemplo, el enlace de Google Drive del PDF con permiso de lectura.
-                  </p>
-                }
-              </div>
-              } @else {
-              <div class="field">
-                <span class="field__label" id="replace-file-label">Archivo PDF</span>
-                <div
-                  class="dropzone"
-                  [class.dropzone--active]="dragging()"
-                  [class.dropzone--error]="showFileError() || fileProblem()"
-                  (dragover)="onDragOver($event)"
-                  (dragleave)="dragging.set(false)"
-                  (drop)="onDrop($event)"
-                >
-                  @if (file(); as chosen) {
-                    <p class="dropzone__name">{{ chosen.name }}</p>
-                    <p class="text-small text-muted">{{ fileSizeLabel(chosen.size) }}</p>
-                    @if (progress() === null) {
-                      <button class="btn btn--text" type="button" [disabled]="saving()" (click)="clearFile()">
-                        Quitar archivo
-                      </button>
-                    }
+                <div class="field">
+                  <label class="field__label" for="replace-link">Enlace a la nueva versión</label>
+                  <div class="control" [class.control--error]="showLinkError()">
+                    <input
+                      class="control__input"
+                      id="replace-link"
+                      type="url"
+                      inputmode="url"
+                      placeholder="https://…"
+                      formControlName="linkUrl"
+                      [attr.aria-invalid]="showLinkError()"
+                      aria-describedby="replace-link-help"
+                    />
+                  </div>
+                  @if (showLinkError()) {
+                    <p class="field__error" id="replace-link-help">
+                      Pega una dirección completa que empiece por https://
+                    </p>
                   } @else {
-                    <p>Arrastra aquí tu PDF o</p>
-                    <label class="btn btn--secondary dropzone__pick" for="replace-file">
-                      Elegir archivo
-                    </label>
-                  }
-                  <input
-                    class="visually-hidden"
-                    id="replace-file"
-                    type="file"
-                    accept="application/pdf,.pdf"
-                    aria-labelledby="replace-file-label"
-                    (change)="onFileChosen($event)"
-                  />
-                  @if (progress(); as percent) {
-                    <div
-                      class="gauge"
-                      role="progressbar"
-                      aria-label="Progreso de la subida"
-                      aria-valuemin="0"
-                      aria-valuemax="100"
-                      [attr.aria-valuenow]="percent"
-                    >
-                      <span class="gauge__fill" [style.width.%]="percent"></span>
-                    </div>
-                    <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
-                  } @else if (progress() === 0) {
-                    <p class="text-small text-muted" role="status">Subiendo…</p>
+                    <p class="field__hint" id="replace-link-help">
+                      Por ejemplo, el enlace de Google Drive del PDF con permiso de lectura.
+                    </p>
                   }
                 </div>
-                @if (fileProblem(); as problem) {
-                  <p class="field__error">{{ problem }}</p>
-                } @else if (showFileError()) {
-                  <p class="field__error">Elige un archivo PDF para continuar.</p>
-                } @else {
-                  <p class="field__hint">Solo PDF, de hasta {{ maxFileMb }} MB.</p>
-                }
-              </div>
+              } @else {
+                <div class="field">
+                  <span class="field__label" id="replace-file-label">Archivo PDF</span>
+                  <div
+                    class="dropzone"
+                    [class.dropzone--active]="dragging()"
+                    [class.dropzone--error]="showFileError() || fileProblem()"
+                    (dragover)="onDragOver($event)"
+                    (dragleave)="dragging.set(false)"
+                    (drop)="onDrop($event)"
+                  >
+                    @if (file(); as chosen) {
+                      <p class="dropzone__name">{{ chosen.name }}</p>
+                      <p class="text-small text-muted">{{ fileSizeLabel(chosen.size) }}</p>
+                      @if (progress() === null) {
+                        <button
+                          class="btn btn--text"
+                          type="button"
+                          [disabled]="saving()"
+                          (click)="clearFile()"
+                        >
+                          Quitar archivo
+                        </button>
+                      }
+                    } @else {
+                      <p>Arrastra aquí tu PDF o</p>
+                      <label class="btn btn--secondary dropzone__pick" for="replace-file">
+                        Elegir archivo
+                      </label>
+                    }
+                    <input
+                      class="visually-hidden"
+                      id="replace-file"
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      aria-labelledby="replace-file-label"
+                      (change)="onFileChosen($event)"
+                    />
+                    @if (progress(); as percent) {
+                      <div
+                        class="gauge"
+                        role="progressbar"
+                        aria-label="Progreso de la subida"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        [attr.aria-valuenow]="percent"
+                      >
+                        <span class="gauge__fill" [style.width.%]="percent"></span>
+                      </div>
+                      <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
+                    } @else if (progress() === 0) {
+                      <p class="text-small text-muted" role="status">Subiendo…</p>
+                    }
+                  </div>
+                  @if (fileProblem(); as problem) {
+                    <p class="field__error">{{ problem }}</p>
+                  } @else if (showFileError()) {
+                    <p class="field__error">Elige un archivo PDF para continuar.</p>
+                  } @else {
+                    <p class="field__hint">Solo PDF, de hasta {{ maxFileMb }} MB.</p>
+                  }
+                </div>
               }
             </div>
 
@@ -368,26 +385,41 @@
               </div>
             }
 
-            <div class="actions">
-              <button class="btn btn--primary" type="submit" [disabled]="saving()">
-                {{ saving() ? 'Guardando…' : work.status === 'Submitted' ? 'Reemplazar y reenviar' : 'Guardar y enviar' }}
-              </button>
-              @if (work.status === 'Draft') {
-                <button class="btn btn--secondary" type="button" [disabled]="saving()" (click)="saveDraftVersion()">
-                  Solo guardar la versión
+            @if (confirmingSend()) {
+              <ng-container [ngTemplateOutlet]="confirmBox" />
+            } @else {
+              <div class="actions">
+                <button class="btn btn--primary" type="submit" [disabled]="saving()">
+                  {{
+                    saving()
+                      ? 'Guardando…'
+                      : work.status === 'Submitted'
+                        ? 'Reemplazar y reenviar'
+                        : 'Guardar y enviar'
+                  }}
                 </button>
-                @if (artifacts().length) {
+                @if (work.status === 'Draft') {
                   <button
-                    class="btn btn--text"
+                    class="btn btn--secondary"
                     type="button"
                     [disabled]="saving()"
-                    (click)="askSend('send-draft')"
+                    (click)="saveDraftVersion()"
                   >
-                    Enviar sin cambios
+                    Solo guardar la versión
                   </button>
+                  @if (artifacts().length) {
+                    <button
+                      class="btn btn--text"
+                      type="button"
+                      [disabled]="saving()"
+                      (click)="askSend('send-draft')"
+                    >
+                      Enviar sin cambios
+                    </button>
+                  }
                 }
-              }
-            </div>
+              </div>
+            }
           </form>
         </section>
       } @else if ((work.status === 'Draft' || work.status === 'Submitted') && deadlinePassed()) {
@@ -447,8 +479,41 @@
               </button>
             </div>
           }
+          @if (confirmingTakeBack()) {
+            <ng-container [ngTemplateOutlet]="confirmBox" />
+          }
         </section>
       }
     }
   }
 }
+
+<!--
+  The confirmation shows right where the person pressed the button (at the end of the form or of
+  the "Retirar" card), not at the top of the page.
+-->
+<ng-template #confirmBox>
+  @if (confirmation(); as ask) {
+    <div class="alert alert--warning" role="alertdialog" aria-labelledby="work-confirm-title">
+      <div class="alert__body">
+        <p class="alert__title" id="work-confirm-title">{{ ask.title }}</p>
+        <p>{{ ask.text }}</p>
+        <div class="actions">
+          <button
+            class="btn"
+            id="work-confirm-button"
+            [class.btn--accent]="ask.destructive"
+            [class.btn--primary]="!ask.destructive"
+            type="button"
+            (click)="confirm()"
+          >
+            {{ ask.button }}
+          </button>
+          <button class="btn btn--text" type="button" (click)="cancelConfirmation()">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</ng-template>

@@ -1,11 +1,16 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, concatMap, filter, finalize, map, of, tap } from 'rxjs';
 import { apiErrorMessage } from '../../../core/api/api-error';
 import { AuthService } from '../../../core/auth/auth.service';
-import { AddedArtifact, ArtifactTypeName, UploadProgress, WorkDto } from '../../../core/models/work';
+import {
+  AddedArtifact,
+  ArtifactTypeName,
+  UploadProgress,
+  WorkDto,
+} from '../../../core/models/work';
 import {
   ARTIFACT_TYPES,
   ARTIFACT_TYPE_LABELS,
@@ -71,7 +76,7 @@ const CONFIRMATIONS: Record<PendingAction, Confirmation> = {
  */
 @Component({
   selector: 'app-work-detail-page',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, NgTemplateOutlet, ReactiveFormsModule, RouterLink],
   templateUrl: './work-detail-page.html',
   styleUrl: './work-detail-page.css',
   host: { class: 'page-content' },
@@ -129,6 +134,15 @@ export class WorkDetailPage {
   protected readonly confirmation = computed(() => {
     const action = this.confirming();
     return action ? CONFIRMATIONS[action] : null;
+  });
+  /** Sending asks at the end of the form; withdrawing and going back to draft, in their card. */
+  protected readonly confirmingSend = computed(() => {
+    const action = this.confirming();
+    return action === 'send-version' || action === 'send-draft';
+  });
+  protected readonly confirmingTakeBack = computed(() => {
+    const action = this.confirming();
+    return action === 'withdraw' || action === 'return-to-draft';
   });
 
   protected readonly form = inject(NonNullableFormBuilder).group({
@@ -199,7 +213,9 @@ export class WorkDetailPage {
 
   protected showLinkError(): boolean {
     const control = this.form.controls.linkUrl;
-    return this.source() === 'link' && (control.touched || this.submitted()) && !isHttpUrl(control.value);
+    return (
+      this.source() === 'link' && (control.touched || this.submitted()) && !isHttpUrl(control.value)
+    );
   }
 
   protected showFileError(): boolean {
@@ -217,15 +233,21 @@ export class WorkDetailPage {
         return;
       }
     }
-    this.confirming.set(action);
+    this.ask(action);
   }
 
   protected askWithdraw(): void {
-    this.confirming.set('withdraw');
+    this.ask('withdraw');
   }
 
   protected askReturnToDraft(): void {
-    this.confirming.set('return-to-draft');
+    this.ask('return-to-draft');
+  }
+
+  /** Opens the confirmation next to the button and moves the focus to its main button. */
+  private ask(action: PendingAction): void {
+    this.confirming.set(action);
+    setTimeout(() => document.getElementById('work-confirm-button')?.focus());
   }
 
   protected cancelConfirmation(): void {
