@@ -167,6 +167,36 @@ export const routes: Routes = [
           import('./features/notifications/notifications-page').then((m) => m.NotificationsPage),
       },
       {
+        path: 'admin/institutions',
+        canActivate: [superAdminGuard],
+        children: [
+          {
+            path: '',
+            title: 'Instituciones',
+            loadComponent: () =>
+              import('./features/admin/institutions/institution-list/institution-list-page').then(
+                (m) => m.InstitutionListPage,
+              ),
+          },
+          {
+            path: 'new',
+            title: 'Crear institución',
+            loadComponent: () =>
+              import('./features/admin/institutions/institution-form/institution-form-page').then(
+                (m) => m.InstitutionFormPage,
+              ),
+          },
+          {
+            path: ':institutionId',
+            title: 'Editar institución',
+            loadComponent: () =>
+              import('./features/admin/institutions/institution-form/institution-form-page').then(
+                (m) => m.InstitutionFormPage,
+              ),
+          },
+        ],
+      },
+      {
         path: 'admin/events',
         canActivate: [superAdminGuard],
         children: [

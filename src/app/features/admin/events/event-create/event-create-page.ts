@@ -1,9 +1,12 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../../../core/api/api-error';
+import { Observable, catchError, map, throwError } from 'rxjs';
 import { InstitutionChoice, institutionChoices } from '../../../../core/events/event-rules';
 import { EventsService } from '../../../../core/events/events.service';
+import { InstitutionsService } from '../../../../core/institutions/institutions.service';
 
 /** The backend stores the name in 200 characters. */
 const NAME_MAX_LENGTH = 200;
@@ -20,6 +23,7 @@ const NAME_MAX_LENGTH = 200;
 })
 export class EventCreatePage {
   private readonly events = inject(EventsService);
+  private readonly institutionsApi = inject(InstitutionsService);
   private readonly router = inject(Router);
   private readonly fb = inject(NonNullableFormBuilder);
 
@@ -30,7 +34,7 @@ export class EventCreatePage {
     capacity: this.fb.control<number | null>(null, [Validators.min(1)]),
   });
 
-  /** The backend cannot list institutions yet: these are the ones that already have a fair. */
+  /** The active institutions, where the fair can be created. */
   protected readonly institutions = signal<InstitutionChoice[]>([]);
   protected readonly loading = signal(true);
   protected readonly loadError = signal<string | null>(null);
@@ -39,9 +43,8 @@ export class EventCreatePage {
   protected readonly errorMessage = signal<string | null>(null);
 
   constructor() {
-    this.events.list().subscribe({
-      next: (events) => {
-        const choices = institutionChoices(events);
+    this.loadChoices().subscribe({
+      next: (choices) => {
         this.institutions.set(choices);
         if (choices.length === 1) {
           this.form.controls.institutionId.setValue(choices[0].id);
@@ -53,6 +56,29 @@ export class EventCreatePage {
         this.loading.set(false);
       },
     });
+  }
+
+  /**
+   * `GET /api/institutions`. While the backend does not have it yet (404), the institutions are
+   * taken from the existing fairs so a fair can still be created. Remove the fallback once the
+   * endpoint exists.
+   */
+  private loadChoices(): Observable<InstitutionChoice[]> {
+    return this.institutionsApi.list().pipe(
+      map((items) =>
+        items
+          .filter((item) => item.isActive)
+          .map((item) => ({
+            id: item.id,
+            label: item.acronym ? `${item.name} (${item.acronym})` : item.name,
+          })),
+      ),
+      catchError((error: unknown) =>
+        error instanceof HttpErrorResponse && error.status === 404
+          ? this.events.list().pipe(map((events) => institutionChoices(events)))
+          : throwError(() => error),
+      ),
+    );
   }
 
   protected showError(name: 'institutionId' | 'name' | 'capacity'): boolean {

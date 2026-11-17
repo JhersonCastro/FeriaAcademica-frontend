@@ -30,8 +30,8 @@
         <div class="alert__body">
           <p class="alert__title">Todavía no hay una institución disponible</p>
           <p>
-            La plataforma aún no permite listar instituciones: por ahora solo se puede crear una
-            feria en una institución que ya tenga alguna.
+            Crea o activa una institución para poder crear la feria en ella.
+            <a class="btn btn--text" routerLink="/admin/institutions/new">Crear institución</a>
           </p>
         </div>
       </div>
@@ -77,7 +77,7 @@
               >
                 <option value="" disabled>Selecciona una institución</option>
                 @for (institution of institutions(); track institution.id) {
-                  <option [value]="institution.id">Institución de: {{ institution.label }}</option>
+                  <option [value]="institution.id">{{ institution.label }}</option>
                 }
               </select>
             </div>
@@ -86,7 +86,7 @@
             }
           </div>
         } @else {
-          <p class="field__hint">Se crea en la misma institución de las ferias existentes.</p>
+          <p class="field__hint">Se crea en la única institución disponible.</p>
         }
 
         <div class="field">

@@ -1,0 +1,95 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <a routerLink="/admin/institutions">Instituciones</a>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">{{ institutionId ? 'Editar institución' : 'Crear institución' }}</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">{{ institutionId ? 'Editar institución' : 'Crear institución' }}</h1>
+    <p class="text-muted">
+      Las ferias se crean dentro de una institución, por ejemplo una universidad.
+    </p>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="institution-form-title">
+  <h2 class="title-2" id="institution-form-title">Datos de la institución</h2>
+
+  @if (loading()) {
+    <p class="state" role="status">Cargando…</p>
+  } @else if (loadError(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  } @else {
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="institution-name">Nombre de la institución</label>
+        <div class="control" [class.control--error]="showError('name')">
+          <input
+            class="control__input"
+            id="institution-name"
+            type="text"
+            autocomplete="off"
+            formControlName="name"
+            [attr.maxlength]="nameMaxLength"
+            [attr.aria-invalid]="showError('name')"
+            [attr.aria-describedby]="showError('name') ? 'institution-name-error' : null"
+          />
+          @if (showError('name')) {
+            <img
+              class="control__icon"
+              src="assets/icons/circle-alert.svg"
+              width="16"
+              height="16"
+              alt=""
+            />
+          }
+        </div>
+        @if (showError('name')) {
+          <p class="field__error" id="institution-name-error">
+            Ingresa el nombre de la institución.
+          </p>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="institution-acronym">
+          Siglas <span class="field__optional">(opcional)</span>
+        </label>
+        <div class="control" [class.control--error]="showError('acronym')">
+          <input
+            class="control__input"
+            id="institution-acronym"
+            type="text"
+            autocomplete="off"
+            formControlName="acronym"
+            [attr.maxlength]="acronymMaxLength"
+            [attr.aria-invalid]="showError('acronym')"
+          />
+        </div>
+        @if (showError('acronym')) {
+          <p class="field__error">
+            Las siglas pueden tener hasta {{ acronymMaxLength }} caracteres.
+          </p>
+        }
+      </div>
+
+      @if (errorMessage(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button class="btn btn--primary" type="submit" [disabled]="saving()">
+          {{ saving() ? 'Guardando…' : institutionId ? 'Guardar cambios' : 'Crear institución' }}
+        </button>
+        <a class="btn btn--text" routerLink="/admin/institutions">Cancelar</a>
+      </div>
+    </form>
+  }
+</section>
