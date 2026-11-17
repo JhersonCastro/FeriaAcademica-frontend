@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { EventSummary } from '../../../../core/events/events.service';
+import { InstitutionDto } from '../../../../core/institutions/institutions.service';
 import { EventCreatePage } from './event-create-page';
 
 function fair(id: string, institutionId: string, name: string): EventSummary {
@@ -19,6 +20,10 @@ function fair(id: string, institutionId: string, name: string): EventSummary {
     availableSeats: null,
     submissionDeadline: null,
   };
+}
+
+function institution(id: string, name: string, isActive = true): InstitutionDto {
+  return { id, name, acronym: null, isActive, eventCount: 0 };
 }
 
 describe('EventCreatePage', () => {
@@ -42,10 +47,10 @@ describe('EventCreatePage', () => {
 
   afterEach(() => http.verify());
 
-  async function open(events: EventSummary[]): Promise<void> {
+  async function open(institutions: InstitutionDto[]): Promise<void> {
     harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/admin/events/new', EventCreatePage);
-    http.expectOne('/api/events').flush(events);
+    http.expectOne('/api/institutions').flush(institutions);
     harness.detectChanges();
     root = harness.routeNativeElement as HTMLElement;
   }
@@ -62,10 +67,10 @@ describe('EventCreatePage', () => {
   }
 
   it('creates the fair in the only institution that exists and opens its configuration', async () => {
-    await open([fair('e1', 'inst-1', 'FIET 2026'), fair('e2', 'inst-1', 'FIET 2025')]);
+    await open([institution('inst-1', 'Universidad del Cauca')]);
 
     expect(root.querySelector('#create-event-institution')).toBeNull();
-    expect(root.textContent).toContain('Se crea en la misma institución de las ferias existentes.');
+    expect(root.textContent).toContain('Se crea en la única institución disponible.');
 
     type('#create-event-name', '  FIET 2027  ');
     type('#create-event-capacity', '120');
@@ -84,7 +89,7 @@ describe('EventCreatePage', () => {
   });
 
   it('leaves the seats unlimited when the capacity is empty', async () => {
-    await open([fair('e1', 'inst-1', 'FIET 2026')]);
+    await open([institution('inst-1', 'Universidad del Cauca')]);
 
     type('#create-event-name', 'Feria Empresarial');
     submit();
@@ -99,7 +104,10 @@ describe('EventCreatePage', () => {
   });
 
   it('asks for the institution when there is more than one and does not send an incomplete form', async () => {
-    await open([fair('e1', 'inst-1', 'FIET 2026'), fair('e2', 'inst-2', 'Feria Empresarial')]);
+    await open([
+      institution('inst-1', 'Universidad del Cauca'),
+      institution('inst-2', 'Otra universidad'),
+    ]);
 
     expect(root.querySelector('#create-event-institution')).not.toBeNull();
     type('#create-event-name', 'Feria nueva');
@@ -110,7 +118,7 @@ describe('EventCreatePage', () => {
   });
 
   it('requires a name', async () => {
-    await open([fair('e1', 'inst-1', 'FIET 2026')]);
+    await open([institution('inst-1', 'Universidad del Cauca')]);
 
     submit();
 
@@ -118,7 +126,38 @@ describe('EventCreatePage', () => {
     http.expectNone((req) => req.method === 'POST');
   });
 
-  it('explains that no fair can be created while no institution is known', async () => {
+  it('only offers active institutions', async () => {
+    await open([
+      institution('inst-1', 'Universidad del Cauca'),
+      institution('inst-2', 'Otra universidad', false),
+    ]);
+
+    expect(root.querySelector('#create-event-institution')).toBeNull();
+    type('#create-event-name', 'Feria nueva');
+    submit();
+
+    expect(http.expectOne((req) => req.method === 'POST').request.body.institutionId).toBe(
+      'inst-1',
+    );
+  });
+
+  it('falls back to the institutions of the existing fairs while the backend has no list yet', async () => {
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/admin/events/new', EventCreatePage);
+    http.expectOne('/api/institutions').flush(null, { status: 404, statusText: 'Not Found' });
+    http.expectOne('/api/events').flush([fair('e1', 'inst-9', 'FIET 2026')]);
+    harness.detectChanges();
+    root = harness.routeNativeElement as HTMLElement;
+
+    type('#create-event-name', 'FIET 2027');
+    submit();
+
+    expect(http.expectOne((req) => req.method === 'POST').request.body.institutionId).toBe(
+      'inst-9',
+    );
+  });
+
+  it('explains that no fair can be created while there is no active institution', async () => {
     await open([]);
 
     expect(root.textContent).toContain('Todavía no hay una institución disponible');
@@ -126,7 +165,7 @@ describe('EventCreatePage', () => {
   });
 
   it('shows the backend error', async () => {
-    await open([fair('e1', 'inst-1', 'FIET 2026')]);
+    await open([institution('inst-1', 'Universidad del Cauca')]);
 
     type('#create-event-name', 'FIET 2027');
     submit();

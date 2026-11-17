@@ -1,0 +1,78 @@
+<nav class="breadcrumb" aria-label="Ruta">
+  <span>Administración</span>
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">Instituciones</span>
+</nav>
+
+<header class="page-header">
+  <div class="page-header__text">
+    <h1 class="title-1">Instituciones</h1>
+    <p class="text-muted">
+      Organizaciones que realizan ferias. Cada feria se crea en una de ellas.
+    </p>
+  </div>
+  <a class="btn btn--primary" routerLink="/admin/institutions/new">Crear institución</a>
+</header>
+
+<section class="card" aria-labelledby="institutions-title">
+  <h2 class="title-2" id="institutions-title">Instituciones registradas</h2>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert--danger" role="alert">
+      <p>{{ message }}</p>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="text-muted" role="status">Cargando las instituciones…</p>
+  } @else if (!items().length && !errorMessage()) {
+    <div class="state">
+      <span class="diamond" aria-hidden="true"></span>
+      <p>Todavía no hay instituciones. Crea la primera para poder crear ferias.</p>
+    </div>
+  } @else if (items().length) {
+    <div class="table-wrap">
+      <table class="table table--stack">
+        <thead>
+          <tr>
+            <th scope="col">Institución</th>
+            <th scope="col">Siglas</th>
+            <th scope="col">Estado</th>
+            <th scope="col">Ferias</th>
+            <th scope="col"><span class="visually-hidden">Acciones</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (institution of items(); track institution.id) {
+            <tr>
+              <td>
+                <a class="table__link" [routerLink]="['/admin/institutions', institution.id]">{{
+                  institution.name
+                }}</a>
+              </td>
+              <td data-label="Siglas">{{ institution.acronym || '—' }}</td>
+              <td data-label="Estado">
+                <span
+                  class="chip"
+                  [class]="institution.isActive ? 'chip--success' : 'chip--neutral'"
+                  >{{ institution.isActive ? 'Activa' : 'Inactiva' }}</span
+                >
+              </td>
+              <td data-label="Ferias">{{ institution.eventCount }}</td>
+              <td>
+                <button
+                  class="btn btn--text"
+                  type="button"
+                  [disabled]="changing() === institution.id"
+                  (click)="toggle(institution)"
+                >
+                  {{ institution.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
