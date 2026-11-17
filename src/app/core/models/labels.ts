@@ -68,6 +68,19 @@ export const STAGE_LABELS: Record<StageType, string> = {
   Publication: 'Publicación',
 };
 
+/** What each stage is for, shown under its name in the list of stages of a fair. */
+export const STAGE_DESCRIPTIONS: Record<StageType, string> = {
+  Configuration: 'Reglas y datos base de la feria',
+  Call: 'Se abre la invitación a participar',
+  Nomination: 'Los profesores nominan trabajos',
+  Reception: 'Se crean y envían los trabajos',
+  Admission: 'Se admiten los trabajos recibidos',
+  Registration: 'Se inscriben asistentes y participantes',
+  Evaluation: 'Los revisores califican los trabajos',
+  Results: 'Se calculan y revisan los resultados',
+  Publication: 'Se publican resultados y certificados',
+};
+
 const EVENT_STATUS_LABELS: Record<string, string> = {
   Configuration: 'En configuración',
   Published: 'Publicada',

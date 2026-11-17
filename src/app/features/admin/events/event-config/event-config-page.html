@@ -151,235 +151,295 @@
   </section>
 
   <section class="card stages" aria-labelledby="stages-title">
-    <h2 class="title-2" id="stages-title">Etapas</h2>
+    <div class="stages__head">
+      <h2 class="title-2" id="stages-title">Línea de tiempo de la feria</h2>
+      <span class="chip chip--info">{{
+        timeline().length
+          ? timeline().length + ' de ' + stageTypes.length + ' etapas añadidas'
+          : 'Sin etapas'
+      }}</span>
+    </div>
 
-    <!-- T-13: what is saved in the backend, so it is still there when coming back to the fair. -->
-    <h3 class="title-3">Línea de tiempo guardada</h3>
     @if (stagesLoading()) {
       <p class="state" role="status">Cargando las etapas…</p>
     } @else if (stagesLoadError(); as message) {
       <div class="alert alert--danger alert--compact" role="alert">
         <p>{{ message }}</p>
       </div>
-    } @else if (savedStages().length) {
-      <ol class="timeline">
-        @for (stage of savedStages(); track stage.type; let i = $index) {
-          <li class="timeline__item">
-            <span class="timeline__index" aria-hidden="true">{{ i + 1 }}</span>
-            <div class="timeline__body">
-              <p class="timeline__name">
-                {{ stageLabels[stage.type] }}
-                <span class="chip" [class]="stageStatus[stage.status].chip">{{
-                  stageStatus[stage.status].label
-                }}</span>
-              </p>
-              <p class="text-small text-muted">
-                @if (stage.startDate && stage.endDate) {
-                  {{ stage.startDate | date: 'd MMM y, h:mm a' }} →
-                  {{ stage.endDate | date: 'd MMM y, h:mm a' }}
-                } @else {
-                  Sin fechas
-                }
-              </p>
-            </div>
-          </li>
-        }
-      </ol>
-    } @else {
-      <p class="text-muted">Esta feria todavía no tiene etapas programadas.</p>
-    }
-
-    @if (schedulable()) {
-      <!-- T-15: plan every stage at once, as a checklist. -->
-      <h3 class="title-3">Programar etapas</h3>
-      <p class="text-muted">
-        Marca las etapas que tendrá la feria, ordénalas con las flechas y pon sus fechas. El fin de
-        <strong>Recepción de trabajos</strong> es la fecha límite de envío de los trabajos.
-      </p>
-
-      <form class="auto-fill" [formGroup]="autoForm" (ngSubmit)="calculate()" novalidate>
-        <p class="auto-fill__title">Calcular las fechas (opcional)</p>
-        <div class="auto-fill__fields">
-          <div class="field">
-            <label class="field__label" for="auto-first-start">Inicio de la primera etapa</label>
-            <div class="control">
-              <input
-                class="control__input"
-                id="auto-first-start"
-                type="datetime-local"
-                formControlName="firstStart"
-              />
-            </div>
-          </div>
-          <div class="field">
-            <label class="field__label" for="auto-duration">Duración de cada etapa (días)</label>
-            <div class="control">
-              <input
-                class="control__input"
-                id="auto-duration"
-                type="number"
-                min="1"
-                step="1"
-                inputmode="numeric"
-                formControlName="durationDays"
-              />
-            </div>
-          </div>
-          <div class="field">
-            <label class="field__label" for="auto-gap">Intervalo entre etapas (días)</label>
-            <div class="control">
-              <input
-                class="control__input"
-                id="auto-gap"
-                type="number"
-                min="0"
-                step="1"
-                inputmode="numeric"
-                formControlName="gapDays"
-              />
-            </div>
-          </div>
-        </div>
-        @if (autoError(); as message) {
-          <p class="field__error" role="alert">{{ message }}</p>
-        }
-        <div class="actions">
-          <button class="btn btn--secondary" type="submit">Calcular fechas</button>
-        </div>
-      </form>
-
-      <ul class="stage-plan" aria-label="Etapas de la feria">
-        @for (row of rows(); track row.type) {
-          <li class="stage-plan__row" [class.stage-plan__row--on]="row.selected">
-            <div class="stage-plan__head">
-              <label class="checkbox">
-                <input
-                  type="checkbox"
-                  [checked]="row.selected"
-                  (change)="toggle(row.type, $event)"
-                />
-                @if (orderOf(row.type); as order) {
-                  <span class="stage-plan__order">{{ order }}</span>
-                }
-                <span class="stage-plan__name">{{ stageLabels[row.type] }}</span>
-              </label>
-              @if (orderOf(row.type); as order) {
-                <div class="stage-plan__move">
-                  <button
-                    class="btn btn--text btn--icon"
-                    type="button"
-                    [disabled]="order === 1"
-                    [attr.aria-label]="'Subir ' + stageLabels[row.type]"
-                    (click)="move(row.type, -1)"
-                  >
-                    ↑
-                  </button>
-                  <button
-                    class="btn btn--text btn--icon"
-                    type="button"
-                    [disabled]="order === selectedCount()"
-                    [attr.aria-label]="'Bajar ' + stageLabels[row.type]"
-                    (click)="move(row.type, 1)"
-                  >
-                    ↓
-                  </button>
-                </div>
-              }
-            </div>
-
-            @if (row.selected) {
-              <div class="form-grid stage-plan__dates">
-                <div class="field">
-                  <label class="field__label" [for]="'start-' + row.type">Inicio</label>
-                  <div class="control">
-                    <input
-                      class="control__input"
-                      type="datetime-local"
-                      [id]="'start-' + row.type"
-                      [value]="row.start"
-                      (input)="setDate(row.type, 'start', $event)"
-                    />
-                  </div>
-                </div>
-                <div class="field">
-                  <label class="field__label" [for]="'end-' + row.type">Fin</label>
-                  <div class="control">
-                    <input
-                      class="control__input"
-                      type="datetime-local"
-                      [id]="'end-' + row.type"
-                      [value]="row.end"
-                      (input)="setDate(row.type, 'end', $event)"
-                    />
-                  </div>
-                </div>
-              </div>
-            }
-          </li>
-        }
-      </ul>
-
-      @if (removingReception()) {
-        <div class="alert alert--warning alert--compact" role="status">
+    } @else if (!timeline().length) {
+      <div class="empty-box">
+        <p class="empty-box__title">Aún no hay etapas en la línea de tiempo</p>
+        @if (schedulable()) {
           <p>
-            Si quitas <strong>Recepción de trabajos</strong>, los trabajos se quedan sin fecha
-            límite de envío.
+            Elige una etapa de la lista de abajo para añadirla. Después defines su fecha y hora de
+            inicio y de fin.
           </p>
-        </div>
-      }
-      @if (warnings().length) {
-        <div class="alert alert--warning alert--compact" role="status">
-          <div class="alert__body">
-            @for (warning of warnings(); track warning) {
-              <p>{{ warning }}</p>
-            }
-            <p class="text-small">Puedes guardar así si las etapas deben cruzarse.</p>
-          </div>
-        </div>
-      }
-      @if (planSubmitted() && errors().length) {
-        <div class="alert alert--danger alert--compact" role="alert">
-          <div class="alert__body">
-            @for (error of errors(); track error) {
-              <p>{{ error }}</p>
-            }
-          </div>
-        </div>
-      }
-      @if (planError(); as message) {
-        <div class="alert alert--danger alert--compact" role="alert">
-          <p>{{ message }}</p>
-        </div>
-      }
-      @if (planSaved()) {
-        <div class="alert alert--success alert--compact" role="status">
-          <p>Etapas guardadas.</p>
-        </div>
-      }
-
-      <div class="actions">
-        <button
-          class="btn btn--primary"
-          type="button"
-          [disabled]="planSaving()"
-          (click)="savePlan()"
-        >
-          {{ planSaving() ? 'Guardando…' : 'Guardar etapas' }}
-        </button>
-        @if (pendingChanges()) {
-          <button
-            class="btn btn--text"
-            type="button"
-            [disabled]="planSaving()"
-            (click)="resetPlan()"
-          >
-            Descartar cambios
-          </button>
-          <span class="text-small text-muted">{{ pendingChanges() }} cambio(s) sin guardar</span>
+        } @else {
+          <p>Esta feria no tiene etapas programadas.</p>
         }
       </div>
     } @else {
-      <p class="text-muted">Las etapas de una feria cerrada o cancelada ya no se pueden cambiar.</p>
+      <ol class="chain" aria-label="Etapas de la feria, en el orden en que ocurren">
+        @for (item of timeline(); track item.stage.type; let first = $first; let last = $last) {
+          <li class="chain__item">
+            <div class="chain__connector" aria-hidden="true">
+              <span
+                class="chain__line"
+                [class.chain__line--on]="!first"
+                [class.chain__line--danger]="!first && item.conflict"
+              ></span>
+              <span class="node" [class]="item.kind.node">{{ item.order }}</span>
+              <span class="chain__line" [class.chain__line--on]="!last"></span>
+            </div>
+            <button
+              class="stage-card"
+              type="button"
+              [class.is-selected]="selected() === item.stage.type"
+              [class.is-conflict]="item.conflict"
+              [disabled]="!schedulable()"
+              (click)="select(item.stage.type)"
+            >
+              <span class="stage-card__name">{{ stageLabels[item.stage.type] }}</span>
+              <span class="chip" [class]="item.kind.chip">{{ item.kind.label }}</span>
+              @if (item.stage.startDate && item.stage.endDate) {
+                <span class="stage-card__label">Inicio</span>
+                <span class="stage-card__date">{{ formatDate(item.stage.startDate) }}</span>
+                <span class="stage-card__label">Fin</span>
+                <span class="stage-card__date">{{ formatDate(item.stage.endDate) }}</span>
+              } @else {
+                <span class="stage-card__label">Sin fechas</span>
+              }
+            </button>
+          </li>
+        }
+      </ol>
+
+      @for (item of conflictList(); track item.type) {
+        <div class="alert alert--danger" role="alert">
+          <span class="alert__mark" aria-hidden="true">!</span>
+          <div class="alert__body">
+            <p class="alert__title">Las etapas no van en el orden correcto</p>
+            <p>{{ orderConflict(item.type, item.conflict) }}</p>
+          </div>
+        </div>
+      }
     }
   </section>
+
+  @if (schedulable() && !stagesLoading() && !stagesLoadError()) {
+    <div class="stages-row">
+      <section class="card" aria-labelledby="available-title">
+        <h2 class="title-2" id="available-title">Etapas disponibles</h2>
+        <p class="text-muted">
+          Elige una etapa para añadirla a la línea de tiempo. Se ordenan solas por su fecha de
+          inicio.
+        </p>
+        <ul class="available">
+          @for (type of stageTypes; track type) {
+            <li>
+              <button
+                class="available__item"
+                type="button"
+                [class.is-added]="added(type)"
+                [class.is-selected]="selected() === type"
+                [attr.aria-pressed]="selected() === type"
+                (click)="select(type)"
+              >
+                <span class="available__mark" aria-hidden="true">{{
+                  added(type) ? '✓' : '+'
+                }}</span>
+                <span class="available__text">
+                  <span class="available__name">{{ stageLabels[type] }}</span>
+                  <span class="available__hint">{{
+                    added(type) ? 'En la línea de tiempo' : stageDescriptions[type]
+                  }}</span>
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
+      </section>
+
+      <section class="card" aria-labelledby="config-title">
+        @if (selected(); as type) {
+          <div class="stages__head">
+            <h2 class="title-2" id="config-title">Configurar · {{ stageLabels[type] }}</h2>
+            @if (selectedSaved(); as saved) {
+              <span class="chip" [class]="kindOf(type, saved.status).chip">{{
+                kindOf(type, saved.status).label
+              }}</span>
+            }
+          </div>
+
+          @if (validation(); as check) {
+            <div class="group">
+              <p class="group__title">INICIO DE LA ETAPA</p>
+              <div class="pair">
+                <div class="field">
+                  <label class="field__label" for="stage-start-date">Fecha</label>
+                  <div class="control" [class.control--error]="check.issues.startDate">
+                    <input
+                      class="control__input"
+                      id="stage-start-date"
+                      type="date"
+                      [value]="draft().startDate"
+                      [attr.aria-invalid]="!!check.issues.startDate"
+                      [attr.aria-describedby]="
+                        check.issues.startDate ? 'stage-start-date-error' : null
+                      "
+                      (input)="setDraft('startDate', $event)"
+                    />
+                  </div>
+                  @if (check.issues.startDate; as message) {
+                    <p class="field__error" id="stage-start-date-error">{{ message }}</p>
+                  }
+                </div>
+                <div class="field">
+                  <label class="field__label" for="stage-start-time">Hora</label>
+                  <div class="control" [class.control--error]="check.issues.startTime">
+                    <input
+                      class="control__input"
+                      id="stage-start-time"
+                      type="time"
+                      [value]="draft().startTime"
+                      [attr.aria-invalid]="!!check.issues.startTime"
+                      (input)="setDraft('startTime', $event)"
+                    />
+                  </div>
+                  @if (check.issues.startTime; as message) {
+                    <p class="field__error">{{ message }}</p>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="group">
+              <p class="group__title">FIN DE LA ETAPA</p>
+              <div class="pair">
+                <div class="field">
+                  <label class="field__label" for="stage-end-date">Fecha</label>
+                  <div class="control" [class.control--error]="check.issues.endDate">
+                    <input
+                      class="control__input"
+                      id="stage-end-date"
+                      type="date"
+                      [value]="draft().endDate"
+                      [attr.aria-invalid]="!!check.issues.endDate"
+                      [attr.aria-describedby]="check.issues.endDate ? 'stage-end-date-error' : null"
+                      (input)="setDraft('endDate', $event)"
+                    />
+                  </div>
+                  @if (check.issues.endDate; as message) {
+                    <p class="field__error" id="stage-end-date-error">{{ message }}</p>
+                  }
+                </div>
+                <div class="field">
+                  <label class="field__label" for="stage-end-time">Hora</label>
+                  <div class="control" [class.control--error]="check.issues.endTime">
+                    <input
+                      class="control__input"
+                      id="stage-end-time"
+                      type="time"
+                      [value]="draft().endTime"
+                      [attr.aria-invalid]="!!check.issues.endTime"
+                      [attr.aria-describedby]="check.issues.endTime ? 'stage-end-time-error' : null"
+                      (input)="setDraft('endTime', $event)"
+                    />
+                  </div>
+                  @if (check.issues.endTime; as message) {
+                    <p class="field__error" id="stage-end-time-error">{{ message }}</p>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <span class="field__label">Zona horaria</span>
+              <div class="control control--readonly">
+                <span class="control__input control__input--static">{{ timeZone }}</span>
+              </div>
+            </div>
+
+            @if (hasIssues()) {
+              <div class="summary summary--danger" role="alert">
+                <p class="summary__title">Corrige las fechas y horas para continuar</p>
+                @if (savedSummary(); as saved) {
+                  <p>
+                    La configuración anterior de «{{ stageLabels[type] }}» ({{ saved }}) permanece
+                    vigente.
+                  </p>
+                }
+              </div>
+            } @else if (duration(); as length) {
+              <div class="summary">
+                <p class="summary__title">Duración: {{ length }}</p>
+                @if (type === 'Reception') {
+                  <p>
+                    El fin de «Recepción de trabajos» es la fecha límite de entrega de los trabajos.
+                  </p>
+                }
+              </div>
+            }
+          }
+
+          @if (stageNotice(); as message) {
+            <div class="alert alert--success alert--compact" role="status">
+              <p>{{ message }}</p>
+            </div>
+          }
+          @if (stageError(); as message) {
+            <div class="alert alert--danger alert--compact" role="alert">
+              <p>{{ message }}</p>
+            </div>
+          }
+
+          <div class="actions">
+            <button
+              class="btn btn--primary"
+              type="button"
+              [disabled]="!validation()?.valid || stageSaving()"
+              (click)="saveStage()"
+            >
+              {{ stageSaving() ? 'Guardando…' : 'Guardar etapa' }}
+            </button>
+            @if (selectedSaved()) {
+              <button
+                class="btn btn--danger"
+                type="button"
+                [disabled]="stageSaving()"
+                (click)="removeStage()"
+              >
+                Quitar de la línea de tiempo
+              </button>
+            }
+          </div>
+          @if (type === 'Reception' && selectedSaved()) {
+            <p class="text-small text-muted">
+              Si la quitas, los trabajos se quedan sin fecha límite de envío.
+            </p>
+          }
+        } @else {
+          <h2 class="title-2" id="config-title">Configurar etapa</h2>
+          <div class="empty-box empty-box--soft">
+            <p class="empty-box__title">Ninguna etapa elegida</p>
+            <p>
+              Al añadir una etapa podrás fijar aquí su fecha y hora de inicio y de fin, y la zona
+              horaria.
+            </p>
+          </div>
+          <div class="field">
+            <span class="field__label">Zona horaria</span>
+            <div class="control control--readonly">
+              <span class="control__input control__input--static">{{ timeZone }}</span>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn--primary" type="button" disabled>Guardar etapa</button>
+          </div>
+        }
+      </section>
+    </div>
+  } @else if (!schedulable()) {
+    <p class="text-muted">Las etapas de una feria cerrada o cancelada ya no se pueden cambiar.</p>
+  }
 }
