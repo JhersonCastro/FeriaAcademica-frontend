@@ -1,0 +1,140 @@
+/* T-13 and T-15: the saved timeline and the checklist to plan the stages. */
+.stages {
+  max-width: 960px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timeline__item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.timeline__index,
+.stage-plan__order {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font: 600 12px/1 var(--font-body);
+}
+
+.timeline__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.timeline__name {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-weight: 600;
+}
+
+.auto-fill {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.auto-fill__title {
+  font-weight: 600;
+}
+
+.auto-fill__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.stage-plan {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.stage-plan__row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 16px;
+}
+
+.stage-plan__row + .stage-plan__row {
+  border-top: 1px solid var(--color-border);
+}
+
+.stage-plan__row--on {
+  background: var(--color-support-light);
+}
+
+.stage-plan__head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 40px;
+}
+
+.stage-plan__name {
+  font-weight: 600;
+}
+
+.stage-plan__row:not(.stage-plan__row--on) .stage-plan__name {
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
+.stage-plan__move {
+  display: flex;
+  gap: 4px;
+}
+
+.btn--icon {
+  width: 40px;
+  padding: 0;
+  font-size: 18px;
+}
+
+.stage-plan__dates {
+  padding-left: 32px;
+}
+
+@media (max-width: 640px) {
+  .auto-fill__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage-plan__row {
+    padding: 12px;
+  }
+
+  .stage-plan__dates {
+    padding-left: 0;
+  }
+}

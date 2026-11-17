@@ -17,7 +17,9 @@
     <div class="page-header__text">
       <h1 class="title-1">{{ event.name }}</h1>
       <p class="text-muted">
-        <span class="chip" [class]="statusChips[event.status]">{{ statusLabel(event.status) }}</span>
+        <span class="chip" [class]="statusChips[event.status]">{{
+          statusLabel(event.status)
+        }}</span>
         · {{ event.registered }} inscritos · Cupos libres: {{ seats(event) }}
       </p>
     </div>
@@ -73,13 +75,7 @@
               [disabled]="acting()"
               (click)="runAction()"
             >
-              {{
-                acting()
-                  ? 'Procesando…'
-                  : action === 'publish'
-                    ? 'Sí, publicar'
-                    : 'Sí, cerrar'
-              }}
+              {{ acting() ? 'Procesando…' : action === 'publish' ? 'Sí, publicar' : 'Sí, cerrar' }}
             </button>
             <button
               class="btn btn--text"
@@ -154,84 +150,234 @@
     </form>
   </section>
 
-  <section class="card card--narrow" aria-labelledby="stages-title">
+  <section class="card stages" aria-labelledby="stages-title">
     <h2 class="title-2" id="stages-title">Etapas</h2>
+
+    <!-- T-13: what is saved in the backend, so it is still there when coming back to the fair. -->
+    <h3 class="title-3">Línea de tiempo guardada</h3>
+    @if (stagesLoading()) {
+      <p class="state" role="status">Cargando las etapas…</p>
+    } @else if (stagesLoadError(); as message) {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>{{ message }}</p>
+      </div>
+    } @else if (savedStages().length) {
+      <ol class="timeline">
+        @for (stage of savedStages(); track stage.type; let i = $index) {
+          <li class="timeline__item">
+            <span class="timeline__index" aria-hidden="true">{{ i + 1 }}</span>
+            <div class="timeline__body">
+              <p class="timeline__name">
+                {{ stageLabels[stage.type] }}
+                <span class="chip" [class]="stageStatus[stage.status].chip">{{
+                  stageStatus[stage.status].label
+                }}</span>
+              </p>
+              <p class="text-small text-muted">
+                @if (stage.startDate && stage.endDate) {
+                  {{ stage.startDate | date: 'd MMM y, h:mm a' }} →
+                  {{ stage.endDate | date: 'd MMM y, h:mm a' }}
+                } @else {
+                  Sin fechas
+                }
+              </p>
+            </div>
+          </li>
+        }
+      </ol>
+    } @else {
+      <p class="text-muted">Esta feria todavía no tiene etapas programadas.</p>
+    }
+
     @if (schedulable()) {
+      <!-- T-15: plan every stage at once, as a checklist. -->
+      <h3 class="title-3">Programar etapas</h3>
       <p class="text-muted">
-        Programa las fechas de cada etapa. El fin de <strong>Recepción de trabajos</strong> es la
-        fecha límite de envío de los trabajos.
+        Marca las etapas que tendrá la feria, ordénalas con las flechas y pon sus fechas. El fin de
+        <strong>Recepción de trabajos</strong> es la fecha límite de envío de los trabajos.
       </p>
 
-      <form class="form" [formGroup]="stageForm" (ngSubmit)="scheduleStage()" novalidate>
-        <div class="field">
-          <label class="field__label" for="stage-type">Etapa</label>
-          <div class="control">
-            <select class="control__input" id="stage-type" formControlName="type">
-              @for (type of stageTypes; track type) {
-                <option [value]="type">{{ stageLabels[type] }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <div class="form-grid">
+      <form class="auto-fill" [formGroup]="autoForm" (ngSubmit)="calculate()" novalidate>
+        <p class="auto-fill__title">Calcular las fechas (opcional)</p>
+        <div class="auto-fill__fields">
           <div class="field">
-            <label class="field__label" for="stage-start">Inicio</label>
-            <div class="control" [class.control--error]="showStageError('start')">
+            <label class="field__label" for="auto-first-start">Inicio de la primera etapa</label>
+            <div class="control">
               <input
                 class="control__input"
-                id="stage-start"
+                id="auto-first-start"
                 type="datetime-local"
-                formControlName="start"
-                [attr.aria-invalid]="showStageError('start')"
+                formControlName="firstStart"
               />
             </div>
-            @if (showStageError('start')) {
-              <p class="field__error">Indica la fecha de inicio.</p>
-            }
           </div>
-
           <div class="field">
-            <label class="field__label" for="stage-end">Fin</label>
-            <div class="control" [class.control--error]="showStageError('end')">
+            <label class="field__label" for="auto-duration">Duración de cada etapa (días)</label>
+            <div class="control">
               <input
                 class="control__input"
-                id="stage-end"
-                type="datetime-local"
-                formControlName="end"
-                [attr.aria-invalid]="showStageError('end')"
+                id="auto-duration"
+                type="number"
+                min="1"
+                step="1"
+                inputmode="numeric"
+                formControlName="durationDays"
               />
             </div>
-            @if (showStageError('end')) {
-              <p class="field__error">Indica la fecha de fin.</p>
-            }
+          </div>
+          <div class="field">
+            <label class="field__label" for="auto-gap">Intervalo entre etapas (días)</label>
+            <div class="control">
+              <input
+                class="control__input"
+                id="auto-gap"
+                type="number"
+                min="0"
+                step="1"
+                inputmode="numeric"
+                formControlName="gapDays"
+              />
+            </div>
           </div>
         </div>
-
-        @if (stageError(); as message) {
-          <div class="alert alert--danger alert--compact" role="alert">
-            <p>{{ message }}</p>
-          </div>
+        @if (autoError(); as message) {
+          <p class="field__error" role="alert">{{ message }}</p>
         }
-
         <div class="actions">
-          <button class="btn btn--primary" type="submit" [disabled]="stageSaving()">
-            {{ stageSaving() ? 'Guardando…' : 'Programar etapa' }}
-          </button>
+          <button class="btn btn--secondary" type="submit">Calcular fechas</button>
         </div>
       </form>
 
-      @if (scheduled().length) {
-        <h3 class="title-3">Programadas en esta sesión</h3>
-        <ul class="chip-list">
-          @for (stage of scheduled(); track stage.type) {
-            <li class="chip chip--success">
-              {{ stageLabels[stage.type] }}: {{ stage.start | date: 'd MMM y, h:mm a' }} →
-              {{ stage.end | date: 'd MMM y, h:mm a' }}
-            </li>
-          }
-        </ul>
+      <ul class="stage-plan" aria-label="Etapas de la feria">
+        @for (row of rows(); track row.type) {
+          <li class="stage-plan__row" [class.stage-plan__row--on]="row.selected">
+            <div class="stage-plan__head">
+              <label class="checkbox">
+                <input
+                  type="checkbox"
+                  [checked]="row.selected"
+                  (change)="toggle(row.type, $event)"
+                />
+                @if (orderOf(row.type); as order) {
+                  <span class="stage-plan__order">{{ order }}</span>
+                }
+                <span class="stage-plan__name">{{ stageLabels[row.type] }}</span>
+              </label>
+              @if (orderOf(row.type); as order) {
+                <div class="stage-plan__move">
+                  <button
+                    class="btn btn--text btn--icon"
+                    type="button"
+                    [disabled]="order === 1"
+                    [attr.aria-label]="'Subir ' + stageLabels[row.type]"
+                    (click)="move(row.type, -1)"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    class="btn btn--text btn--icon"
+                    type="button"
+                    [disabled]="order === selectedCount()"
+                    [attr.aria-label]="'Bajar ' + stageLabels[row.type]"
+                    (click)="move(row.type, 1)"
+                  >
+                    ↓
+                  </button>
+                </div>
+              }
+            </div>
+
+            @if (row.selected) {
+              <div class="form-grid stage-plan__dates">
+                <div class="field">
+                  <label class="field__label" [for]="'start-' + row.type">Inicio</label>
+                  <div class="control">
+                    <input
+                      class="control__input"
+                      type="datetime-local"
+                      [id]="'start-' + row.type"
+                      [value]="row.start"
+                      (input)="setDate(row.type, 'start', $event)"
+                    />
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="field__label" [for]="'end-' + row.type">Fin</label>
+                  <div class="control">
+                    <input
+                      class="control__input"
+                      type="datetime-local"
+                      [id]="'end-' + row.type"
+                      [value]="row.end"
+                      (input)="setDate(row.type, 'end', $event)"
+                    />
+                  </div>
+                </div>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (removingReception()) {
+        <div class="alert alert--warning alert--compact" role="status">
+          <p>
+            Si quitas <strong>Recepción de trabajos</strong>, los trabajos se quedan sin fecha
+            límite de envío.
+          </p>
+        </div>
       }
+      @if (warnings().length) {
+        <div class="alert alert--warning alert--compact" role="status">
+          <div class="alert__body">
+            @for (warning of warnings(); track warning) {
+              <p>{{ warning }}</p>
+            }
+            <p class="text-small">Puedes guardar así si las etapas deben cruzarse.</p>
+          </div>
+        </div>
+      }
+      @if (planSubmitted() && errors().length) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <div class="alert__body">
+            @for (error of errors(); track error) {
+              <p>{{ error }}</p>
+            }
+          </div>
+        </div>
+      }
+      @if (planError(); as message) {
+        <div class="alert alert--danger alert--compact" role="alert">
+          <p>{{ message }}</p>
+        </div>
+      }
+      @if (planSaved()) {
+        <div class="alert alert--success alert--compact" role="status">
+          <p>Etapas guardadas.</p>
+        </div>
+      }
+
+      <div class="actions">
+        <button
+          class="btn btn--primary"
+          type="button"
+          [disabled]="planSaving()"
+          (click)="savePlan()"
+        >
+          {{ planSaving() ? 'Guardando…' : 'Guardar etapas' }}
+        </button>
+        @if (pendingChanges()) {
+          <button
+            class="btn btn--text"
+            type="button"
+            [disabled]="planSaving()"
+            (click)="resetPlan()"
+          >
+            Descartar cambios
+          </button>
+          <span class="text-small text-muted">{{ pendingChanges() }} cambio(s) sin guardar</span>
+        }
+      </div>
     } @else {
       <p class="text-muted">Las etapas de una feria cerrada o cancelada ya no se pueden cambiar.</p>
     }
