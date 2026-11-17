@@ -36,7 +36,9 @@ describe('apiErrorMessage', () => {
   it('translates the registration and attendance rules', () => {
     expect(
       apiErrorMessage(
-        businessError('An event in state Configuration does not accept registrations or attendance.'),
+        businessError(
+          'An event in state Configuration does not accept registrations or attendance.',
+        ),
       ),
     ).toBe('Esta feria no está abierta a inscripciones ni asistencia en este momento.');
     expect(translateApiMessage('This QR code is not registered for this event.')).toBe(

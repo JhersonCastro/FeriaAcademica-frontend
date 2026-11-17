@@ -27,10 +27,30 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ],
   [API_MESSAGES.invalidLink, 'El enlace no es válido o ya venció.'],
   ['A user with this email already exists.', 'Ya existe un usuario con este correo.'],
+  ['An institution with this name already exists.', 'Ya existe una institución con ese nombre.'],
+  ['Institution name is required.', 'El nombre de la institución es obligatorio.'],
+  [
+    /Institution name cannot exceed \d+ characters\./,
+    'El nombre de la institución es demasiado largo.',
+  ],
+  [
+    /Institution acronym cannot exceed \d+ characters\./,
+    'Las siglas de la institución son demasiado largas.',
+  ],
+  ['The institution is already inactive.', 'La institución ya está desactivada.'],
+  ['The institution is already active.', 'La institución ya está activa.'],
+  ['The institution does not exist.', 'La institución no existe.'],
+  [
+    'The institution is inactive and cannot receive new events.',
+    'La institución está desactivada y no puede recibir ferias nuevas.',
+  ],
   ['You cannot deactivate your own account.', 'No puedes desactivar tu propia cuenta.'],
   ['The account is already deactivated.', 'La cuenta ya está desactivada.'],
   ['Only a deactivated account can be activated.', 'Solo se puede activar una cuenta desactivada.'],
-  [/The user already has the \w+ role in this event\./, 'El usuario ya tiene ese rol en esta feria.'],
+  [
+    /The user already has the \w+ role in this event\./,
+    'El usuario ya tiene ese rol en esta feria.',
+  ],
   [
     'Sign in with the invited account to accept this invitation.',
     'Inicia sesión con la cuenta invitada para aceptar esta invitación.',
@@ -49,11 +69,11 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ],
   ['Event not found.', 'No encontramos la feria.'],
   ['Name is required.', 'El nombre de la feria es obligatorio.'],
-  [/An event in state \w+ cannot be published\./, 'Solo una feria en configuración se puede publicar.'],
   [
-    'At least one stage must be active.',
-    'Programa al menos una etapa antes de publicar la feria.',
+    /An event in state \w+ cannot be published\./,
+    'Solo una feria en configuración se puede publicar.',
   ],
+  ['At least one stage must be active.', 'Programa al menos una etapa antes de publicar la feria.'],
   [
     /An event in state \w+ cannot be closed\./,
     'Solo una feria publicada o en curso se puede cerrar.',
@@ -71,7 +91,10 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
   ],
   ['User not found.', 'No encontramos el usuario.'],
   ['Full name is required.', 'El nombre completo es obligatorio.'],
-  ['Full name cannot exceed 200 characters.', 'El nombre completo no puede superar 200 caracteres.'],
+  [
+    'Full name cannot exceed 200 characters.',
+    'El nombre completo no puede superar 200 caracteres.',
+  ],
   ['Email is required.', 'El correo es obligatorio.'],
   ['Email is not valid.', 'El correo no es válido.'],
   ['Phone number is not valid.', 'El teléfono no es válido.'],
@@ -162,7 +185,10 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'The event report has not been generated yet.',
     'El informe de esta feria todavía no se ha guardado.',
   ],
-  [/An event in state \w+ cannot be closed\./, 'Esta feria no se puede cerrar en su estado actual.'],
+  [
+    /An event in state \w+ cannot be closed\./,
+    'Esta feria no se puede cerrar en su estado actual.',
+  ],
   [
     'Certificates are available once the event has finished.',
     'Los certificados se pueden descargar cuando la feria termina.',
@@ -175,12 +201,18 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'A participation certificate requires a work with its final version delivered.',
     'Para el certificado de participación debes entregar la versión final de tu trabajo.',
   ],
-  [/Passwords must be at least (\d+) characters\./, 'La contraseña debe tener al menos $1 caracteres.'],
+  [
+    /Passwords must be at least (\d+) characters\./,
+    'La contraseña debe tener al menos $1 caracteres.',
+  ],
   [
     'Passwords must have at least one non alphanumeric character.',
     'La contraseña debe incluir al menos un símbolo.',
   ],
-  ["Passwords must have at least one digit ('0'-'9').", 'La contraseña debe incluir al menos un número.'],
+  [
+    "Passwords must have at least one digit ('0'-'9').",
+    'La contraseña debe incluir al menos un número.',
+  ],
   [
     "Passwords must have at least one lowercase ('a'-'z').",
     'La contraseña debe incluir al menos una minúscula.',
@@ -195,7 +227,10 @@ const TRANSLATIONS: ReadonlyArray<[pattern: string | RegExp, text: string]> = [
     'The scale maximum must be greater than the minimum.',
     'El valor más alto de la escala debe ser mayor que el más bajo.',
   ],
-  ['The value is outside the criterion scale.', 'Una respuesta está fuera de la escala de su pregunta.'],
+  [
+    'The value is outside the criterion scale.',
+    'Una respuesta está fuera de la escala de su pregunta.',
+  ],
   [
     'The evaluation can no longer be changed.',
     'Las preguntas ya no se pueden cambiar: la feria se cerró y ya tiene respuestas.',

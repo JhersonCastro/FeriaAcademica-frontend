@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -18,24 +17,36 @@ import {
   StageType,
 } from '../../../../core/events/events.service';
 import {
-  StageRow,
-  fillDates,
-  initialRows,
-  moveRow,
-  toggleRow,
-  planChanges,
-  planErrors,
-  planWarnings,
+  STAGE_TIME_ZONE_LABEL,
+  StageDraft,
+  draftFromStage,
+  draftRange,
+  emptyDraft,
+  formatDuration,
+  formatStageDate,
+  orderConflictText,
+  sortStages,
+  timelineConflicts,
+  validateDraft,
 } from '../../../../core/events/stage-plan';
-import { STAGE_LABELS, STAGE_TYPES, eventStatusLabel } from '../../../../core/models/labels';
-import { Observable, concat, finalize, last, of } from 'rxjs';
+import {
+  STAGE_DESCRIPTIONS,
+  STAGE_LABELS,
+  STAGE_TYPES,
+  eventStatusLabel,
+} from '../../../../core/models/labels';
 
 type EventAction = 'publish' | 'close';
+type DraftField = keyof StageDraft;
 
-const STAGE_STATUS: Record<StageStatus, { label: string; chip: string }> = {
-  Scheduled: { label: 'Programada', chip: 'chip--neutral' },
-  Open: { label: 'En curso', chip: 'chip--success' },
-  Closed: { label: 'Terminada', chip: 'chip--info' },
+/** How a stage is told apart in the timeline: its state in its own schedule, or a conflict. */
+type StageKind = StageStatus | 'Conflict';
+
+const STAGE_KINDS: Record<StageKind, { label: string; chip: string; node: string }> = {
+  Closed: { label: 'Finalizada', chip: 'chip--neutral', node: 'node--done' },
+  Open: { label: 'En curso', chip: 'chip--navy', node: 'node--open' },
+  Scheduled: { label: 'Pendiente', chip: 'chip--info', node: 'node--pending' },
+  Conflict: { label: 'Con conflicto', chip: 'chip--danger', node: 'node--conflict' },
 };
 
 const ACTION_NOTICES: Record<EventAction, string> = {
@@ -43,10 +54,10 @@ const ACTION_NOTICES: Record<EventAction, string> = {
   close: 'La feria quedó cerrada: se habilitan los certificados y se detienen las inscripciones.',
 };
 
-/** Super admin: publish or close a fair, set its seats and schedule its stages. */
+/** Super admin: publish or close a fair, set its seats and plan the timeline of its stages. */
 @Component({
   selector: 'app-event-config-page',
-  imports: [ReactiveFormsModule, RouterLink, DatePipe],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './event-config-page.html',
   styleUrl: './event-config-page.css',
   host: { class: 'page-content' },
@@ -57,10 +68,14 @@ export class EventConfigPage {
   private readonly fb = inject(NonNullableFormBuilder);
 
   protected readonly stageLabels = STAGE_LABELS;
-  protected readonly stageStatus = STAGE_STATUS;
+  protected readonly stageDescriptions = STAGE_DESCRIPTIONS;
+  protected readonly stageTypes = STAGE_TYPES;
+  protected readonly timeZone = STAGE_TIME_ZONE_LABEL;
   protected readonly statusChips = EVENT_STATUS_CHIPS;
   protected readonly statusLabel = eventStatusLabel;
   protected readonly seats = seatsLabel;
+  protected readonly formatDate = formatStageDate;
+  protected readonly orderConflict = orderConflictText;
 
   protected readonly event = signal<EventSummary | null>(null);
   protected readonly loading = signal(true);
@@ -86,35 +101,58 @@ export class EventConfigPage {
   protected readonly capacityError = signal<string | null>(null);
   protected readonly capacitySaved = signal(false);
 
-  // Stages (T-13, T-15): the saved timeline and the checklist to plan it.
+  // Stages (HU-006): the saved timeline and the stage being configured.
   protected readonly savedStages = signal<EventStageDto[]>([]);
   protected readonly stagesLoading = signal(true);
   protected readonly stagesLoadError = signal<string | null>(null);
-  protected readonly rows = signal<StageRow[]>(initialRows([], STAGE_TYPES));
-  protected readonly autoForm = this.fb.group({
-    firstStart: [''],
-    durationDays: this.fb.control<number | null>(5, [Validators.min(0)]),
-    gapDays: this.fb.control<number | null>(0, [Validators.min(0)]),
+  protected readonly selected = signal<StageType | null>(null);
+  protected readonly draft = signal<StageDraft>(emptyDraft());
+  protected readonly stageSaving = signal(false);
+  protected readonly stageError = signal<string | null>(null);
+  protected readonly stageNotice = signal<string | null>(null);
+
+  private readonly savedByType = computed(
+    () => new Map(this.savedStages().map((stage) => [stage.type, stage])),
+  );
+  /** The saved stage being configured, `null` when it is not in the timeline yet. */
+  protected readonly selectedSaved = computed(() => {
+    const type = this.selected();
+    return type ? (this.savedByType().get(type) ?? null) : null;
   });
-  protected readonly autoError = signal<string | null>(null);
-  protected readonly planSubmitted = signal(false);
-  protected readonly planSaving = signal(false);
-  protected readonly planError = signal<string | null>(null);
-  protected readonly planSaved = signal(false);
-  protected readonly selectedCount = computed(
-    () => this.rows().filter((row) => row.selected).length,
+  /** The conflicts of the timeline, counting the dates typed in the form for a saved stage. */
+  private readonly conflicts = computed(() =>
+    timelineConflicts(this.savedStages(), this.selected(), this.draft()),
   );
-  protected readonly errors = computed(() => planErrors(this.rows()));
-  protected readonly warnings = computed(() => planWarnings(this.rows()));
-  /** Unmarking a saved Reception stage takes away the submission deadline of the works. */
-  protected readonly removingReception = computed(
-    () =>
-      this.savedStages().some((stage) => stage.type === 'Reception') &&
-      !this.rows().some((row) => row.type === 'Reception' && row.selected),
+  protected readonly timeline = computed(() =>
+    sortStages(this.savedStages()).map((stage, index) => ({
+      stage,
+      order: index + 1,
+      conflict: this.conflicts().has(stage.type),
+      kind: STAGE_KINDS[this.conflicts().has(stage.type) ? 'Conflict' : stage.status],
+    })),
   );
-  protected readonly pendingChanges = computed(() => {
-    const changes = planChanges(this.savedStages(), this.rows());
-    return changes.schedule.length + changes.remove.length;
+  /** What is shown under the timeline for each conflict. */
+  protected readonly conflictList = computed(() =>
+    [...this.conflicts()].map(([type, conflict]) => ({ type, conflict })),
+  );
+  protected readonly validation = computed(() => {
+    const type = this.selected();
+    return type ? validateDraft(type, this.draft(), this.savedStages()) : null;
+  });
+  protected readonly hasIssues = computed(() => {
+    const check = this.validation();
+    return !!check && Object.keys(check.issues).length > 0;
+  });
+  protected readonly duration = computed(() => {
+    const range = draftRange(this.draft());
+    return range ? formatDuration(range.startDate, range.endDate) : null;
+  });
+  /** The dates of the stage as they are saved, to say what stays in force while the form has errors. */
+  protected readonly savedSummary = computed(() => {
+    const saved = this.selectedSaved();
+    return saved?.startDate && saved.endDate
+      ? `${formatStageDate(saved.startDate, false)} → ${formatStageDate(saved.endDate, false)}`
+      : null;
   });
 
   constructor() {
@@ -122,104 +160,76 @@ export class EventConfigPage {
     this.loadStages();
   }
 
-  /** The position of a marked stage in the plan (1, 2, …), or `null` when it is not marked. */
-  protected orderOf(type: StageType): number | null {
-    const selected = this.rows().filter((row) => row.selected);
-    const index = selected.findIndex((row) => row.type === type);
-    return index < 0 ? null : index + 1;
+  /** Whether the stage is in the timeline (saved). */
+  protected added(type: StageType): boolean {
+    return this.savedByType().has(type);
   }
 
-  protected toggle(type: StageType, event: Event): void {
-    const selected = (event.target as HTMLInputElement).checked;
-    this.planSaved.set(false);
-    this.rows.update((rows) => toggleRow(rows, type, selected, STAGE_TYPES));
+  /** The way a stage of the timeline is drawn: its state, or a conflict. */
+  protected kindOf(type: StageType, status: StageStatus) {
+    return STAGE_KINDS[this.conflicts().has(type) ? 'Conflict' : status];
   }
 
-  protected setDate(type: StageType, field: 'start' | 'end', event: Event): void {
+  /** Opens a stage of the list in the form on the right, with its saved dates if it has them. */
+  protected select(type: StageType): void {
+    this.selected.set(type);
+    this.draft.set(draftFromStage(this.savedByType().get(type) ?? null));
+    this.stageError.set(null);
+    this.stageNotice.set(null);
+  }
+
+  protected setDraft(field: DraftField, event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.planSaved.set(false);
-    this.rows.update((rows) =>
-      rows.map((row) => (row.type === type ? { ...row, [field]: value } : row)),
-    );
+    this.stageNotice.set(null);
+    this.draft.update((draft) => ({ ...draft, [field]: value }));
   }
 
-  protected move(type: StageType, step: -1 | 1): void {
-    this.planSaved.set(false);
-    this.rows.update((rows) => moveRow(rows, type, step, STAGE_TYPES));
-  }
-
-  /** Fills the dates of the marked stages from the first start, the duration and the interval. */
-  protected calculate(): void {
-    this.autoError.set(null);
-    const { firstStart, durationDays, gapDays } = this.autoForm.getRawValue();
-    if (!this.selectedCount()) {
-      this.autoError.set('Marca primero las etapas que tendrá la feria.');
+  /** Saves the stage being configured: it goes into the timeline, or its dates change. */
+  protected saveStage(): void {
+    const type = this.selected();
+    const range = draftRange(this.draft());
+    if (!type || !range || !this.validation()?.valid) {
       return;
     }
-    if (!durationDays || durationDays <= 0) {
-      this.autoError.set('La duración de cada etapa debe ser de al menos 1 día.');
-      return;
-    }
-    const filled = fillDates(this.rows(), {
-      firstStart,
-      durationDays,
-      gapDays: gapDays ?? 0,
+    this.stageSaving.set(true);
+    this.stageError.set(null);
+    this.stageNotice.set(null);
+    this.events.scheduleStage(this.eventId, type, range).subscribe({
+      next: () => {
+        this.stageSaving.set(false);
+        this.stageNotice.set(`«${STAGE_LABELS[type]}» quedó en la línea de tiempo.`);
+        this.loadStages();
+        this.load();
+      },
+      error: (error: unknown) => {
+        this.stageSaving.set(false);
+        this.stageError.set(apiErrorMessage(error));
+      },
     });
-    if (!filled) {
-      this.autoError.set('Indica cuándo empieza la primera etapa.');
-      return;
-    }
-    this.planSaved.set(false);
-    this.rows.set(filled);
   }
 
-  /** Goes back to the saved timeline, forgetting what was changed in the checklist. */
-  protected resetPlan(): void {
-    this.planSubmitted.set(false);
-    this.planError.set(null);
-    this.rows.set(initialRows(this.savedStages(), STAGE_TYPES));
-  }
-
-  /**
-   * Saves the plan: schedules the new or changed stages (PUT) and then removes the ones that were
-   * unmarked (DELETE), one after the other so the backend always keeps an active stage.
-   */
-  protected savePlan(): void {
-    this.planSubmitted.set(true);
-    this.planError.set(null);
-    this.planSaved.set(false);
-    if (this.errors().length) {
+  /** Takes the stage being configured out of the timeline (it keeps no dates). */
+  protected removeStage(): void {
+    const type = this.selected();
+    if (!type || !this.selectedSaved()) {
       return;
     }
-    const { schedule, remove } = planChanges(this.savedStages(), this.rows());
-    if (!schedule.length && !remove.length) {
-      this.planSaved.set(true);
-      return;
-    }
-    const calls: Observable<void>[] = [
-      ...schedule.map(({ type, schedule: dates }) =>
-        this.events.scheduleStage(this.eventId, type, dates),
-      ),
-      ...remove.map((type) => this.events.removeStage(this.eventId, type)),
-    ];
-    this.planSaving.set(true);
-    concat(...calls, of(undefined))
-      .pipe(
-        last(),
-        finalize(() => {
-          this.planSaving.set(false);
-          // Whatever happened, show what the backend has now.
-          this.loadStages(false);
-          this.load();
-        }),
-      )
-      .subscribe({
-        next: () => {
-          this.planSubmitted.set(false);
-          this.planSaved.set(true);
-        },
-        error: (error: unknown) => this.planError.set(apiErrorMessage(error)),
-      });
+    this.stageSaving.set(true);
+    this.stageError.set(null);
+    this.stageNotice.set(null);
+    this.events.removeStage(this.eventId, type).subscribe({
+      next: () => {
+        this.stageSaving.set(false);
+        this.draft.set(emptyDraft());
+        this.stageNotice.set(`«${STAGE_LABELS[type]}» salió de la línea de tiempo.`);
+        this.loadStages();
+        this.load();
+      },
+      error: (error: unknown) => {
+        this.stageSaving.set(false);
+        this.stageError.set(apiErrorMessage(error));
+      },
+    });
   }
 
   protected runAction(): void {
@@ -268,15 +278,24 @@ export class EventConfigPage {
     });
   }
 
-  /** T-13: the stages saved in the backend. `resetRows` also puts them back in the checklist. */
-  private loadStages(resetRows = true): void {
+  /**
+   * The stages saved in the backend. The first time, the one in progress opens in the form; after
+   * saving or removing one, the form shows what the backend has now and keeps its notice.
+   */
+  private loadStages(): void {
     this.events.stages(this.eventId).subscribe({
       next: (stages) => {
         this.savedStages.set(stages);
         this.stagesLoadError.set(null);
         this.stagesLoading.set(false);
-        if (resetRows || this.planSaved()) {
-          this.rows.set(initialRows(stages, STAGE_TYPES));
+        const current = this.selected();
+        if (current) {
+          this.draft.set(draftFromStage(stages.find((stage) => stage.type === current) ?? null));
+        } else {
+          const open = stages.find((stage) => stage.status === 'Open');
+          if (open) {
+            this.select(open.type);
+          }
         }
       },
       error: (error: unknown) => {

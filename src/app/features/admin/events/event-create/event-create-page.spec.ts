@@ -141,22 +141,6 @@ describe('EventCreatePage', () => {
     );
   });
 
-  it('falls back to the institutions of the existing fairs while the backend has no list yet', async () => {
-    harness = await RouterTestingHarness.create();
-    await harness.navigateByUrl('/admin/events/new', EventCreatePage);
-    http.expectOne('/api/institutions').flush(null, { status: 404, statusText: 'Not Found' });
-    http.expectOne('/api/events').flush([fair('e1', 'inst-9', 'FIET 2026')]);
-    harness.detectChanges();
-    root = harness.routeNativeElement as HTMLElement;
-
-    type('#create-event-name', 'FIET 2027');
-    submit();
-
-    expect(http.expectOne((req) => req.method === 'POST').request.body.institutionId).toBe(
-      'inst-9',
-    );
-  });
-
   it('explains that no fair can be created while there is no active institution', async () => {
     await open([]);
 

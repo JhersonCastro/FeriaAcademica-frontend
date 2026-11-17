@@ -1,190 +1,232 @@
-import { STAGE_TYPES } from '../models/labels';
 import { EventStageDto } from './events.service';
 import {
-  StageRow,
-  fillDates,
-  initialRows,
-  isoToLocalInput,
-  moveRow,
-  toggleRow,
-  planChanges,
-  planErrors,
-  planWarnings,
-  toLocalInput,
+  draftFromStage,
+  draftRange,
+  emptyDraft,
+  findConflicts,
+  formatDuration,
+  formatStageDate,
+  formatStageDateNumeric,
+  isoToZone,
+  orderConflictText,
+  sortStages,
+  timelineConflicts,
+  validateDraft,
+  withDraft,
+  zoneToIso,
 } from './stage-plan';
 
-/** An ISO instant for a local date and time, so the tests do not depend on the time zone. */
-const iso = (local: string) => new Date(local).toISOString();
+/** An ISO instant for a date and time in Colombia (UTC−5), so the tests do not depend on the browser's zone. */
+const bogota = (date: string, time: string) => new Date(`${date}T${time}:00-05:00`).toISOString();
 
-const row = (type: StageRow['type'], start = '', end = '', selected = true): StageRow => ({
+const stage = (
+  type: EventStageDto['type'],
+  start: [string, string] | null,
+  end: [string, string] | null,
+): EventStageDto => ({
   type,
-  selected,
-  start,
-  end,
+  status: 'Scheduled',
+  startDate: start ? bogota(...start) : null,
+  endDate: end ? bogota(...end) : null,
 });
 
-describe('stage plan (T-15)', () => {
-  it('formats a date for a datetime-local input and back from the API', () => {
-    expect(toLocalInput(new Date(2026, 10, 20, 8, 5))).toBe('2026-11-20T08:05');
-    expect(isoToLocalInput(iso('2026-11-20T08:05'))).toBe('2026-11-20T08:05');
-    expect(isoToLocalInput(null)).toBe('');
-    expect(isoToLocalInput('no es fecha')).toBe('');
+const timeline = [
+  stage('Reception', ['2026-11-01', '08:00'], ['2026-11-20', '23:59']),
+  stage('Evaluation', ['2026-11-21', '08:00'], ['2026-12-05', '17:00']),
+];
+
+describe('stage timeline (HU-006)', () => {
+  it('converts between the inputs and ISO instants in Colombia time', () => {
+    expect(zoneToIso('2026-11-20', '23:59')).toBe('2026-11-21T04:59:00.000Z');
+    expect(isoToZone('2026-11-21T04:59:00.000Z')).toEqual({ date: '2026-11-20', time: '23:59' });
+    expect(zoneToIso('', '08:00')).toBeNull();
+    expect(zoneToIso('2026-11-20', '')).toBeNull();
   });
 
-  it('starts with the saved stages marked and in date order, then the rest unmarked', () => {
-    const saved: EventStageDto[] = [
-      {
-        type: 'Reception',
-        status: 'Scheduled',
-        startDate: iso('2026-11-20T08:00'),
-        endDate: iso('2026-11-27T17:00'),
-      },
-      {
-        type: 'Evaluation',
-        status: 'Scheduled',
-        startDate: iso('2026-11-28T08:00'),
-        endDate: iso('2026-11-30T17:00'),
-      },
-    ];
-    const rows = initialRows(saved, STAGE_TYPES);
-
-    expect(rows.map((r) => r.type).slice(0, 3)).toEqual([
-      'Reception',
-      'Evaluation',
-      'Configuration',
-    ]);
-    expect(rows.length).toBe(STAGE_TYPES.length);
-    expect(rows[0]).toEqual(row('Reception', '2026-11-20T08:00', '2026-11-27T17:00'));
-    expect(rows.filter((r) => r.selected).length).toBe(2);
-    // A stage that is not marked shows no date: the inputs no longer bring the current time.
-    expect(rows[2]).toEqual(row('Configuration', '', '', false));
-  });
-
-  it('moves a marked stage up or down among the marked ones and ignores moves past the edges', () => {
-    const rows = [row('Call'), row('Reception'), row('Evaluation'), row('Results', '', '', false)];
-    expect(moveRow(rows, 'Reception', -1, STAGE_TYPES).map((r) => r.type)).toEqual([
-      'Reception',
-      'Call',
-      'Evaluation',
-      'Results',
-    ]);
-    expect(moveRow(rows, 'Evaluation', 1, STAGE_TYPES).map((r) => r.type)).toEqual([
-      'Call',
-      'Reception',
-      'Evaluation',
-      'Results',
-    ]);
-    expect(moveRow(rows, 'Call', -1, STAGE_TYPES).map((r) => r.type)).toEqual([
-      'Call',
-      'Reception',
-      'Evaluation',
-      'Results',
-    ]);
-  });
-
-  it('puts a newly marked stage after the marked ones and an unmarked one back in its place', () => {
-    const rows = initialRows([], STAGE_TYPES);
-    const marked = toggleRow(
-      toggleRow(rows, 'Evaluation', true, STAGE_TYPES),
-      'Call',
-      true,
-      STAGE_TYPES,
-    );
-    expect(marked.slice(0, 3).map((r) => [r.type, r.selected])).toEqual([
-      ['Evaluation', true],
-      ['Call', true],
-      ['Configuration', false],
-    ]);
-    const unmarked = toggleRow(marked, 'Evaluation', false, STAGE_TYPES);
-    expect(unmarked.map((r) => r.type)).toEqual([
-      'Call',
-      ...STAGE_TYPES.filter((t) => t !== 'Call'),
-    ]);
-  });
-
-  it('fills the dates of the marked stages in order, with the duration and the interval', () => {
-    const rows = [
-      row('Call'),
-      row('Nomination', '', '', false),
-      row('Reception'),
-      row('Evaluation'),
-    ];
-    const filled = fillDates(rows, { firstStart: '2026-11-20T08:00', durationDays: 5, gapDays: 2 });
-
-    expect(filled).toEqual([
-      row('Call', '2026-11-20T08:00', '2026-11-25T08:00'),
-      row('Nomination', '', '', false),
-      row('Reception', '2026-11-27T08:00', '2026-12-02T08:00'),
-      row('Evaluation', '2026-12-04T08:00', '2026-12-09T08:00'),
-    ]);
-  });
-
-  it('does not fill anything without a valid first start', () => {
-    expect(fillDates([row('Call')], { firstStart: '', durationDays: 5, gapDays: 0 })).toBeNull();
-  });
-
-  it('asks for at least one stage and for valid dates', () => {
-    expect(planErrors([row('Call', '', '', false)])).toEqual(['Marca al menos una etapa.']);
-    expect(planErrors([row('Call', '2026-11-20T08:00', '')])).toEqual([
-      'Indica el inicio y el fin de Convocatoria.',
-    ]);
-    expect(planErrors([row('Reception', '2026-11-20T08:00', '2026-11-19T08:00')])).toEqual([
-      'Recepción de trabajos debe terminar después de empezar.',
-    ]);
-    expect(planErrors([row('Call', '2026-11-20T08:00', '2026-11-21T08:00')])).toEqual([]);
-  });
-
-  it('warns, without blocking, when a stage starts before the previous one ends', () => {
-    const rows = [
-      row('Call', '2026-11-20T08:00', '2026-11-25T08:00'),
-      row('Reception', '2026-11-24T08:00', '2026-11-30T08:00'),
-    ];
-    expect(planWarnings(rows)).toEqual([
-      'Recepción de trabajos empieza antes de que termine Convocatoria.',
-    ]);
-    expect(planErrors(rows)).toEqual([]);
-  });
-
-  it('sends only new or changed stages and removes the unmarked saved ones', () => {
-    const saved: EventStageDto[] = [
-      {
-        type: 'Call',
-        status: 'Scheduled',
-        startDate: iso('2026-11-20T08:00'),
-        endDate: iso('2026-11-25T08:00'),
-      },
-      {
-        type: 'Reception',
-        status: 'Scheduled',
-        startDate: iso('2026-11-26T08:00'),
-        endDate: iso('2026-11-30T08:00'),
-      },
-      {
-        type: 'Results',
-        status: 'Scheduled',
-        startDate: iso('2026-12-10T08:00'),
-        endDate: iso('2026-12-11T08:00'),
-      },
-    ];
-    const rows = [
-      row('Call', '2026-11-20T08:00', '2026-11-25T08:00'), // unchanged
-      row('Reception', '2026-11-26T08:00', '2026-12-01T08:00'), // new end
-      row('Evaluation', '2026-12-02T08:00', '2026-12-05T08:00'), // new stage
-      row('Results', '2026-12-10T08:00', '2026-12-11T08:00', false), // unmarked
-    ];
-
-    expect(planChanges(saved, rows)).toEqual({
-      schedule: [
-        {
-          type: 'Reception',
-          schedule: { startDate: iso('2026-11-26T08:00'), endDate: iso('2026-12-01T08:00') },
-        },
-        {
-          type: 'Evaluation',
-          schedule: { startDate: iso('2026-12-02T08:00'), endDate: iso('2026-12-05T08:00') },
-        },
-      ],
-      remove: ['Results'],
+  it('fills the inputs from a saved stage and reads them back', () => {
+    const draft = draftFromStage(timeline[0]);
+    expect(draft).toEqual({
+      startDate: '2026-11-01',
+      startTime: '08:00',
+      endDate: '2026-11-20',
+      endTime: '23:59',
     });
+    expect(draftRange(draft)).toEqual({
+      startDate: timeline[0].startDate,
+      endDate: timeline[0].endDate,
+    });
+    expect(draftFromStage(null)).toEqual(emptyDraft());
+    expect(draftFromStage(stage('Call', null, null))).toEqual(emptyDraft());
+  });
+
+  it('writes dates the way the design does', () => {
+    expect(formatStageDate(bogota('2026-10-01', '08:00'))).toBe('1 oct 2026 · 8:00 a. m.');
+    expect(formatStageDate(bogota('2026-11-20', '23:59'), false)).toBe('20 nov · 11:59 p. m.');
+    expect(formatStageDate(bogota('2026-12-10', '12:00'))).toBe('10 dic 2026 · 12:00 p. m.');
+    expect(formatStageDateNumeric(bogota('2026-11-20', '23:59'))).toBe('20/11/2026 · 11:59 p. m.');
+  });
+
+  it('writes the duration of a stage', () => {
+    const start = bogota('2026-11-01', '08:00');
+    expect(formatDuration(start, bogota('2026-11-20', '23:59'))).toBe('19 días y 15 h 59 min');
+    expect(formatDuration(start, bogota('2026-11-02', '08:00'))).toBe('1 día');
+    expect(formatDuration(start, bogota('2026-11-01', '10:30'))).toBe('2 h 30 min');
+    expect(formatDuration(start, start)).toBeNull();
+  });
+
+  it('orders the stages by their start, the ones without dates last', () => {
+    const sorted = sortStages([
+      stage('Results', ['2026-12-10', '09:00'], ['2026-12-10', '12:00']),
+      stage('Call', null, null),
+      stage('Configuration', ['2026-10-01', '08:00'], ['2026-10-14', '18:00']),
+    ]);
+    expect(sorted.map((item) => item.type)).toEqual(['Configuration', 'Results', 'Call']);
+  });
+
+  describe('validation', () => {
+    it('accepts a stage that starts after the previous one ends', () => {
+      const draft = draftFromStage(timeline[1]);
+      expect(validateDraft('Evaluation', draft, timeline)).toMatchObject({
+        valid: true,
+        complete: true,
+        issues: {},
+        conflict: null,
+      });
+    });
+
+    it('does not accept a start before the previous stage ends', () => {
+      const draft = { ...draftFromStage(timeline[1]), startDate: '2026-11-15' };
+      const result = validateDraft('Evaluation', draft, timeline);
+      expect(result.valid).toBe(false);
+      expect(result.issues.startDate).toBe(
+        'Empieza antes de que termine «Recepción de trabajos» (20/11/2026 · 11:59 p. m.). ' +
+          'Evaluación debe empezar después de Recepción de trabajos.',
+      );
+      expect(result.conflict?.previous).toBe('Reception');
+    });
+
+    it('does not accept an end after the start of the stage that comes next', () => {
+      const registration = {
+        startDate: '2026-03-10',
+        startTime: '17:06',
+        endDate: '2027-03-11',
+        endTime: '18:09',
+      };
+      const result = validateDraft('Registration', registration, timeline);
+      expect(result.valid).toBe(false);
+      expect(result.issues.endDate).toBe(
+        'Termina después de que empiece «Evaluación» (21/11/2026 · 8:00 a. m.). ' +
+          'Inscripciones debe terminar antes de que empiece Evaluación.',
+      );
+
+      const sameDay = {
+        ...registration,
+        startDate: '2026-11-20',
+        endDate: '2026-11-21',
+        endTime: '09:00',
+      };
+      expect(validateDraft('Registration', sameDay, timeline).issues.endTime).toBe(
+        'Termina después de que empiece «Evaluación» (21/11/2026 · 8:00 a. m.). ' +
+          'Inscripciones debe terminar antes de que empiece Evaluación.',
+      );
+
+      const fits = {
+        startDate: '2026-11-21',
+        startTime: '00:00',
+        endDate: '2026-11-21',
+        endTime: '08:00',
+      };
+      expect(validateDraft('Registration', fits, timeline).valid).toBe(true);
+    });
+
+    it('does not accept an end that is not after the start', () => {
+      const draft = {
+        startDate: '2026-11-21',
+        startTime: '08:00',
+        endDate: '2026-11-21',
+        endTime: '07:00',
+      };
+      expect(validateDraft('Evaluation', draft, timeline).issues.endTime).toBe(
+        'El fin debe ser posterior al inicio (21/11/2026 · 8:00 a. m.).',
+      );
+      expect(
+        validateDraft('Evaluation', { ...draft, endDate: '2026-11-20' }, timeline).issues.endDate,
+      ).toBe('El fin debe ser posterior al inicio (21/11/2026 · 8:00 a. m.).');
+    });
+
+    it('only keeps an incomplete stage from saving, without a message', () => {
+      const result = validateDraft('Call', { ...emptyDraft(), startDate: '2026-10-15' }, timeline);
+      expect(result).toMatchObject({ complete: false, valid: false, issues: {} });
+    });
+
+    it('compares with the saved stage of the usual order, not with the stage itself', () => {
+      const draft = draftFromStage(timeline[0]);
+      expect(validateDraft('Reception', draft, timeline).valid).toBe(true);
+    });
+  });
+
+  it('finds the stages that start before the previous one ends', () => {
+    expect(findConflicts(timeline).size).toBe(0);
+
+    const overlapping = [
+      timeline[0],
+      stage('Evaluation', ['2026-11-15', '08:00'], ['2026-12-05', '17:00']),
+    ];
+    const conflicts = findConflicts(overlapping);
+    expect([...conflicts.keys()]).toEqual(['Evaluation']);
+    expect(conflicts.get('Evaluation')?.previous).toBe('Reception');
+  });
+
+  it('applies the draft of the stage being edited to the timeline', () => {
+    const draft = {
+      startDate: '2026-11-15',
+      startTime: '08:00',
+      endDate: '2026-12-05',
+      endTime: '17:00',
+    };
+    expect(findConflicts(withDraft(timeline, 'Evaluation', draft)).has('Evaluation')).toBe(true);
+
+    const added = withDraft(timeline, 'Results', {
+      startDate: '2026-12-10',
+      startTime: '09:00',
+      endDate: '2026-12-10',
+      endTime: '12:00',
+    });
+    expect(added.map((item) => item.type)).toEqual(['Reception', 'Evaluation', 'Results']);
+    expect(withDraft(timeline, 'Evaluation', emptyDraft())).toEqual(timeline);
+  });
+
+  it('explains an order that is wrong with the dates that break it', () => {
+    const conflicts = findConflicts([
+      stage('Registration', ['2027-03-10', '17:06'], ['2027-03-11', '18:09']),
+      stage('Evaluation', ['2026-11-30', '15:28'], ['2027-01-05', '18:30']),
+    ]);
+    expect(orderConflictText('Evaluation', conflicts.get('Evaluation')!)).toBe(
+      'Evaluación debe empezar después de que termine Inscripciones. ' +
+        'Hoy Evaluación empieza el 30 nov 2026 · 3:28 p. m. e Inscripciones termina el 11 mar 2027 · 6:09 p. m.',
+    );
+
+    const other = findConflicts([
+      stage('Reception', ['2026-11-01', '08:00'], ['2026-11-20', '23:59']),
+      stage('Evaluation', ['2026-11-15', '08:00'], ['2026-12-05', '17:00']),
+    ]);
+    expect(orderConflictText('Evaluation', other.get('Evaluation')!)).toContain(
+      'Evaluación empieza el 15 nov 2026 · 8:00 a. m. y Recepción de trabajos termina el 20 nov 2026 · 11:59 p. m.',
+    );
+  });
+
+  it('shows the problems of a stage that is not saved only in the form', () => {
+    const draft = {
+      startDate: '2026-11-15',
+      startTime: '08:00',
+      endDate: '2026-12-31',
+      endTime: '17:00',
+    };
+    // Registration is not in the timeline: it does not make Evaluation look wrong.
+    expect(timelineConflicts(timeline, 'Registration', draft).size).toBe(0);
+    // Evaluation is saved: its draft does count.
+    expect(timelineConflicts(timeline, 'Evaluation', draft).has('Evaluation')).toBe(true);
+    // Nothing is being edited.
+    expect(timelineConflicts(timeline, null, emptyDraft()).size).toBe(0);
   });
 });
