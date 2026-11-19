@@ -20,6 +20,7 @@ import {
   WORK_STATUS_CHIPS,
   WORK_STATUS_LABELS,
   artifactHref,
+  artifactName,
   artifactRows,
   canReplace,
   canReturnToDraft,
@@ -97,6 +98,7 @@ export class WorkDetailPage {
 
   protected readonly statusLabels = WORK_STATUS_LABELS;
   protected readonly artifactHref = artifactHref;
+  protected readonly artifactName = artifactName;
   protected readonly statusChips = WORK_STATUS_CHIPS;
   protected readonly resultLabels = REVIEW_RESULT_LABELS;
   protected readonly resultChips = REVIEW_RESULT_CHIPS;

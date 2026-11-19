@@ -54,6 +54,10 @@ export interface WorkArtifactDto {
   uploadedAt: string;
   /** Marks the definitive document of an approved work. Only `GET /api/works/{id}` sends it. */
   isFinal?: boolean;
+  /** Original name of an uploaded file. The backend does not store it yet (see docs/pendiente-back-nombre-del-archivo.md). */
+  fileName?: string | null;
+  /** Size in bytes of an uploaded file. Not stored by the backend yet either. */
+  sizeBytes?: number | null;
 }
 
 /** The reviewer's decision and feedback on one attempt. */
@@ -86,7 +90,10 @@ export interface WorkDto {
   reviews: WorkReviewDto[];
 }
 
-/** `GET /api/reviews/assigned`: works waiting for the signed-in reviewer (Submitted or InReview). */
+/**
+ * `GET /api/reviews/assigned`: works waiting for the signed-in reviewer (Submitted or InReview).
+ * `GET /api/reviews/approved` has the same shape for the ones already approved (Admitted or Evaluated).
+ */
 export interface AssignedWorkDto {
   id: string;
   eventId: string;
@@ -126,5 +133,4 @@ export interface CreateWorkRequest {
 
 /** Progress of a file upload: `percent` while it goes, then the artifact the backend created. */
 export type UploadProgress =
-  | { kind: 'progress'; percent: number }
-  | { kind: 'done'; artifact: AddedArtifact };
+  { kind: 'progress'; percent: number } | { kind: 'done'; artifact: AddedArtifact };

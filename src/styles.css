@@ -784,3 +784,29 @@ textarea.control__input {
     font-weight: 600;
   }
 }
+
+/* Sub-tabs inside a page (e.g. Revisar trabajos: Pendientes / Aprobados). */
+.subtabs {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.subtabs__link {
+  margin-bottom: -1px;
+  padding: 10px 16px;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.subtabs__link:hover {
+  color: var(--color-primary);
+}
+
+.subtabs__link--active {
+  border-bottom-color: var(--color-primary);
+  color: var(--color-primary);
+}

@@ -18,45 +18,228 @@
   font-weight: 600;
 }
 
-.source-toggle {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+/* The work and its files take the room; the reviewer's feedback is a side column. */
+.work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: start;
+  gap: 20px;
 }
 
+@media (max-width: 1024px) {
+  .work-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Choice of how the work is delivered, with the attachment type next to it. */
+.source-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.type-select {
+  min-height: 40px;
+  gap: 10px;
+}
+
+.type-select__prefix {
+  color: var(--color-text-muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.type-select__input {
+  flex: none;
+  /* The right padding leaves room for the arrow the global select style draws. */
+  padding: 8px 28px 8px 0;
+  font-weight: 600;
+}
+
+.upload-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Segmented choice between uploading a PDF and pasting a link. */
+.source-toggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-self: flex-start;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--color-neutral-bg);
+}
+
+.source-toggle__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.source-toggle__option--on {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.source-toggle__option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* A file picked in the upload zone. */
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-neutral-bg);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.file-card--current {
+  border-color: var(--color-support);
+  background: #f4f8ff;
+}
+
+.file-card__tile {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 44px;
+  height: 52px;
+  border-radius: 10px;
+  background: var(--color-support-light);
+  color: var(--color-support);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.file-card__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.file-card__info p {
+  margin: 0;
+}
+
+.file-card__name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.file-card__meta {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* Where the PDF is dropped or picked. */
 .dropzone {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 16px;
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
+  align-items: center;
+  gap: 10px;
+  padding: 28px 24px;
+  border: 1px dashed var(--color-support);
+  border-radius: 16px;
+  background: #f4f8ff;
+  text-align: center;
 }
 
 .dropzone--active {
-  border-color: var(--color-support);
+  border-style: solid;
+  border-width: 2px;
   background: var(--color-support-light);
+}
+
+.dropzone--chosen {
+  align-items: stretch;
+  padding: 16px;
+  border-style: solid;
+  text-align: left;
+}
+
+.dropzone--chosen .file-card {
+  background: var(--color-surface);
 }
 
 .dropzone--error {
   border-color: var(--color-danger-text);
+  background: var(--color-danger-bg);
 }
 
 .dropzone p {
   margin: 0;
 }
 
-.dropzone__name {
+.dropzone__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--color-support-light);
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.dropzone--active .dropzone__badge {
+  border-color: var(--color-support);
+}
+
+.dropzone__title {
+  font-size: 16px;
   font-weight: 600;
-  word-break: break-all;
+}
+
+.dropzone__sub {
+  color: var(--color-text-muted);
+  font-size: 13px;
 }
 
 .dropzone__pick {
   cursor: pointer;
 }
 
+.dropzone__rules {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.dropzone--active .dropzone__rules .chip {
+  background: var(--color-surface);
+}
+
 .dropzone .gauge {
   width: 100%;
+}
+
+@media (max-width: 640px) {
+  .file-card {
+    flex-wrap: wrap;
+  }
 }

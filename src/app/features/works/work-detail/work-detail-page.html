@@ -20,22 +20,61 @@
     <div
       class="dropzone"
       [class.dropzone--active]="dragging()"
+      [class.dropzone--chosen]="file()"
       [class.dropzone--error]="showFileError() || fileProblem()"
       (dragover)="onDragOver($event)"
       (dragleave)="dragging.set(false)"
       (drop)="onDrop($event)"
     >
       @if (file(); as chosen) {
-        <p class="dropzone__name">{{ chosen.name }}</p>
-        <p class="text-small text-muted">{{ fileSizeLabel(chosen.size) }}</p>
-        @if (progress() === null) {
-          <button class="btn btn--text" type="button" [disabled]="saving()" (click)="clearFile()">
-            Quitar archivo
-          </button>
-        }
+        <div class="file-card file-card--current">
+          <span class="file-card__tile" aria-hidden="true">
+            <img src="assets/icons/file-text.svg" width="20" height="20" alt="" />
+            <span>PDF</span>
+          </span>
+          <div class="file-card__info">
+            <p class="file-card__name">{{ chosen.name }}</p>
+            <p class="file-card__meta">
+              {{ fileSizeLabel(chosen.size) }}
+              @if (progress() === null) {
+                · Listo para subir
+              }
+            </p>
+            @if (progress(); as percent) {
+              <div
+                class="gauge"
+                role="progressbar"
+                aria-label="Progreso de la subida"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                [attr.aria-valuenow]="percent"
+              >
+                <span class="gauge__fill" [style.width.%]="percent"></span>
+              </div>
+              <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
+            } @else if (progress() === 0) {
+              <p class="text-small text-muted" role="status">Subiendo…</p>
+            }
+          </div>
+          @if (progress() === null) {
+            <button class="btn btn--text" type="button" [disabled]="saving()" (click)="clearFile()">
+              Quitar archivo
+            </button>
+          }
+        </div>
       } @else {
-        <p>Arrastra aquí tu PDF o</p>
+        <span class="dropzone__badge" aria-hidden="true">
+          <img src="assets/icons/upload.svg" width="26" height="26" alt="" />
+        </span>
+        <p class="dropzone__title">
+          {{ dragging() ? 'Suelta el PDF para subirlo' : 'Arrastra tu PDF aquí' }}
+        </p>
+        <p class="dropzone__sub">o elígelo desde tu equipo</p>
         <label class="btn btn--secondary dropzone__pick" for="replace-file">Elegir archivo</label>
+        <div class="dropzone__rules">
+          <span class="chip chip--info">Solo PDF</span>
+          <span class="chip chip--info">Máximo {{ maxFileMb }} MB</span>
+        </div>
       }
       <input
         class="visually-hidden"
@@ -45,28 +84,11 @@
         aria-labelledby="replace-file-label"
         (change)="onFileChosen($event)"
       />
-      @if (progress(); as percent) {
-        <div
-          class="gauge"
-          role="progressbar"
-          aria-label="Progreso de la subida"
-          aria-valuemin="0"
-          aria-valuemax="100"
-          [attr.aria-valuenow]="percent"
-        >
-          <span class="gauge__fill" [style.width.%]="percent"></span>
-        </div>
-        <p class="text-small text-muted" role="status">Subiendo… {{ percent }} %</p>
-      } @else if (progress() === 0) {
-        <p class="text-small text-muted" role="status">Subiendo…</p>
-      }
     </div>
     @if (fileProblem(); as problem) {
       <p class="field__error">{{ problem }}</p>
     } @else if (showFileError()) {
       <p class="field__error">Elige un archivo PDF para continuar.</p>
-    } @else {
-      <p class="field__hint">Solo PDF, de hasta {{ maxFileMb }} MB.</p>
     }
   </div>
 </ng-template>
@@ -156,7 +178,7 @@
         </div>
       }
 
-      <div class="grid-2">
+      <div class="work-grid">
         <section class="card" aria-labelledby="work-title">
           <div class="chip-list">
             <span class="chip" [class]="statusChips[work.status]">{{
@@ -177,8 +199,8 @@
                 <thead>
                   <tr>
                     <th scope="col">Adjunto</th>
+                    <th scope="col">Nombre</th>
                     <th scope="col">Versión</th>
-                    <th scope="col">Estado</th>
                     <th scope="col"><span class="visually-hidden">Acción</span></th>
                   </tr>
                 </thead>
@@ -194,15 +216,19 @@
                           artifact.uploadedAt | date: 'd MMM y, h:mm a'
                         }}</span>
                       </td>
-                      <td data-label="Versión">v{{ artifact.version }}</td>
-                      <td data-label="Estado">
-                        <span
-                          class="chip"
-                          [class]="artifact.current ? 'chip--success' : 'chip--neutral'"
-                        >
-                          {{ artifact.current ? 'Vigente' : 'Conservada' }}
-                        </span>
+                      <td data-label="Nombre">
+                        @if (artifactName(artifact); as name) {
+                          {{ name }}
+                          @if (artifact.sizeBytes) {
+                            <span class="table__secondary">{{
+                              fileSizeLabel(artifact.sizeBytes)
+                            }}</span>
+                          }
+                        } @else {
+                          <span class="text-muted">Nombre no disponible</span>
+                        }
                       </td>
+                      <td data-label="Versión">v{{ artifact.version }}</td>
                       <td>
                         @if (artifactHref(artifact); as url) {
                           <a class="table__link" [href]="url" target="_blank" rel="noopener">
@@ -301,55 +327,79 @@
 
       @if (replaceable()) {
         <section class="card card--narrow" aria-labelledby="work-replace-title">
-          <h2 class="title-2" id="work-replace-title">
-            {{ work.status === 'Submitted' ? 'Reemplazar mi trabajo' : 'Subir una nueva versión' }}
-          </h2>
+          <h2 class="title-2" id="work-replace-title">Subir mi trabajo</h2>
           <p class="text-muted">
-            La versión anterior no se borra: queda conservada en el historial y el evaluador verá la
-            nueva.
-            @if (work.status === 'Submitted') {
-              Al reemplazarlo, el trabajo entra al final de la cola de revisión.
+            @if (artifacts().length) {
+              Tu archivo anterior no se borra: queda en el historial y el evaluador verá el más
+              reciente.
+              @if (work.status === 'Submitted') {
+                Al subir otro, el trabajo entra al final de la cola de revisión.
+              }
+            } @else {
+              Sube el PDF de tu trabajo o pega un enlace.
             }
           </p>
 
           <form class="form" [formGroup]="form" (ngSubmit)="askSend('send-version')" novalidate>
-            <div class="source-toggle" role="group" aria-label="Cómo entregas la nueva versión">
-              <button
-                type="button"
-                class="btn"
-                [class.btn--primary]="source() === 'file'"
-                [class.btn--secondary]="source() !== 'file'"
-                [attr.aria-pressed]="source() === 'file'"
-                [disabled]="saving()"
-                (click)="chooseSource('file')"
-              >
-                Subir un PDF
-              </button>
-              <button
-                type="button"
-                class="btn"
-                [class.btn--primary]="source() === 'link'"
-                [class.btn--secondary]="source() !== 'link'"
-                [attr.aria-pressed]="source() === 'link'"
-                [disabled]="saving()"
-                (click)="chooseSource('link')"
-              >
-                Pegar un enlace
-              </button>
-            </div>
-
-            <div class="form-grid">
-              <div class="field">
-                <label class="field__label" for="replace-type">Tipo de adjunto</label>
-                <div class="control">
-                  <select class="control__input" id="replace-type" formControlName="type">
-                    @for (type of artifactTypes; track type) {
-                      <option [value]="type">{{ artifactLabels[type] }}</option>
-                    }
-                  </select>
-                </div>
+            <div class="source-row">
+              <div class="source-toggle" role="group" aria-label="Cómo entregas tu trabajo">
+                <button
+                  type="button"
+                  class="source-toggle__option"
+                  [class.source-toggle__option--on]="source() === 'file'"
+                  [attr.aria-pressed]="source() === 'file'"
+                  [disabled]="saving()"
+                  (click)="chooseSource('file')"
+                >
+                  <img
+                    [src]="
+                      source() === 'file'
+                        ? 'assets/icons/upload-navy.svg'
+                        : 'assets/icons/upload-muted.svg'
+                    "
+                    width="16"
+                    height="16"
+                    alt=""
+                  />
+                  Subir un PDF
+                </button>
+                <button
+                  type="button"
+                  class="source-toggle__option"
+                  [class.source-toggle__option--on]="source() === 'link'"
+                  [attr.aria-pressed]="source() === 'link'"
+                  [disabled]="saving()"
+                  (click)="chooseSource('link')"
+                >
+                  <img
+                    [src]="
+                      source() === 'link'
+                        ? 'assets/icons/link-navy.svg'
+                        : 'assets/icons/link-muted.svg'
+                    "
+                    width="16"
+                    height="16"
+                    alt=""
+                  />
+                  Pegar un enlace
+                </button>
               </div>
 
+              <div class="control type-select">
+                <label class="type-select__prefix" for="replace-type">Tipo de adjunto</label>
+                <select
+                  class="control__input type-select__input"
+                  id="replace-type"
+                  formControlName="type"
+                >
+                  @for (type of artifactTypes; track type) {
+                    <option [value]="type">{{ artifactLabels[type] }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="upload-fields">
               @if (source() === 'link') {
                 <div class="field">
                   <label class="field__label" for="replace-link">Enlace a la nueva versión</label>

@@ -6,11 +6,12 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { AssignedWorkDto } from '../../../core/models/work';
 import { WORK_STATUS_CHIPS, WORK_STATUS_LABELS } from '../../../core/works/work-rules';
 import { ReviewsService } from '../../../core/works/works.service';
+import { ReviewTabs } from '../review-tabs/review-tabs';
 
 /** HU-020: only the works assigned to the signed-in reviewer, oldest in the queue first. */
 @Component({
   selector: 'app-review-queue-page',
-  imports: [DatePipe, RouterLink],
+  imports: [DatePipe, RouterLink, ReviewTabs],
   templateUrl: './review-queue-page.html',
   host: { class: 'page-content' },
 })

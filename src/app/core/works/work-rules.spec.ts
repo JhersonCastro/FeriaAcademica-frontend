@@ -1,6 +1,7 @@
 import { WorkArtifactDto } from '../models/work';
 import {
   artifactHref,
+  artifactName,
   artifactRows,
   canReplace,
   canReturnToDraft,
@@ -210,5 +211,21 @@ describe('artifactHref (T-12)', () => {
 
   it('is null when there is nothing to open', () => {
     expect(artifactHref({ fileUrl: null, linkUrl: null })).toBeNull();
+  });
+});
+
+describe('artifactName', () => {
+  it('shows the original file name when the backend sends it', () => {
+    expect(artifactName({ fileName: 'riego-v2.pdf', linkUrl: null })).toBe('riego-v2.pdf');
+  });
+
+  it('falls back to the host of a link', () => {
+    expect(artifactName({ fileName: null, linkUrl: 'https://drive.google.com/file/d/1' })).toBe(
+      'drive.google.com',
+    );
+  });
+
+  it('is null for an uploaded file that arrives without a name', () => {
+    expect(artifactName({ linkUrl: null })).toBeNull();
   });
 });

@@ -176,6 +176,35 @@ describe('WorkDetailPage actions', () => {
     expect(root.textContent).toContain('La versión final ya fue entregada.');
   });
 
+  it('lists the files in a table with their name, or says the name is not available', async () => {
+    const named: WorkArtifactDto = {
+      ...LINK,
+      id: 'f2',
+      version: 2,
+      fileUrl: '/api/works/w1/files/f2',
+      linkUrl: null,
+      fileName: 'sistema-riego-v2.pdf',
+      sizeBytes: 2.4 * 1024 * 1024,
+    };
+    const unnamed: WorkArtifactDto = { ...named, id: 'f1', version: 1, fileName: null };
+    const root = await open(work({ status: 'Submitted', artifacts: [unnamed, named] }));
+    const headers = [...root.querySelectorAll('th')].map((th) => th.textContent?.trim());
+    const text = root.textContent ?? '';
+
+    expect(headers).toEqual(expect.arrayContaining(['Adjunto', 'Nombre', 'Versión']));
+    expect(text).toContain('sistema-riego-v2.pdf');
+    expect(text).toContain('2,4 MB');
+    expect(text).toContain('Nombre no disponible');
+    expect(root.querySelectorAll('tbody tr')).toHaveLength(2);
+  });
+
+  it('always calls the upload card "Subir mi trabajo"', async () => {
+    const root = await open(work({ status: 'Submitted', artifacts: [LINK] }));
+
+    expect(root.textContent).toContain('Subir mi trabajo');
+    expect(root.textContent).not.toContain('Reemplazar mi trabajo');
+  });
+
   it('lists what a draft still needs before it can be sent', async () => {
     const root = await open(work());
     const items = [...root.querySelectorAll('.checklist__item')].map((item) =>
