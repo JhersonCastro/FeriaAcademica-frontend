@@ -9,6 +9,10 @@
   </div>
 </header>
 
+@if (activeEvents.activeEvent(); as active) {
+  <app-event-timeline [eventId]="active.eventId" [eventName]="active.eventName" />
+}
+
 <div class="grid-2">
   @if (isSuperAdmin()) {
     <section class="card" aria-labelledby="home-all-events-title">

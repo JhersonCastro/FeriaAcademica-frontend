@@ -1,0 +1,56 @@
+<section class="card timeline" aria-labelledby="timeline-title">
+  <div class="timeline__head">
+    <h2 class="title-2" id="timeline-title">Línea de tiempo de la feria</h2>
+    @if (summary(); as summary) {
+      <span class="chip" [class]="summary.chip">{{ summary.label }}</span>
+    }
+  </div>
+  @if (eventName()) {
+    <p class="text-muted">{{ eventName() }}</p>
+  }
+
+  @switch (state().kind) {
+    @case ('loading') {
+      <p class="text-muted" role="status">Cargando las etapas…</p>
+    }
+    @case ('error') {
+      <div class="alert alert--danger alert--compact" role="alert">
+        <p>No pudimos cargar la línea de tiempo de la feria. Intenta de nuevo más tarde.</p>
+      </div>
+    }
+    @default {
+      @if (!items().length) {
+        <p class="text-muted">Esta feria todavía no tiene etapas programadas.</p>
+      } @else {
+        @if (receptionLine(); as line) {
+          <div class="alert alert--info alert--compact" role="status">
+            <p>{{ line }}</p>
+          </div>
+        }
+
+        <ol class="steps" aria-label="Etapas de la feria, en el orden en que ocurren">
+          @for (item of items(); track item.stage.type) {
+            <li class="step" [class.step--now]="item.status === 'Open'">
+              <span class="node" [class]="item.view.node" aria-hidden="true">{{
+                item.number
+              }}</span>
+              <div class="step__body">
+                <span class="step__name">{{ stageLabels[item.stage.type] }}</span>
+                <span class="step__hint">{{ stageDescriptions[item.stage.type] }}</span>
+                @if (item.stage.startDate && item.stage.endDate) {
+                  <span class="step__dates">
+                    {{ formatDate(item.stage.startDate, false) }} →
+                    {{ formatDate(item.stage.endDate, false) }}
+                  </span>
+                } @else {
+                  <span class="step__dates">Sin fechas</span>
+                }
+                <span class="chip" [class]="item.view.chip">{{ item.view.label }}</span>
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    }
+  }
+</section>

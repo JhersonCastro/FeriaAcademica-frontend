@@ -7,11 +7,12 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ActiveEventStore } from '../../core/events/active-event.store';
 import { EventsService } from '../../core/events/events.service';
 import { eventStatusLabel } from '../../core/models/labels';
+import { EventTimeline } from '../../shared/ui/event-timeline/event-timeline';
 import { RoleLabelPipe } from '../../shared/ui/role-label.pipe';
 
 @Component({
   selector: 'app-home-page',
-  imports: [RouterLink, DatePipe, RoleLabelPipe],
+  imports: [RouterLink, DatePipe, RoleLabelPipe, EventTimeline],
   templateUrl: './home-page.html',
   host: { class: 'page-content' },
 })
