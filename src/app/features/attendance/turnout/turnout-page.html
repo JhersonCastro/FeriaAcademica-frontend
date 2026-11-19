@@ -7,7 +7,14 @@
 <header class="page-header">
   <div class="page-header__text">
     <h1 class="title-1">Afluencia</h1>
-    <p class="text-muted">{{ eventName() }} · se actualiza cada {{ pollSeconds }} segundos</p>
+    <p class="text-muted">
+      {{ eventName() }} ·
+      @if (live()) {
+        en tiempo real
+      } @else {
+        se actualiza cada {{ pollSeconds }} segundos
+      }
+    </p>
   </div>
   <a class="btn btn--primary" [routerLink]="['/events', eventId, 'attendance', 'scan']">
     Ir al check-in
