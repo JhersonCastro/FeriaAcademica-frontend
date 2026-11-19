@@ -23,51 +23,125 @@
   </div>
 }
 
-<section class="card turnout" aria-labelledby="turnout-title" aria-live="polite">
-  <h2 class="visually-hidden" id="turnout-title">Resumen de asistencia</h2>
+<div class="subtabs" role="tablist" aria-label="Afluencia">
+  <button
+    type="button"
+    role="tab"
+    class="subtabs__link"
+    [class.subtabs__link--active]="tab() === 'summary'"
+    [attr.aria-selected]="tab() === 'summary'"
+    (click)="tab.set('summary')"
+  >
+    Resumen
+  </button>
+  <button
+    type="button"
+    role="tab"
+    class="subtabs__link"
+    [class.subtabs__link--active]="tab() === 'entered'"
+    [attr.aria-selected]="tab() === 'entered'"
+    (click)="tab.set('entered')"
+  >
+    Ingresados
+    @if (summary(); as summary) {
+      ({{ summary.entered | number }})
+    }
+  </button>
+</div>
 
-  @if (summary(); as summary) {
-    <div class="turnout__hero">
-      <p class="turnout__label">Ingresados / inscritos</p>
-      <p class="turnout__figure">
-        {{ summary.entered | number }}<span class="turnout__total"> / {{ summary.registered | number }}</span>
-      </p>
-    </div>
+@if (tab() === 'entered') {
+  <section class="card" aria-labelledby="entered-title" aria-live="polite">
+    <h2 class="visually-hidden" id="entered-title">Personas que ya ingresaron</h2>
 
-    <div
-      class="turnout__meter"
-      role="meter"
-      aria-label="Asistencia sobre inscritos"
-      aria-valuemin="0"
-      [attr.aria-valuemax]="summary.registered"
-      [attr.aria-valuenow]="summary.entered"
-      [attr.aria-valuetext]="(ratio() | percent) + ' de los inscritos ya ingresó'"
-    >
-      <span class="turnout__meter-fill" [style.width.%]="ratio() * 100"></span>
-    </div>
-
-    <dl class="turnout__stats">
-      <div class="turnout__stat">
-        <dt>Pendientes</dt>
-        <dd>{{ summary.pending | number }}</dd>
+    @if (listError(); as message) {
+      <div class="alert alert--warning" role="alert">
+        <div class="alert__body">
+          <p class="alert__title">No pudimos cargar la lista de ingresados</p>
+          <p>{{ message }}</p>
+        </div>
       </div>
-      <div class="turnout__stat">
-        <dt>Asistencia</dt>
-        <dd>{{ ratio() | percent }}</dd>
-      </div>
-      <div class="turnout__stat">
-        <dt>Último ingreso</dt>
-        <dd>{{ summary.lastEntryAt ? (summary.lastEntryAt | date: 'HH:mm:ss') : '—' }}</dd>
-      </div>
-    </dl>
+    }
 
-    <p class="text-small text-muted">
-      Las inscripciones canceladas no cuentan.
-      @if (updatedAt(); as updatedAt) {
-        Actualizado a las {{ updatedAt | date: 'HH:mm:ss' }}.
+    @if (entered(); as rows) {
+      @if (!rows.length) {
+        <div class="state">
+          <span class="diamond" aria-hidden="true"></span>
+          <p>Todavía nadie ha hecho check-in.</p>
+        </div>
+      } @else {
+        <div class="table-wrap">
+          <table class="table table--stack">
+            <thead>
+              <tr>
+                <th scope="col">Nombre</th>
+                <th scope="col">Correo</th>
+                <th scope="col">Ingresó</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of rows; track row.registrationId) {
+                <tr>
+                  <td>{{ row.fullName }}</td>
+                  <td data-label="Correo">{{ row.email }}</td>
+                  <td data-label="Ingresó">{{ row.enteredAt | date: 'dd/MM/yyyy HH:mm:ss' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       }
-    </p>
-  } @else if (!errorMessage()) {
-    <p class="text-muted">Cargando la afluencia…</p>
-  }
-</section>
+    } @else if (!listError()) {
+      <p class="text-muted">Cargando los ingresados…</p>
+    }
+  </section>
+} @else {
+  <section class="card turnout" aria-labelledby="turnout-title" aria-live="polite">
+    <h2 class="visually-hidden" id="turnout-title">Resumen de asistencia</h2>
+
+    @if (summary(); as summary) {
+      <div class="turnout__hero">
+        <p class="turnout__label">Ingresados / inscritos</p>
+        <p class="turnout__figure">
+          {{ summary.entered | number
+          }}<span class="turnout__total"> / {{ summary.registered | number }}</span>
+        </p>
+      </div>
+
+      <div
+        class="turnout__meter"
+        role="meter"
+        aria-label="Asistencia sobre inscritos"
+        aria-valuemin="0"
+        [attr.aria-valuemax]="summary.registered"
+        [attr.aria-valuenow]="summary.entered"
+        [attr.aria-valuetext]="(ratio() | percent) + ' de los inscritos ya ingresó'"
+      >
+        <span class="turnout__meter-fill" [style.width.%]="ratio() * 100"></span>
+      </div>
+
+      <dl class="turnout__stats">
+        <div class="turnout__stat">
+          <dt>Pendientes</dt>
+          <dd>{{ summary.pending | number }}</dd>
+        </div>
+        <div class="turnout__stat">
+          <dt>Asistencia</dt>
+          <dd>{{ ratio() | percent }}</dd>
+        </div>
+        <div class="turnout__stat">
+          <dt>Último ingreso</dt>
+          <dd>{{ summary.lastEntryAt ? (summary.lastEntryAt | date: 'HH:mm:ss') : '—' }}</dd>
+        </div>
+      </dl>
+
+      <p class="text-small text-muted">
+        Las inscripciones canceladas no cuentan.
+        @if (updatedAt(); as updatedAt) {
+          Actualizado a las {{ updatedAt | date: 'HH:mm:ss' }}.
+        }
+      </p>
+    } @else if (!errorMessage()) {
+      <p class="text-muted">Cargando la afluencia…</p>
+    }
+  </section>
+}
