@@ -39,6 +39,11 @@ describe('AttendanceService', () => {
     expect(req.request.body).toEqual({ qrToken: TOKEN });
   });
 
+  it('lists the registrations of the event', () => {
+    service.registrations(EVENT_ID).subscribe();
+    expect(http.expectOne(`/api/events/${EVENT_ID}/registrations`).request.method).toBe('GET');
+  });
+
   it('reads the attendance summary', () => {
     service.summary(EVENT_ID).subscribe();
     expect(http.expectOne(`/api/events/${EVENT_ID}/attendance/summary`).request.method).toBe('GET');

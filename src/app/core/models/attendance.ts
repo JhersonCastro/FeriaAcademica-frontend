@@ -10,6 +10,17 @@ export interface RegistrationDto {
   enteredAt: string | null;
 }
 
+/** One person registered for an event, as staff see it in the turnout list. */
+export interface EventRegistrationDto {
+  registrationId: string;
+  userId: string;
+  fullName: string;
+  email: string;
+  status: RegistrationStatus;
+  /** First check-in, or `null` while the person has not entered. */
+  enteredAt: string | null;
+}
+
 export type ScanOutcome = 'Valid' | 'AlreadyEntered' | 'Invalid';
 
 export interface ScanResultDto {

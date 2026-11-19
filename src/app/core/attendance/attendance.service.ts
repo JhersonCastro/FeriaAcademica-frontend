@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AttendanceSummaryDto, RegistrationDto, ScanResultDto } from '../models/attendance';
+import {
+  AttendanceSummaryDto,
+  EventRegistrationDto,
+  RegistrationDto,
+  ScanResultDto,
+} from '../models/attendance';
 
 /** Event registration with a personal QR, and QR check-in at the door. */
 @Injectable({ providedIn: 'root' })
@@ -13,6 +18,11 @@ export class AttendanceService {
   /** Registers the signed-in user. Idempotent: calling it again returns the same QR. */
   register(eventId: string): Observable<RegistrationDto> {
     return this.http.post<RegistrationDto>(`${this.eventUrl(eventId)}/registrations`, null);
+  }
+
+  /** Everyone registered, with their check-in time. Staff of the event only. */
+  registrations(eventId: string): Observable<EventRegistrationDto[]> {
+    return this.http.get<EventRegistrationDto[]>(`${this.eventUrl(eventId)}/registrations`);
   }
 
   /** 400 "You are not registered for this event." when there is no registration yet. */

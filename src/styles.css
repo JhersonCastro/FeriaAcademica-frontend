@@ -802,6 +802,14 @@ textarea.control__input {
   text-decoration: none;
 }
 
+button.subtabs__link {
+  border-width: 0 0 2px;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 .subtabs__link:hover {
   color: var(--color-primary);
 }
