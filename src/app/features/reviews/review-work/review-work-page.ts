@@ -12,8 +12,10 @@ import {
   WORK_STATUS_CHIPS,
   WORK_STATUS_LABELS,
   artifactHref,
+  artifactName,
   artifactRows,
   decisionError,
+  fileSizeLabel,
 } from '../../../core/works/work-rules';
 import { ReviewsService } from '../../../core/works/works.service';
 
@@ -37,6 +39,8 @@ export class ReviewWorkPage {
   protected readonly today = new Date();
   protected readonly statusLabels = WORK_STATUS_LABELS;
   protected readonly artifactHref = artifactHref;
+  protected readonly artifactName = artifactName;
+  protected readonly fileSizeLabel = fileSizeLabel;
   protected readonly statusChips = WORK_STATUS_CHIPS;
   protected readonly artifactLabels = ARTIFACT_TYPE_LABELS;
   protected readonly decisions = REVIEW_DECISIONS;
@@ -47,6 +51,11 @@ export class ReviewWorkPage {
   protected readonly work = signal<AssignedWorkDto | null>(null);
   protected readonly artifacts = computed(() => artifactRows(this.work()?.artifacts ?? []));
   protected readonly errorMessage = signal<string | null>(null);
+  /** An approved work: it can be consulted but there is no decision left to record. */
+  protected readonly readOnly = signal(false);
+  protected readonly hasFinalVersion = computed(() =>
+    (this.work()?.artifacts ?? []).some((artifact) => artifact.isFinal),
+  );
 
   protected readonly decision = signal<ReviewDecision | null>(null);
   protected readonly feedback = signal('');
@@ -112,11 +121,34 @@ export class ReviewWorkPage {
     });
   }
 
-  /** There is no single-work endpoint for reviewers: the work is taken from the assigned list. */
+  /**
+   * There is no single-work endpoint for reviewers: the work is taken from the assigned list and,
+   * when it is not there, from the approved one (then it is read-only).
+   */
   private load(): void {
     this.reviews.assigned().subscribe({
       next: (works) => {
         const work = works.find((item) => item.id === this.workId) ?? null;
+        if (work) {
+          this.readOnly.set(false);
+          this.work.set(work);
+          this.state.set('ready');
+        } else {
+          this.loadApproved();
+        }
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(apiErrorMessage(error));
+        this.state.set('error');
+      },
+    });
+  }
+
+  private loadApproved(): void {
+    this.reviews.approved().subscribe({
+      next: (works) => {
+        const work = works.find((item) => item.id === this.workId) ?? null;
+        this.readOnly.set(work !== null);
         this.work.set(work);
         this.state.set(work ? 'ready' : 'not-found');
       },

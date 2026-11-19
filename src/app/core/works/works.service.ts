@@ -112,6 +112,11 @@ export class ReviewsService {
     return this.http.get<AssignedWorkDto[]>(`${this.baseUrl}/assigned`);
   }
 
+  /** Works of the signed-in reviewer that are already approved (Admitted or Evaluated), newest first. */
+  approved(): Observable<AssignedWorkDto[]> {
+    return this.http.get<AssignedWorkDto[]>(`${this.baseUrl}/approved`);
+  }
+
   /** Submitted -> InReview. After this the author can no longer withdraw the work. */
   start(workId: string): Observable<void> {
     return this.http.post<void>(`${this.reviewUrl(workId)}/start`, null);

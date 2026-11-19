@@ -11,6 +11,8 @@
   </div>
 </header>
 
+<app-review-tabs />
+
 <section class="card" aria-labelledby="queue-title">
   <h2 class="title-2" id="queue-title">Mi bandeja</h2>
 
@@ -43,10 +45,14 @@
             <tr>
               <td>
                 <a class="table__link" [routerLink]="['/reviews', work.id]">{{ work.title }}</a>
-                <span class="table__secondary">{{ work.eventName }} · Intento {{ work.currentAttempt }}</span>
+                <span class="table__secondary"
+                  >{{ work.eventName }} · Intento {{ work.currentAttempt }}</span
+                >
               </td>
               <td data-label="Estado">
-                <span class="chip" [class]="statusChips[work.status]">{{ statusLabels[work.status] }}</span>
+                <span class="chip" [class]="statusChips[work.status]">{{
+                  statusLabels[work.status]
+                }}</span>
               </td>
               <td data-label="En la cola desde">
                 {{ work.enqueuedAt ? (work.enqueuedAt | date: 'd MMM y, h:mm a') : '—' }}

@@ -113,6 +113,15 @@ export const routes: Routes = [
               ),
           },
           {
+            // Before ':workId', or "approved" would be taken for a work id.
+            path: 'approved',
+            title: 'Trabajos aprobados',
+            loadComponent: () =>
+              import('./features/reviews/approved-works/approved-works-page').then(
+                (m) => m.ApprovedWorksPage,
+              ),
+          },
+          {
             path: ':workId',
             title: 'Revisar trabajo',
             loadComponent: () =>
