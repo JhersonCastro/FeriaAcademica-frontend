@@ -63,6 +63,8 @@ export type StageStatus = 'Scheduled' | 'Open' | 'Closed';
 /** `GET /api/events/{id}/stages`: a stage of the fair's timeline (UTC instants, `null` if none). */
 export interface EventStageDto {
   type: StageType;
+  /** Position in the natural sequence of stages (1 = Configuration ... 9 = Publication). */
+  order?: number;
   status: StageStatus;
   startDate: string | null;
   endDate: string | null;
