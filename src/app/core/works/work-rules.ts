@@ -97,6 +97,27 @@ export function artifactRows(artifacts: readonly WorkArtifactDto[]): ArtifactRow
 }
 
 /**
+ * What an artifact is called in the list: the original file name when the backend sends it, the
+ * host of a link, or `null` when an uploaded file arrives without a name (the backend does not
+ * store it yet, see docs/pendiente-back-nombre-del-archivo.md).
+ */
+export function artifactName(
+  artifact: Pick<WorkArtifactDto, 'fileName' | 'linkUrl'>,
+): string | null {
+  if (artifact.fileName) {
+    return artifact.fileName;
+  }
+  if (artifact.linkUrl) {
+    try {
+      return new URL(artifact.linkUrl).hostname;
+    } catch {
+      return 'Enlace';
+    }
+  }
+  return null;
+}
+
+/**
  * Where to open an artifact. Links go as they are; an uploaded file is an API path
  * (`/api/works/{id}/files/{fileId}`), so it needs the API's origin when the front is deployed on
  * another one. `null` when the artifact has neither.
