@@ -3,20 +3,24 @@ import { forkJoin } from 'rxjs';
 import { apiErrorMessage } from '../api/api-error';
 import { AuthService } from '../auth/auth.service';
 import { NotificationDto } from '../models/notification';
+import { RealtimeService } from '../realtime/realtime.service';
 import { NotificationsService } from './notifications.service';
 
-/** How often the signed-in area asks the backend for new notifications. */
+/** How often the signed-in area asks for new notifications while the live stream is down. */
 export const NOTIFICATIONS_POLL_MS = 30_000;
 
 /**
- * The signed-in user's notifications. The backend has no push channel, so while there is a
- * session the list is refreshed on an interval; a notification that was not there before shows
- * up as `incoming` so the shell can announce it without a page reload.
+ * The signed-in user's notifications. While there is a session the backend pushes each new one
+ * over a stream (SSE); if the stream is not connected the list is refreshed on an interval
+ * instead. A notification that was not there before shows up as `incoming` so the shell can
+ * announce it without a page reload.
  */
 @Injectable({ providedIn: 'root' })
 export class NotificationsStore {
   private readonly api = inject(NotificationsService);
   private readonly auth = inject(AuthService);
+  private readonly realtime = inject(RealtimeService);
+  private readonly live = signal(false);
 
   readonly notifications = signal<NotificationDto[]>([]);
   readonly loaded = signal(false);
@@ -35,8 +39,29 @@ export class NotificationsStore {
         return;
       }
       untracked(() => this.refresh());
-      const timer = setInterval(() => this.refresh(), NOTIFICATIONS_POLL_MS);
-      onCleanup(() => clearInterval(timer));
+      const timer = setInterval(() => {
+        if (!this.live()) {
+          this.refresh();
+        }
+      }, NOTIFICATIONS_POLL_MS);
+      const stream = this.realtime
+        .watch('/api/notifications/stream', ['notification'])
+        .subscribe((message) => {
+          if (message.kind === 'event') {
+            this.receive(message.data as NotificationDto);
+            return;
+          }
+          this.live.set(message.kind === 'open');
+          if (message.kind === 'open') {
+            // Whatever arrived while the stream was not connected.
+            this.refresh();
+          }
+        });
+      onCleanup(() => {
+        clearInterval(timer);
+        stream.unsubscribe();
+        this.live.set(false);
+      });
     });
   }
 
@@ -62,6 +87,17 @@ export class NotificationsStore {
         this.loaded.set(true);
       },
     });
+  }
+
+  /** A notification pushed by the backend; one already known (or malformed) is ignored. */
+  private receive(notification: NotificationDto): void {
+    if (!notification?.id || this.notifications().some((n) => n.id === notification.id)) {
+      return;
+    }
+    this.notifications.update((list) => [notification, ...list]);
+    if (this.loaded() && !notification.isRead) {
+      this.incoming.set(notification);
+    }
   }
 
   markAsRead(id: string): void {
