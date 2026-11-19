@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { apiErrorMessage } from '../../../../core/api/api-error';
@@ -26,6 +26,7 @@ import {
   formatStageDate,
   orderConflictText,
   sortStages,
+  stageStatusAt,
   timelineConflicts,
   validateDraft,
 } from '../../../../core/events/stage-plan';
@@ -111,6 +112,9 @@ export class EventConfigPage {
   protected readonly stageError = signal<string | null>(null);
   protected readonly stageNotice = signal<string | null>(null);
 
+  /** The current instant, to tell which stages are running; it moves forward every minute. */
+  private readonly now = signal(Date.now());
+
   private readonly savedByType = computed(
     () => new Map(this.savedStages().map((stage) => [stage.type, stage])),
   );
@@ -128,7 +132,7 @@ export class EventConfigPage {
       stage,
       order: index + 1,
       conflict: this.conflicts().has(stage.type),
-      kind: STAGE_KINDS[this.conflicts().has(stage.type) ? 'Conflict' : stage.status],
+      kind: this.kindOf(stage.type, stage),
     })),
   );
   /** What is shown under the timeline for each conflict. */
@@ -158,6 +162,9 @@ export class EventConfigPage {
   constructor() {
     this.load();
     this.loadStages();
+    // Stage states depend on the clock, so they are refreshed while the page stays open.
+    const tick = setInterval(() => this.now.set(Date.now()), 60_000);
+    inject(DestroyRef).onDestroy(() => clearInterval(tick));
   }
 
   /** Whether the stage is in the timeline (saved). */
@@ -165,9 +172,9 @@ export class EventConfigPage {
     return this.savedByType().has(type);
   }
 
-  /** The way a stage of the timeline is drawn: its state, or a conflict. */
-  protected kindOf(type: StageType, status: StageStatus) {
-    return STAGE_KINDS[this.conflicts().has(type) ? 'Conflict' : status];
+  /** The way a stage of the timeline is drawn: its state right now, or a conflict. */
+  protected kindOf(type: StageType, stage: EventStageDto) {
+    return STAGE_KINDS[this.conflicts().has(type) ? 'Conflict' : stageStatusAt(stage, this.now())];
   }
 
   /** Opens a stage of the list in the form on the right, with its saved dates if it has them. */
@@ -292,7 +299,7 @@ export class EventConfigPage {
         if (current) {
           this.draft.set(draftFromStage(stages.find((stage) => stage.type === current) ?? null));
         } else {
-          const open = stages.find((stage) => stage.status === 'Open');
+          const open = stages.find((stage) => stageStatusAt(stage, this.now()) === 'Open');
           if (open) {
             this.select(open.type);
           }
