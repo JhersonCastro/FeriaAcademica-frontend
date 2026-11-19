@@ -126,6 +126,32 @@ export function stageStatusAt(
   return now >= new Date(stage.startDate).getTime() ? 'Open' : 'Scheduled';
 }
 
+/** What the list of fairs says about the stage a fair is in. */
+export interface CurrentStage {
+  /** `current` is running now, `next` has not started, `finished` means every stage already ended. */
+  kind: 'current' | 'next' | 'finished';
+  /** The stage itself; `null` when `finished`. */
+  type: StageType | null;
+}
+
+/**
+ * The stage a fair is in at `now`: the one running (the latest started when they overlap), else the
+ * next one to start, else `finished` when all ended. `null` while the timeline has no dated stages.
+ */
+export function currentStage(stages: readonly EventStageDto[], now: number): CurrentStage | null {
+  const dated = sortStages(stages).filter((stage) => stage.startDate && stage.endDate);
+  if (!dated.length) {
+    return null;
+  }
+  const status = (stage: EventStageDto) => stageStatusAt(stage, now);
+  const running = dated.filter((stage) => status(stage) === 'Open');
+  if (running.length) {
+    return { kind: 'current', type: running[running.length - 1].type };
+  }
+  const upcoming = dated.find((stage) => status(stage) === 'Scheduled');
+  return upcoming ? { kind: 'next', type: upcoming.type } : { kind: 'finished', type: null };
+}
+
 /** A stage that starts before the stage that comes before it in the life of a fair ends. */
 export interface StageConflict {
   previous: StageType;

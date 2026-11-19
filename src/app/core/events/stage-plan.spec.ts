@@ -1,5 +1,6 @@
 import { EventStageDto } from './events.service';
 import {
+  currentStage,
   draftFromStage,
   draftRange,
   emptyDraft,
@@ -240,6 +241,35 @@ describe('stage timeline (HU-006)', () => {
     expect(stageStatusAt(call, at('2026-05-15', '12:00'))).toBe('Open');
     expect(stageStatusAt(call, at('2026-05-20', '18:00'))).toBe('Closed');
     expect(stageStatusAt(call, at('2026-06-01', '09:00'))).toBe('Closed');
+  });
+
+  it('names the stage a fair is in, the next one, or that all ended', () => {
+    const stages = [
+      stage('Call', ['2026-05-01', '08:00'], ['2026-05-10', '18:00']),
+      stage('Reception', ['2026-05-11', '08:00'], ['2026-05-20', '18:00']),
+      stage('Evaluation', ['2026-06-01', '08:00'], ['2026-06-10', '18:00']),
+    ];
+    const at = (date: string, time: string) => new Date(bogota(date, time)).getTime();
+
+    expect(currentStage(stages, at('2026-05-15', '12:00'))).toEqual({
+      kind: 'current',
+      type: 'Reception',
+    });
+    // Between two stages nothing runs: the next one is named.
+    expect(currentStage(stages, at('2026-05-25', '12:00'))).toEqual({
+      kind: 'next',
+      type: 'Evaluation',
+    });
+    expect(currentStage(stages, at('2026-04-01', '12:00'))).toEqual({ kind: 'next', type: 'Call' });
+    expect(currentStage(stages, at('2026-07-01', '12:00'))).toEqual({
+      kind: 'finished',
+      type: null,
+    });
+  });
+
+  it('has no current stage while the timeline has no dated stages', () => {
+    expect(currentStage([], Date.now())).toBeNull();
+    expect(currentStage([stage('Call', null, null)], Date.now())).toBeNull();
   });
 
   it('keeps the backend state when the stage has no dates or the backend already moved it', () => {
