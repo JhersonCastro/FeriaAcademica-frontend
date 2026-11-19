@@ -265,8 +265,8 @@
           <div class="stages__head">
             <h2 class="title-2" id="config-title">Configurar · {{ stageLabels[type] }}</h2>
             @if (selectedSaved(); as saved) {
-              <span class="chip" [class]="kindOf(type, saved.status).chip">{{
-                kindOf(type, saved.status).label
+              <span class="chip" [class]="kindOf(type, saved).chip">{{
+                kindOf(type, saved).label
               }}</span>
             }
           </div>

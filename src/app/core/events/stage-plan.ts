@@ -1,5 +1,5 @@
 import { STAGE_LABELS, STAGE_TYPES } from '../models/labels';
-import { EventStageDto, StageType } from './events.service';
+import { EventStageDto, StageStatus, StageType } from './events.service';
 
 /**
  * HU-006: the timeline of a fair. The super admin picks a stage from the visible list, gives it a
@@ -105,6 +105,25 @@ export function sortStages(stages: readonly EventStageDto[]): EventStageDto[] {
   return [...stages].sort(
     (a, b) => time(a) - time(b) || STAGE_TYPES.indexOf(a.type) - STAGE_TYPES.indexOf(b.type),
   );
+}
+
+/**
+ * Where a stage is right now. The backend only ever sends `Scheduled`, so the state comes from the
+ * dates: before the start it is pending, between start and end it is open, after the end it is
+ * closed. A stage without dates stays as the backend says. When the backend starts sending `Open`
+ * or `Closed` itself, that wins.
+ */
+export function stageStatusAt(
+  stage: Pick<EventStageDto, 'status' | 'startDate' | 'endDate'>,
+  now: number,
+): StageStatus {
+  if (stage.status !== 'Scheduled' || !stage.startDate || !stage.endDate) {
+    return stage.status;
+  }
+  if (now >= new Date(stage.endDate).getTime()) {
+    return 'Closed';
+  }
+  return now >= new Date(stage.startDate).getTime() ? 'Open' : 'Scheduled';
 }
 
 /** A stage that starts before the stage that comes before it in the life of a fair ends. */

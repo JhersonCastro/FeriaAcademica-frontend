@@ -57,7 +57,7 @@ export interface StageSchedule {
   endDate: string;
 }
 
-/** Where a stage is in its own schedule, as the backend computes it from today's date. */
+/** Where a stage is in its own schedule. The backend sends `Scheduled`; the front derives the rest from the dates. */
 export type StageStatus = 'Scheduled' | 'Open' | 'Closed';
 
 /** `GET /api/events/{id}/stages`: a stage of the fair's timeline (UTC instants, `null` if none). */

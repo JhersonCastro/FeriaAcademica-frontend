@@ -10,6 +10,7 @@ import {
   isoToZone,
   orderConflictText,
   sortStages,
+  stageStatusAt,
   timelineConflicts,
   validateDraft,
   withDraft,
@@ -228,5 +229,24 @@ describe('stage timeline (HU-006)', () => {
     expect(timelineConflicts(timeline, 'Evaluation', draft).has('Evaluation')).toBe(true);
     // Nothing is being edited.
     expect(timelineConflicts(timeline, null, emptyDraft()).size).toBe(0);
+  });
+
+  it('tells the state of a stage from the current time', () => {
+    const call = stage('Call', ['2026-05-10', '08:00'], ['2026-05-20', '18:00']);
+    const at = (date: string, time: string) => new Date(bogota(date, time)).getTime();
+
+    expect(stageStatusAt(call, at('2026-05-09', '23:59'))).toBe('Scheduled');
+    expect(stageStatusAt(call, at('2026-05-10', '08:00'))).toBe('Open');
+    expect(stageStatusAt(call, at('2026-05-15', '12:00'))).toBe('Open');
+    expect(stageStatusAt(call, at('2026-05-20', '18:00'))).toBe('Closed');
+    expect(stageStatusAt(call, at('2026-06-01', '09:00'))).toBe('Closed');
+  });
+
+  it('keeps the backend state when the stage has no dates or the backend already moved it', () => {
+    const now = Date.now();
+    expect(stageStatusAt(stage('Call', null, null), now)).toBe('Scheduled');
+    expect(stageStatusAt({ ...stage('Call', null, null), status: 'Open' }, now)).toBe('Open');
+    const dated = stage('Call', ['2020-01-01', '08:00'], ['2020-01-02', '08:00']);
+    expect(stageStatusAt({ ...dated, status: 'Open' }, now)).toBe('Open');
   });
 });
